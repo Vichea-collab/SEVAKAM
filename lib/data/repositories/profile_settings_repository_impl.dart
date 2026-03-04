@@ -156,9 +156,11 @@ class ProfileSettingsRepositoryImpl implements ProfileSettingsRepository {
       limit: limit,
     );
     return PaginatedResult(
-      items: result.items
-          .map(HelpTicketMessage.fromMap)
-          .toList(growable: false),
+      items: _sortHelpTicketMessages(
+        result.items
+            .map(HelpTicketMessage.fromMap)
+            .toList(growable: false),
+      ),
       pagination: result.pagination,
     );
   }
@@ -291,7 +293,9 @@ class ProfileSettingsRepositoryImpl implements ProfileSettingsRepository {
         page: page,
         limit: limit,
       );
-      final remote = result.items.map(HelpSupportTicket.fromMap).toList();
+      final remote = _sortHelpTickets(
+        result.items.map(HelpSupportTicket.fromMap).toList(),
+      );
       if (remote.isNotEmpty && page == 1) {
         await _localDataSource.saveHelpTickets(
           isProvider: isProvider,
@@ -299,18 +303,19 @@ class ProfileSettingsRepositoryImpl implements ProfileSettingsRepository {
         );
       }
       return PaginatedResult(
-        items: remote.isEmpty ? local : remote,
+        items: remote.isEmpty ? _sortHelpTickets(local) : remote,
         pagination: result.pagination,
       );
     } catch (_) {
-      final totalItems = local.length;
+      final sortedLocal = _sortHelpTickets(local);
+      final totalItems = sortedLocal.length;
       final totalPages = totalItems == 0
           ? 0
           : ((totalItems + limit - 1) ~/ limit);
       final start = ((page < 1 ? 1 : page) - 1) * limit;
       final pageItems = start >= totalItems
           ? const <HelpSupportTicket>[]
-          : local.skip(start).take(limit).toList(growable: false);
+          : sortedLocal.skip(start).take(limit).toList(growable: false);
       return PaginatedResult(
         items: pageItems,
         pagination: PaginationMeta(
@@ -353,5 +358,29 @@ class ProfileSettingsRepositoryImpl implements ProfileSettingsRepository {
       return HelpSupportTicket.fromMap(created);
     } catch (_) {}
     return localTicket;
+  }
+
+  List<HelpSupportTicket> _sortHelpTickets(List<HelpSupportTicket> source) {
+    final sorted = List<HelpSupportTicket>.from(source);
+    sorted.sort((a, b) {
+      final right = b.lastMessageAt ?? b.updatedAt ?? b.createdAt;
+      final left = a.lastMessageAt ?? a.updatedAt ?? a.createdAt;
+      final byTime = right.compareTo(left);
+      if (byTime != 0) return byTime;
+      return a.id.compareTo(b.id);
+    });
+    return sorted;
+  }
+
+  List<HelpTicketMessage> _sortHelpTicketMessages(
+    List<HelpTicketMessage> source,
+  ) {
+    final sorted = List<HelpTicketMessage>.from(source);
+    sorted.sort((a, b) {
+      final byTime = a.createdAt.compareTo(b.createdAt);
+      if (byTime != 0) return byTime;
+      return a.id.compareTo(b.id);
+    });
+    return sorted;
   }
 }

@@ -23,9 +23,12 @@ class ChatListPage extends StatefulWidget {
 }
 
 class _ChatListPageState extends State<ChatListPage> {
+  static const Duration _doublePullWindow = Duration(seconds: 2);
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
   bool _isPaging = false;
+  bool _refreshInProgress = false;
+  DateTime? _lastPullAt;
 
   @override
   void initState() {
@@ -67,23 +70,24 @@ class _ChatListPageState extends State<ChatListPage> {
 
                 final Widget body;
                 if (isLoading && threads.isEmpty) {
-                  body = const Center(
-                    child: AppStatePanel.loading(
-                      title: 'Loading conversations',
-                    ),
+                  body = _pullablePlaceholder(
+                    const AppStatePanel.loading(title: 'Loading conversations'),
                   );
                 } else if (filtered.isEmpty) {
-                  body = AppStatePanel.empty(
-                    title: 'No conversation yet',
-                    message: query.isEmpty
-                        ? 'Start chatting with a provider or customer.'
-                        : 'No messages matched your search.',
+                  body = _pullablePlaceholder(
+                    AppStatePanel.empty(
+                      title: 'No conversation yet',
+                      message: query.isEmpty
+                          ? 'Start chatting with a provider or customer.'
+                          : 'No messages matched your search.',
+                    ),
                   );
                 } else {
                   body = ListView.separated(
                     key: ValueKey<String>(
                       'chat_list_${filtered.length}_${currentPage}_$query',
                     ),
+                    physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: filtered.length,
                     separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, index) {
@@ -99,15 +103,7 @@ class _ChatListPageState extends State<ChatListPage> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-                          child: AppTopBar(
-                            title: 'Chats',
-                            actions: [
-                              IconButton(
-                                onPressed: () => ChatState.refresh(page: 1),
-                                icon: const Icon(Icons.refresh_rounded),
-                              ),
-                            ],
-                          ),
+                          child: AppTopBar(title: 'Chats'),
                         ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -124,11 +120,14 @@ class _ChatListPageState extends State<ChatListPage> {
                           ),
                         ),
                         Expanded(
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 220),
-                            switchInCurve: Curves.easeOutCubic,
-                            switchOutCurve: Curves.easeInCubic,
-                            child: body,
+                          child: RefreshIndicator(
+                            onRefresh: _handleRefresh,
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 220),
+                              switchInCurve: Curves.easeOutCubic,
+                              switchOutCurve: Curves.easeInCubic,
+                              child: body,
+                            ),
                           ),
                         ),
                         if (pagination.totalPages > 1 && query.isEmpty)
@@ -171,6 +170,42 @@ class _ChatListPageState extends State<ChatListPage> {
     }
   }
 
+  Future<void> _handleRefresh() async {
+    final now = DateTime.now();
+    final last = _lastPullAt;
+    final isSecondPull =
+        last != null && now.difference(last) <= _doublePullWindow;
+    if (!isSecondPull) {
+      _lastPullAt = now;
+      return;
+    }
+
+    _lastPullAt = null;
+    if (_refreshInProgress) return;
+    _refreshInProgress = true;
+    try {
+      await ChatState.refresh(page: 1);
+      await ChatState.refreshUnreadCount();
+    } catch (_) {
+      // Keep current chat list when refresh fails.
+    } finally {
+      _refreshInProgress = false;
+    }
+  }
+
+  Widget _pullablePlaceholder(Widget child) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: <Widget>[
+        const SizedBox(height: 160),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: child,
+        ),
+      ],
+    );
+  }
+
   int _normalizedPage(int page) {
     if (page < 1) return 1;
     return page;
@@ -188,11 +223,13 @@ class _ChatThreadTile extends StatelessWidget {
 
     Future<void> openConversation() async {
       final currentPage = ChatState.threadPagination.value.page;
-      unawaited(ChatState.markThreadAsRead(thread.id, syncThreads: true));
+      await ChatState.markThreadAsRead(thread.id, syncThreads: true);
+      if (!context.mounted) return;
       await Navigator.push(
         context,
         slideFadeRoute(ChatConversationPage(thread: thread)),
       );
+      if (!context.mounted) return;
       await ChatState.refresh(page: currentPage < 1 ? 1 : currentPage);
       await ChatState.refreshUnreadCount();
     }

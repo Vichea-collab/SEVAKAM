@@ -436,14 +436,16 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
       if (!mounted) return;
       setState(() {
         if (existing == null) {
-          _addresses = [
+          _addresses = _sortAddresses([
             saved,
             ..._addresses.where((item) => item.id != saved.id),
-          ];
+          ]);
         } else {
-          _addresses = _addresses
-              .map((item) => item.id == saved.id ? saved : item)
-              .toList(growable: false);
+          _addresses = _sortAddresses(
+            _addresses
+                .map((item) => item.id == saved.id ? saved : item)
+                .toList(growable: false),
+          );
         }
         _selectedId = saved.id;
       });
@@ -465,9 +467,9 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
           (draftSelectedId != null &&
               loaded.any((item) => item.id == draftSelectedId))
           ? draftSelectedId
-          : _firstPreferredAddressId(loaded);
+          : _firstPreferredAddressId(_sortAddresses(loaded));
       setState(() {
-        _addresses = loaded;
+        _addresses = _sortAddresses(loaded);
         _selectedId = selectedId;
       });
     } catch (error) {
@@ -510,9 +512,11 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
       await OrderState.deleteSavedAddress(addressId: address.id);
       if (!mounted) return;
       setState(() {
-        _addresses = _addresses
-            .where((item) => item.id != address.id)
-            .toList(growable: false);
+        _addresses = _sortAddresses(
+          _addresses
+              .where((item) => item.id != address.id)
+              .toList(growable: false),
+        );
         _selectedId = _firstPreferredAddressId(_addresses);
       });
       AppToast.success(context, 'Address deleted.');
@@ -520,5 +524,18 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
       if (!mounted) return;
       AppToast.error(context, error.toString());
     }
+  }
+
+  List<HomeAddress> _sortAddresses(List<HomeAddress> source) {
+    final sorted = List<HomeAddress>.from(source);
+    sorted.sort((a, b) {
+      if (a.isDefault != b.isDefault) {
+        return a.isDefault ? -1 : 1;
+      }
+      final byLabel = a.label.toLowerCase().compareTo(b.label.toLowerCase());
+      if (byLabel != 0) return byLabel;
+      return a.id.compareTo(b.id);
+    });
+    return sorted;
   }
 }

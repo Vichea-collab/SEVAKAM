@@ -68,7 +68,7 @@ class FinderPostState {
         page: targetPage,
         limit: limit,
       );
-      posts.value = result.items;
+      posts.value = _sortFinderPosts(result.items);
       pagination.value = result.pagination;
       realtimeActive.value = false;
     } catch (_) {
@@ -106,11 +106,13 @@ class FinderPostState {
         created,
         ...posts.value.where((item) => item.id != created.id),
       ].take(_pageSize).toList(growable: false);
+      posts.value = _sortFinderPosts(posts.value);
     }
     allPosts.value = <FinderPostItem>[
       created,
       ...allPosts.value.where((item) => item.id != created.id),
     ];
+    allPosts.value = _sortFinderPosts(allPosts.value);
     pagination.value = _withAdjustedTotalItems(pagination.value, delta: 1);
   }
 
@@ -139,8 +141,8 @@ class FinderPostState {
               .map((item) => item.id == updated.id ? updated : item)
               .toList(growable: false)
         : <FinderPostItem>[updated, ...allPosts.value];
-    posts.value = nextPosts;
-    allPosts.value = nextAll;
+    posts.value = _sortFinderPosts(nextPosts);
+    allPosts.value = _sortFinderPosts(nextAll);
   }
 
   static Future<void> deleteFinderRequest({required String postId}) async {
@@ -153,8 +155,8 @@ class FinderPostState {
     final nextAll = allPosts.value
         .where((item) => item.id != postId)
         .toList(growable: false);
-    posts.value = nextCurrent;
-    allPosts.value = nextAll;
+    posts.value = _sortFinderPosts(nextCurrent);
+    allPosts.value = _sortFinderPosts(nextAll);
     if (nextAll.length < beforeAllCount ||
         nextCurrent.length < beforeCurrentCount) {
       pagination.value = _withAdjustedTotalItems(pagination.value, delta: -1);
@@ -185,7 +187,7 @@ class FinderPostState {
       for (final item in combined) {
         deduped[item.id] = item;
       }
-      allPosts.value = deduped.values.toList(growable: false);
+      allPosts.value = _sortFinderPosts(deduped.values.toList(growable: false));
     } catch (_) {
       // Keep previous allPosts values when lookup refresh fails.
     } finally {
@@ -210,6 +212,18 @@ class FinderPostState {
   static int _normalizedPage(int page) {
     if (page < 1) return 1;
     return page;
+  }
+
+  static List<FinderPostItem> _sortFinderPosts(List<FinderPostItem> source) {
+    final sorted = List<FinderPostItem>.from(source);
+    sorted.sort((a, b) {
+      final right = b.updatedAt ?? b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final left = a.updatedAt ?? a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final byTime = right.compareTo(left);
+      if (byTime != 0) return byTime;
+      return a.id.compareTo(b.id);
+    });
+    return sorted;
   }
 
   static PaginationMeta _withAdjustedTotalItems(

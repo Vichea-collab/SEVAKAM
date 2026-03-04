@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../core/config/app_env.dart';
 import '../../data/datasources/remote/provider_post_remote_data_source.dart';
@@ -59,6 +60,7 @@ class ProviderPostState {
   }
 
   static Future<void> refresh({int? page, int limit = _pageSize}) async {
+    await _awaitSafeNotifierWindow();
     final targetPage = _normalizedPage(page ?? pagination.value.page);
     loading.value = true;
     try {
@@ -66,7 +68,7 @@ class ProviderPostState {
         page: targetPage,
         limit: limit,
       );
-      posts.value = result.items;
+      posts.value = _sortProviderPosts(result.items);
       pagination.value = result.pagination;
       realtimeActive.value = false;
     } catch (_) {
@@ -89,6 +91,7 @@ class ProviderPostState {
     int limit = _pageSize,
     int maxPages = 5,
   }) async {
+    await _awaitSafeNotifierWindow();
     allPostsLoading.value = true;
     try {
       final combined = <ProviderPostItem>[];
@@ -108,12 +111,28 @@ class ProviderPostState {
       for (final item in combined) {
         deduped[item.id] = item;
       }
-      allPosts.value = deduped.values.toList(growable: false);
+      allPosts.value = _sortProviderPosts(
+        deduped.values.toList(growable: false),
+      );
     } catch (_) {
       // Keep previous allPosts values when lookup refresh fails.
     } finally {
       allPostsLoading.value = false;
     }
+  }
+
+  static Future<void> _awaitSafeNotifierWindow() async {
+    if (SchedulerBinding.instance.schedulerPhase !=
+        SchedulerPhase.persistentCallbacks) {
+      return;
+    }
+    final completer = Completer<void>();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    });
+    await completer.future;
   }
 
   static Future<void> createProviderPost({
@@ -137,11 +156,13 @@ class ProviderPostState {
         created,
         ...posts.value.where((item) => item.id != created.id),
       ].take(_pageSize).toList(growable: false);
+      posts.value = _sortProviderPosts(posts.value);
     }
     allPosts.value = <ProviderPostItem>[
       created,
       ...allPosts.value.where((item) => item.id != created.id),
     ];
+    allPosts.value = _sortProviderPosts(allPosts.value);
     pagination.value = _withAdjustedTotalItems(pagination.value, delta: 1);
   }
 
@@ -172,8 +193,8 @@ class ProviderPostState {
               .map((item) => item.id == updated.id ? updated : item)
               .toList(growable: false)
         : <ProviderPostItem>[updated, ...allPosts.value];
-    posts.value = nextPosts;
-    allPosts.value = nextAll;
+    posts.value = _sortProviderPosts(nextPosts);
+    allPosts.value = _sortProviderPosts(nextAll);
   }
 
   static Future<void> deleteProviderPost({required String postId}) async {
@@ -186,8 +207,8 @@ class ProviderPostState {
     final nextAll = allPosts.value
         .where((item) => item.id != postId)
         .toList(growable: false);
-    posts.value = nextCurrent;
-    allPosts.value = nextAll;
+    posts.value = _sortProviderPosts(nextCurrent);
+    allPosts.value = _sortProviderPosts(nextAll);
     if (nextAll.length < beforeAllCount ||
         nextCurrent.length < beforeCurrentCount) {
       pagination.value = _withAdjustedTotalItems(pagination.value, delta: -1);
@@ -197,6 +218,27 @@ class ProviderPostState {
   static int _normalizedPage(int page) {
     if (page < 1) return 1;
     return page;
+  }
+
+  static List<ProviderPostItem> _sortProviderPosts(
+    List<ProviderPostItem> source,
+  ) {
+    final sorted = List<ProviderPostItem>.from(source);
+    sorted.sort((a, b) {
+      if (a.availableNow != b.availableNow) {
+        return a.availableNow ? -1 : 1;
+      }
+      final right =
+          b.updatedAt ?? b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final left =
+          a.updatedAt ?? a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final byTime = right.compareTo(left);
+      if (byTime != 0) return byTime;
+      final byRate = a.ratePerHour.compareTo(b.ratePerHour);
+      if (byRate != 0) return byRate;
+      return a.id.compareTo(b.id);
+    });
+    return sorted;
   }
 
   static PaginationMeta _withAdjustedTotalItems(

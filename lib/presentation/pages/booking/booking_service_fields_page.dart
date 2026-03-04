@@ -41,6 +41,7 @@ class _BookingServiceFieldsPageState extends State<BookingServiceFieldsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     final fieldDefs = BookingCatalogState.bookingFieldsForService(
       widget.draft.serviceName,
     );
@@ -52,7 +53,7 @@ class _BookingServiceFieldsPageState extends State<BookingServiceFieldsPage> {
             AppSpacing.lg,
             AppSpacing.lg,
             AppSpacing.lg,
-            110,
+            128,
           ),
           child: ListView(
             children: [
@@ -81,40 +82,43 @@ class _BookingServiceFieldsPageState extends State<BookingServiceFieldsPage> {
         ),
       ),
       bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
         decoration: const BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: AppColors.divider)),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total fee',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  Text(
-                    '\$${draft.total.toStringAsFixed(0)}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
-                  ),
-                ],
+        child: SafeArea(
+          top: false,
+          minimum: EdgeInsets.fromLTRB(18, 10, 18, 14 + bottomInset),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total fee',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    Text(
+                      '\$${draft.total.toStringAsFixed(0)}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: PrimaryButton(
-                label: 'Continue',
-                icon: Icons.arrow_forward_rounded,
-                iconTrailing: true,
-                onPressed: () => _goNext(fieldDefs, draft),
+              Expanded(
+                child: PrimaryButton(
+                  label: 'Continue',
+                  icon: Icons.arrow_forward_rounded,
+                  iconTrailing: true,
+                  onPressed: () => _goNext(fieldDefs, draft),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

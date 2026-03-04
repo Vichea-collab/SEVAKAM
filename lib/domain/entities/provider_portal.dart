@@ -14,6 +14,8 @@ class FinderPostItem {
   final String location;
   final String avatarPath;
   final DateTime? preferredDate;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   const FinderPostItem({
     required this.id,
@@ -27,6 +29,8 @@ class FinderPostItem {
     required this.location,
     required this.avatarPath,
     this.preferredDate,
+    this.createdAt,
+    this.updatedAt,
   });
 
   List<String> get serviceList => _serviceList(service, services);
@@ -50,6 +54,8 @@ class ProviderPostItem {
   final bool availableNow;
   final String timeLabel;
   final String avatarPath;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   const ProviderPostItem({
     required this.id,
@@ -67,6 +73,8 @@ class ProviderPostItem {
     required this.availableNow,
     required this.timeLabel,
     required this.avatarPath,
+    this.createdAt,
+    this.updatedAt,
   });
 
   List<String> get serviceList => _serviceList(service, services);

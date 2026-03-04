@@ -45,6 +45,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     final draft = widget.draft.copyWith(
       hours: _hours,
       homeType: _homeType,
@@ -65,7 +66,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
             AppSpacing.lg,
             AppSpacing.lg,
             AppSpacing.lg,
-            110,
+            128,
           ),
           child: ListView(
             children: [
@@ -176,45 +177,48 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
         ),
       ),
       bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
         decoration: const BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: AppColors.divider)),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total fee',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  Text(
-                    '\$${draft.total.toStringAsFixed(0)}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
-                  ),
-                ],
+        child: SafeArea(
+          top: false,
+          minimum: EdgeInsets.fromLTRB(18, 10, 18, 14 + bottomInset),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total fee',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    Text(
+                      '\$${draft.total.toStringAsFixed(0)}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: PrimaryButton(
-                label: 'Continue',
-                icon: Icons.arrow_forward_rounded,
-                iconTrailing: true,
-                onPressed: _serviceError == null
-                    ? () => Navigator.push(
-                        context,
-                        slideFadeRoute(BookingServiceFieldsPage(draft: draft)),
-                      )
-                    : null,
+              Expanded(
+                child: PrimaryButton(
+                  label: 'Continue',
+                  icon: Icons.arrow_forward_rounded,
+                  iconTrailing: true,
+                  onPressed: _serviceError == null
+                      ? () => Navigator.push(
+                          context,
+                          slideFadeRoute(BookingServiceFieldsPage(draft: draft)),
+                        )
+                      : null,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

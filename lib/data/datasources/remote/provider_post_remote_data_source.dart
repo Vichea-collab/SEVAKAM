@@ -90,6 +90,7 @@ class ProviderPostRemoteDataSource {
   ProviderPostItem _mapToProviderPost(Map<dynamic, dynamic> row) {
     final id = (row['id'] ?? '').toString();
     final createdAt = _parseDate(row['createdAt']);
+    final updatedAt = _parseDate(row['updatedAt']);
     final services = _parseServices(row['services']);
     final primaryService = (row['service'] ?? '').toString().trim();
     return ProviderPostItem(
@@ -113,6 +114,8 @@ class ProviderPostRemoteDataSource {
       availableNow: row['availableNow'] == true,
       timeLabel: _timeLabel(createdAt),
       avatarPath: 'assets/images/profile.jpg',
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 

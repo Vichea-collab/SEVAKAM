@@ -280,7 +280,12 @@ class ProfileSettingsState {
     final current = isProvider
         ? providerHelpTickets.value
         : finderHelpTickets.value;
-    final updated = [created, ...current];
+    final updated = [created, ...current]
+      ..sort((a, b) {
+        final right = b.lastMessageAt ?? b.updatedAt ?? b.createdAt;
+        final left = a.lastMessageAt ?? a.updatedAt ?? a.createdAt;
+        return right.compareTo(left);
+      });
     if (isProvider) {
       providerHelpTickets.value = updated.take(_helpPageSize).toList();
       providerHelpTicketsPagination.value = _withAdjustedTotalItems(
@@ -371,7 +376,8 @@ class ProfileSettingsState {
     final currentMessages = isProvider
         ? providerHelpTicketMessages.value
         : finderHelpTicketMessages.value;
-    final updatedMessages = [...currentMessages, message];
+    final updatedMessages = [...currentMessages, message]
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     if (isProvider) {
       providerHelpTicketMessages.value = updatedMessages;
     } else {

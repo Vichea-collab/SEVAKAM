@@ -31,6 +31,9 @@ class ProviderPortalHomePage extends StatefulWidget {
 }
 
 class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
+  static const Duration _doublePullWindow = Duration(seconds: 2);
+  DateTime? _lastPullAt;
+  bool _refreshInProgress = false;
   bool _isPaging = false;
 
   @override
@@ -79,75 +82,81 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
 
                 return Scaffold(
                   body: SafeArea(
-                    child: CustomScrollView(
-                      slivers: [
-                        SliverToBoxAdapter(child: const _ProviderTopHeader()),
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.lg,
-                            AppSpacing.lg,
-                            AppSpacing.lg,
-                            AppSpacing.xl,
-                          ),
-                          sliver: SliverList(
-                            delegate: SliverChildListDelegate([
-                              _ProviderSearchBar(
-                                onTap: () => Navigator.push(
-                                  context,
-                                  slideFadeRoute(
-                                    const ProviderFinderSearchPage(),
+                    child: RefreshIndicator(
+                      onRefresh: _handleRefresh,
+                      child: CustomScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [
+                          SliverToBoxAdapter(child: const _ProviderTopHeader()),
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.lg,
+                              AppSpacing.lg,
+                              AppSpacing.lg,
+                              AppSpacing.xl,
+                            ),
+                            sliver: SliverList(
+                              delegate: SliverChildListDelegate([
+                                _ProviderSearchBar(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    slideFadeRoute(
+                                      const ProviderFinderSearchPage(),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 18),
-                              Row(
-                                children: [
-                                  Text(
-                                    'Finder Requests',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    '${pagination.totalItems} results',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: AppColors.textSecondary,
-                                        ),
+                                const SizedBox(height: 18),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Finder Requests',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      '${pagination.totalItems} results',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: AppColors.textSecondary,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Search by client name, service, or location',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                ),
+                                const SizedBox(height: 12),
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 220),
+                                  child: listBody,
+                                ),
+                                if (pagination.totalPages > 1) ...[
+                                  const SizedBox(height: 12),
+                                  PaginationBar(
+                                    currentPage: currentPage,
+                                    totalPages: pagination.totalPages,
+                                    loading: _isPaging,
+                                    onPageSelected: _goToPage,
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Search by client name, service, or location',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: AppColors.textSecondary),
-                              ),
-                              const SizedBox(height: 12),
-                              AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 220),
-                                child: listBody,
-                              ),
-                              if (pagination.totalPages > 1) ...[
-                                const SizedBox(height: 12),
-                                PaginationBar(
-                                  currentPage: currentPage,
-                                  totalPages: pagination.totalPages,
-                                  loading: _isPaging,
-                                  onPageSelected: _goToPage,
-                                ),
-                              ],
-                            ]),
+                              ]),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   bottomNavigationBar: const AppBottomNav(
@@ -160,6 +169,31 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
         );
       },
     );
+  }
+
+  Future<void> _handleRefresh() async {
+    final now = DateTime.now();
+    final last = _lastPullAt;
+    final isSecondPull =
+        last != null && now.difference(last) <= _doublePullWindow;
+    if (!isSecondPull) {
+      _lastPullAt = now;
+      return;
+    }
+    _lastPullAt = null;
+    if (_refreshInProgress) return;
+    _refreshInProgress = true;
+    try {
+      await Future.wait<void>([
+        FinderPostState.refresh(page: 1),
+        FinderPostState.refreshAllForLookup(maxPages: 3),
+        ChatState.refreshUnreadCount(),
+      ]);
+    } catch (_) {
+      // Keep current data when refresh fails.
+    } finally {
+      _refreshInProgress = false;
+    }
   }
 
   Future<void> _goToPage(int page) async {

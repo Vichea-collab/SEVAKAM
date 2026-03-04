@@ -326,27 +326,6 @@ class _ProviderHero extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF3D6),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFFFD88A)),
-                      ),
-                      child: Text(
-                        profile.city.trim().isEmpty
-                            ? 'Provider'
-                            : profile.city.trim(),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF8A5A00),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 6),
                     Row(
                       children: [

@@ -125,6 +125,7 @@ class ChatState {
       return;
     }
     if (_pendingReadThreadIds.isNotEmpty) {
+      _syncUnreadCountersFromThreads(_applyPendingReadMask(threads.value));
       return;
     }
     try {
@@ -400,9 +401,9 @@ class ChatState {
       _pendingReadThreadIds.remove(id);
       if (syncThreads) {
         final currentPage = _normalizedPage(threadPagination.value.page);
-        unawaited(refresh(page: currentPage));
+        await refresh(page: currentPage);
       }
-      unawaited(refreshUnreadCount());
+      await refreshUnreadCount();
     }
   }
 

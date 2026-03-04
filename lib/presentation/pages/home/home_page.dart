@@ -24,173 +24,214 @@ import '../providers/provider_detail_page.dart';
 import '../providers/provider_posts_page.dart';
 import '../search/search_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   static const String routeName = '/home';
 
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  static const Duration _doublePullWindow = Duration(seconds: 2);
+  DateTime? _lastPullAt;
+  bool _refreshInProgress = false;
+
+  Future<void> _handleRefresh() async {
+    final now = DateTime.now();
+    final last = _lastPullAt;
+    final isSecondPull =
+        last != null && now.difference(last) <= _doublePullWindow;
+
+    if (!isSecondPull) {
+      _lastPullAt = now;
+      return;
+    }
+
+    _lastPullAt = null;
+    if (_refreshInProgress) return;
+    _refreshInProgress = true;
+    try {
+      await Future.wait<void>([
+        CatalogState.refresh(force: true),
+        ProviderPostState.refresh(page: 1),
+        ProviderPostState.refreshAllForLookup(maxPages: 3),
+        ChatState.refreshUnreadCount(),
+      ]);
+    } catch (_) {
+      // Keep current data when refresh fails.
+    } finally {
+      _refreshInProgress = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            const SliverToBoxAdapter(child: _TopHeader()),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.xl,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  const _SearchBar(),
-                  const SizedBox(height: AppSpacing.md),
-                  const _FeaturedBanner(),
-                  const SizedBox(height: AppSpacing.lg),
-                  const _ProviderPostSection(),
-                  SectionTitle(
-                    title: 'Browse all categories',
-                    actionLabel: 'View all',
-                    onAction: () => Navigator.push(
-                      context,
-                      slideFadeRoute(const ProviderHomePage()),
+        child: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              const SliverToBoxAdapter(child: _TopHeader()),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    const _SearchBar(),
+                    const SizedBox(height: AppSpacing.md),
+                    const _FeaturedBanner(),
+                    const SizedBox(height: AppSpacing.lg),
+                    const _ProviderPostSection(),
+                    SectionTitle(
+                      title: 'Browse all categories',
+                      actionLabel: 'View all',
+                      onAction: () => Navigator.push(
+                        context,
+                        slideFadeRoute(const ProviderHomePage()),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  ValueListenableBuilder<bool>(
-                    valueListenable: CatalogState.loading,
-                    builder: (context, catalogLoading, _) {
-                      return ValueListenableBuilder(
-                        valueListenable: CatalogState.categories,
-                        builder: (context, categories, _) {
-                          if (categories.isEmpty && catalogLoading) {
-                            return const Center(
-                              child: AppStatePanel.loading(
-                                title: 'Loading categories',
-                              ),
-                            );
-                          }
-                          if (categories.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
-                          return SizedBox(
-                            height: 150,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemBuilder: (context, index) {
-                                final category = categories[index];
-                                return CategoryChip(
-                                  category: category,
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    slideFadeRoute(
-                                      SearchPage(
-                                        initialCategory: category.name,
+                    const SizedBox(height: AppSpacing.md),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: CatalogState.loading,
+                      builder: (context, catalogLoading, _) {
+                        return ValueListenableBuilder(
+                          valueListenable: CatalogState.categories,
+                          builder: (context, categories, _) {
+                            if (categories.isEmpty && catalogLoading) {
+                              return const Center(
+                                child: AppStatePanel.loading(
+                                  title: 'Loading categories',
+                                ),
+                              );
+                            }
+                            if (categories.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            return SizedBox(
+                              height: 150,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemBuilder: (context, index) {
+                                  final category = categories[index];
+                                  return CategoryChip(
+                                    category: category,
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      slideFadeRoute(
+                                        SearchPage(
+                                          initialCategory: category.name,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              },
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(width: AppSpacing.md),
-                              itemCount: categories.length,
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  SectionTitle(
-                    title: 'Popular services',
-                    actionLabel: 'See all',
-                    onAction: () => Navigator.push(
-                      context,
-                      slideFadeRoute(const SearchPage()),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  ValueListenableBuilder<bool>(
-                    valueListenable: CatalogState.loading,
-                    builder: (context, catalogLoading, _) {
-                      return ValueListenableBuilder(
-                        valueListenable: CatalogState.services,
-                        builder: (context, services, child) {
-                          final popular = CatalogState.popularServices(
-                            limit: 6,
-                          );
-                          if (popular.isEmpty && catalogLoading) {
-                            return const Center(
-                              child: AppStatePanel.loading(
-                                title: 'Loading popular services',
+                                  );
+                                },
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(width: AppSpacing.md),
+                                itemCount: categories.length,
                               ),
                             );
-                          }
-                          if (popular.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
-                          return SizedBox(
-                            height: 230,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemBuilder: (context, index) {
-                                final service = popular[index];
-                                return ServiceCard(
-                                  item: service,
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    slideFadeRoute(
-                                      SearchPage(
-                                        initialQuery: service.title,
-                                        initialCategory: service.category,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(width: AppSpacing.md),
-                              itemCount: popular.length,
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Center(
-                    child: PressableScale(
-                      onTap: () => Navigator.push(
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    SectionTitle(
+                      title: 'Popular services',
+                      actionLabel: 'See all',
+                      onAction: () => Navigator.push(
                         context,
                         slideFadeRoute(const SearchPage()),
                       ),
-                      child: InkWell(
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: CatalogState.loading,
+                      builder: (context, catalogLoading, _) {
+                        return ValueListenableBuilder(
+                          valueListenable: CatalogState.services,
+                          builder: (context, services, child) {
+                            final popular = CatalogState.popularServices(
+                              limit: 6,
+                            );
+                            if (popular.isEmpty && catalogLoading) {
+                              return const Center(
+                                child: AppStatePanel.loading(
+                                  title: 'Loading popular services',
+                                ),
+                              );
+                            }
+                            if (popular.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            return SizedBox(
+                              height: 230,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemBuilder: (context, index) {
+                                  final service = popular[index];
+                                  return ServiceCard(
+                                    item: service,
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      slideFadeRoute(
+                                        SearchPage(
+                                          initialQuery: service.title,
+                                          initialCategory: service.category,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(width: AppSpacing.md),
+                                itemCount: popular.length,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Center(
+                      child: PressableScale(
                         onTap: () => Navigator.push(
                           context,
                           slideFadeRoute(const SearchPage()),
                         ),
-                        borderRadius: BorderRadius.circular(10),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                        child: InkWell(
+                          onTap: () => Navigator.push(
+                            context,
+                            slideFadeRoute(const SearchPage()),
                           ),
-                          child: Text(
-                            "Don't see what you are looking for?\nView all services",
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: AppColors.primary),
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            child: Text(
+                              "Don't see what you are looking for?\nView all services",
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: AppColors.primary),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ]),
+                  ]),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: const AppBottomNav(current: AppBottomTab.home),

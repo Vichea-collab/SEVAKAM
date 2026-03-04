@@ -86,6 +86,7 @@ class FinderPostRemoteDataSource {
   FinderPostItem _mapToFinderPost(Map<dynamic, dynamic> row) {
     final id = (row['id'] ?? '').toString();
     final createdAt = _parseDate(row['createdAt']);
+    final updatedAt = _parseDate(row['updatedAt']);
     final services = _parseServices(row['services']);
     final primaryService = (row['service'] ?? '').toString().trim();
     return FinderPostItem(
@@ -102,6 +103,8 @@ class FinderPostRemoteDataSource {
       location: (row['location'] ?? '').toString(),
       avatarPath: 'assets/images/profile.jpg',
       preferredDate: _parseDate(row['preferredDate']),
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 

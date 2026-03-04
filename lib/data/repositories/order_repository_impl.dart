@@ -121,7 +121,16 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<List<HomeAddress>> fetchSavedAddresses() async {
     final rows = await _remoteDataSource.fetchSavedAddresses();
     if (rows.isEmpty) return const <HomeAddress>[];
-    return rows.map(_toHomeAddress).toList(growable: false);
+    final mapped = rows.map(_toHomeAddress).toList(growable: false);
+    mapped.sort((a, b) {
+      if (a.isDefault != b.isDefault) {
+        return a.isDefault ? -1 : 1;
+      }
+      final byLabel = a.label.toLowerCase().compareTo(b.label.toLowerCase());
+      if (byLabel != 0) return byLabel;
+      return a.id.compareTo(b.id);
+    });
+    return mapped;
   }
 
   @override

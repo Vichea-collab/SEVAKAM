@@ -27,9 +27,6 @@ class ProviderNotificationsPage extends StatefulWidget {
 
 class _ProviderNotificationsPageState extends State<ProviderNotificationsPage>
     with WidgetsBindingObserver {
-  final Set<String> _clearedNoticeKeys = <String>{};
-  final Set<String> _clearedAdminNoticeKeys = <String>{};
-
   @override
   void initState() {
     super.initState();
@@ -62,222 +59,246 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage>
         return ValueListenableBuilder<List<UserNotificationItem>>(
           valueListenable: UserNotificationState.notices,
           builder: (context, adminNotices, _) {
-            return ValueListenableBuilder<bool>(
-              valueListenable: UserNotificationState.loading,
-              builder: (context, loading, _) {
-                final incoming = orders
-                    .where((item) => item.state == ProviderOrderState.incoming)
-                    .length;
-                final active = orders
-                    .where(
-                      (item) =>
-                          item.state == ProviderOrderState.onTheWay ||
-                          item.state == ProviderOrderState.started,
-                    )
-                    .length;
-                final completed = orders
-                    .where((item) => item.state == ProviderOrderState.completed)
-                    .length;
-                final declined = orders
-                    .where((item) => item.state == ProviderOrderState.declined)
-                    .length;
-                final notices = <_ProviderNoticeEntry>[
-                  _ProviderNoticeEntry(
-                    key: 'incoming:$incoming',
-                    title: 'Order Incoming',
-                    description:
-                        '$incoming live request(s) waiting for your action.',
-                    timeLabel: _timeAgo(
-                      _latestStatusTime(
-                        orders.where(
+            return ValueListenableBuilder<int>(
+              valueListenable: UserNotificationState.readStateVersion,
+              builder: (context, readStateVersion, child) {
+                return ValueListenableBuilder<bool>(
+                  valueListenable: UserNotificationState.loading,
+                  builder: (context, loading, _) {
+                    final incoming = orders
+                        .where(
                           (item) => item.state == ProviderOrderState.incoming,
-                        ),
-                      ),
-                    ),
-                    icon: Icons.inbox_rounded,
-                    color: const Color(0xFFF59E0B),
-                    tab: ProviderOrderTab.incoming,
-                  ),
-                  _ProviderNoticeEntry(
-                    key: 'active:$active',
-                    title: 'Orders In Progress',
-                    description:
-                        '$active live order(s) in progress. Keep updating client.',
-                    timeLabel: _timeAgo(
-                      _latestStatusTime(
-                        orders.where(
+                        )
+                        .length;
+                    final active = orders
+                        .where(
                           (item) =>
                               item.state == ProviderOrderState.onTheWay ||
                               item.state == ProviderOrderState.started,
-                        ),
-                      ),
-                    ),
-                    icon: Icons.assignment_turned_in_rounded,
-                    color: const Color(0xFF7C6EF2),
-                    tab: ProviderOrderTab.active,
-                  ),
-                  _ProviderNoticeEntry(
-                    key: 'completed:$completed',
-                    title: 'Order Completed',
-                    description:
-                        '$completed completed order(s). Check recent feedback.',
-                    timeLabel: _timeAgo(
-                      _latestStatusTime(
-                        orders.where(
+                        )
+                        .length;
+                    final completed = orders
+                        .where(
                           (item) => item.state == ProviderOrderState.completed,
-                        ),
-                      ),
-                    ),
-                    icon: Icons.check_circle_rounded,
-                    color: AppColors.success,
-                    tab: ProviderOrderTab.completed,
-                  ),
-                  _ProviderNoticeEntry(
-                    key: 'declined:$declined',
-                    title: 'Order Declined',
-                    description: '$declined declined order(s) in history.',
-                    timeLabel: _timeAgo(
-                      _latestStatusTime(
-                        orders.where(
+                        )
+                        .length;
+                    final declined = orders
+                        .where(
                           (item) => item.state == ProviderOrderState.declined,
-                        ),
-                      ),
-                    ),
-                    icon: Icons.cancel_rounded,
-                    color: AppColors.danger,
-                    tab: ProviderOrderTab.completed,
-                  ),
-                ];
-                final visibleNotices = notices
-                    .where((row) => !_clearedNoticeKeys.contains(row.key))
-                    .toList();
-                final backendItems = _buildAdminNotices(adminNotices)
-                    .where((row) => !_clearedAdminNoticeKeys.contains(row.key))
-                    .toList(growable: false);
-
-                final hasItems =
-                    visibleNotices.isNotEmpty || backendItems.isNotEmpty;
-
-                final Widget body = hasItems
-                    ? Column(
-                        key: ValueKey<String>(
-                          'provider_notice_content_${visibleNotices.length}_${backendItems.length}',
-                        ),
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (visibleNotices.isNotEmpty) ...[
-                            _ProviderNotificationSummary(
-                              incoming: incoming,
-                              active: active,
-                              completed: completed,
+                        )
+                        .length;
+                    final notices = <_ProviderNoticeEntry>[
+                      _ProviderNoticeEntry(
+                        key: 'incoming:$incoming',
+                        title: 'Order Incoming',
+                        description:
+                            '$incoming live request(s) waiting for your action.',
+                        timeLabel: _timeAgo(
+                          _latestStatusTime(
+                            orders.where(
+                              (item) =>
+                                  item.state == ProviderOrderState.incoming,
                             ),
-                            const SizedBox(height: 14),
-                            ...visibleNotices.map(
-                              (notice) => _NotificationTile(
-                                title: notice.title,
-                                description: notice.description,
-                                timeLabel: notice.timeLabel,
-                                icon: notice.icon,
-                                color: notice.color,
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => ProviderOrdersPage(
-                                      initialTab: notice.tab,
+                          ),
+                        ),
+                        icon: Icons.inbox_rounded,
+                        color: const Color(0xFFF59E0B),
+                        tab: ProviderOrderTab.incoming,
+                      ),
+                      _ProviderNoticeEntry(
+                        key: 'active:$active',
+                        title: 'Orders In Progress',
+                        description:
+                            '$active live order(s) in progress. Keep updating client.',
+                        timeLabel: _timeAgo(
+                          _latestStatusTime(
+                            orders.where(
+                              (item) =>
+                                  item.state == ProviderOrderState.onTheWay ||
+                                  item.state == ProviderOrderState.started,
+                            ),
+                          ),
+                        ),
+                        icon: Icons.assignment_turned_in_rounded,
+                        color: const Color(0xFF7C6EF2),
+                        tab: ProviderOrderTab.active,
+                      ),
+                      _ProviderNoticeEntry(
+                        key: 'completed:$completed',
+                        title: 'Order Completed',
+                        description:
+                            '$completed completed order(s). Check recent feedback.',
+                        timeLabel: _timeAgo(
+                          _latestStatusTime(
+                            orders.where(
+                              (item) =>
+                                  item.state == ProviderOrderState.completed,
+                            ),
+                          ),
+                        ),
+                        icon: Icons.check_circle_rounded,
+                        color: AppColors.success,
+                        tab: ProviderOrderTab.completed,
+                      ),
+                      _ProviderNoticeEntry(
+                        key: 'declined:$declined',
+                        title: 'Order Declined',
+                        description: '$declined declined order(s) in history.',
+                        timeLabel: _timeAgo(
+                          _latestStatusTime(
+                            orders.where(
+                              (item) =>
+                                  item.state == ProviderOrderState.declined,
+                            ),
+                          ),
+                        ),
+                        icon: Icons.cancel_rounded,
+                        color: AppColors.danger,
+                        tab: ProviderOrderTab.completed,
+                      ),
+                    ];
+                    final visibleNotices = notices
+                        .where(
+                          (row) => !UserNotificationState.isCleared(
+                            _providerNoticeStateKey(row.key),
+                          ),
+                        )
+                        .toList();
+                    final backendItems = _buildAdminNotices(adminNotices)
+                        .where(
+                          (row) => !UserNotificationState.isCleared(
+                            _providerAdminStateKey(row.key),
+                          ),
+                        )
+                        .toList(growable: false);
+
+                    final hasItems =
+                        visibleNotices.isNotEmpty || backendItems.isNotEmpty;
+
+                    final Widget body = hasItems
+                        ? Column(
+                            key: ValueKey<String>(
+                              'provider_notice_content_${visibleNotices.length}_${backendItems.length}',
+                            ),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (visibleNotices.isNotEmpty) ...[
+                                _ProviderNotificationSummary(
+                                  incoming: incoming,
+                                  active: active,
+                                  completed: completed,
+                                ),
+                                const SizedBox(height: 14),
+                                ...visibleNotices.map(
+                                  (notice) => _NotificationTile(
+                                    title: notice.title,
+                                    description: notice.description,
+                                    timeLabel: notice.timeLabel,
+                                    icon: notice.icon,
+                                    color: notice.color,
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute<void>(
+                                        builder: (_) => ProviderOrdersPage(
+                                          initialTab: notice.tab,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
-                          if (backendItems.isNotEmpty) ...[
-                            if (visibleNotices.isNotEmpty)
-                              const SizedBox(height: 14),
-                            Text(
-                              'Platform updates',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w700,
+                              ],
+                              if (backendItems.isNotEmpty) ...[
+                                if (visibleNotices.isNotEmpty)
+                                  const SizedBox(height: 14),
+                                Text(
+                                  'Platform updates',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                                const SizedBox(height: 10),
+                                ...backendItems.map(
+                                  (notice) => _NotificationTile(
+                                    title: notice.title,
+                                    description: notice.description,
+                                    timeLabel: notice.timeLabel,
+                                    icon: notice.icon,
+                                    color: notice.color,
+                                    onTap: () {
+                                      unawaited(
+                                        UserNotificationState.clear(
+                                          _providerAdminStateKey(notice.key),
+                                        ),
+                                      );
+                                    },
                                   ),
-                            ),
-                            const SizedBox(height: 10),
-                            ...backendItems.map(
-                              (notice) => _NotificationTile(
-                                title: notice.title,
-                                description: notice.description,
-                                timeLabel: notice.timeLabel,
-                                icon: notice.icon,
-                                color: notice.color,
-                                onTap: () {
-                                  setState(() {
-                                    _clearedAdminNoticeKeys.add(notice.key);
-                                  });
-                                },
+                                ),
+                              ],
+                            ],
+                          )
+                        : loading
+                        ? const SizedBox(
+                            height: 320,
+                            child: Center(
+                              child: AppStatePanel.loading(
+                                title: 'Loading notifications',
                               ),
                             ),
-                          ],
-                        ],
-                      )
-                    : loading
-                    ? const SizedBox(
-                        height: 320,
-                        child: Center(
-                          child: AppStatePanel.loading(
-                            title: 'Loading notifications',
-                          ),
-                        ),
-                      )
-                    : const AppStatePanel.empty(
-                        title: 'No notifications yet',
-                        message:
-                            'Order status and platform updates appear here.',
-                      );
+                          )
+                        : const AppStatePanel.empty(
+                            title: 'No notifications yet',
+                            message:
+                                'Order status and platform updates appear here.',
+                          );
 
-                return Scaffold(
-                  body: SafeArea(
-                    child: RefreshIndicator(
-                      onRefresh: _refreshFeed,
-                      child: ListView(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        children: [
-                          AppTopBar(
-                            title: 'Notifications',
-                            showBack: true,
-                            onBack: () => Navigator.pushReplacementNamed(
-                              context,
-                              ProviderPortalHomePage.routeName,
-                            ),
-                            actions: [
-                              IconButton(
-                                onPressed: () => _openMessenger(context),
-                                icon: const Icon(
-                                  Icons.chat_bubble_outline_rounded,
-                                ),
-                                tooltip: 'Messenger',
-                              ),
-                              TextButton(
-                                onPressed: () => _confirmClearAll(
+                    return Scaffold(
+                      body: SafeArea(
+                        child: RefreshIndicator(
+                          onRefresh: _refreshFeed,
+                          child: ListView(
+                            padding: const EdgeInsets.all(AppSpacing.lg),
+                            children: [
+                              AppTopBar(
+                                title: 'Notifications',
+                                showBack: true,
+                                onBack: () => Navigator.pushReplacementNamed(
                                   context,
-                                  notices,
-                                  backendItems,
+                                  ProviderPortalHomePage.routeName,
                                 ),
-                                child: const Text('Clear all'),
+                                actions: [
+                                  IconButton(
+                                    onPressed: () => _openMessenger(context),
+                                    icon: const Icon(
+                                      Icons.chat_bubble_outline_rounded,
+                                    ),
+                                    tooltip: 'Messenger',
+                                  ),
+                                  TextButton(
+                                    onPressed: () => _confirmClearAll(
+                                      context,
+                                      notices,
+                                      backendItems,
+                                    ),
+                                    child: const Text('Clear all'),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 220),
+                                child: body,
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 220),
-                            child: body,
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                  bottomNavigationBar: const AppBottomNav(
-                    current: AppBottomTab.notification,
-                  ),
+                      bottomNavigationBar: const AppBottomNav(
+                        current: AppBottomTab.notification,
+                      ),
+                    );
+                  },
                 );
               },
             );
@@ -350,9 +371,18 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage>
   }
 
   void _clearAll(List<_ProviderNoticeEntry> notices) {
-    setState(() {
-      _clearedNoticeKeys.addAll(notices.map((e) => e.key));
-    });
+    final keys = notices
+        .map((entry) => _providerNoticeStateKey(entry.key))
+        .toList(growable: false);
+    unawaited(UserNotificationState.clearMany(keys));
+  }
+
+  String _providerNoticeStateKey(String key) {
+    return 'provider:notice:${key.trim()}';
+  }
+
+  String _providerAdminStateKey(String key) {
+    return 'provider:admin:${key.trim()}';
   }
 
   List<_ProviderNoticeEntry> _buildAdminNotices(
@@ -476,9 +506,11 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage>
     );
     if (shouldClear != true || !context.mounted) return;
     _clearAll(notices);
-    setState(() {
-      _clearedAdminNoticeKeys.addAll(adminNotices.map((e) => e.key));
-    });
+    unawaited(
+      UserNotificationState.clearMany(
+        adminNotices.map((entry) => _providerAdminStateKey(entry.key)),
+      ),
+    );
   }
 }
 

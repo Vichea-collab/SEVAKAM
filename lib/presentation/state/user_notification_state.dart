@@ -78,6 +78,7 @@ class UserNotificationItem {
 
 class UserNotificationState {
   static const int _pageSize = 10;
+  static const int _maxReadStateKeys = 2000;
 
   static final BackendApiClient _apiClient = BackendApiClient(
     baseUrl: AppEnv.apiBaseUrl(),
@@ -92,14 +93,26 @@ class UserNotificationState {
   );
 
   static final ValueNotifier<bool> loading = ValueNotifier(false);
+  static final ValueNotifier<int> readStateVersion = ValueNotifier(0);
 
   static Future<bool>? _tokenRefreshInFlight;
+  static final Set<String> _readKeys = <String>{};
+  static final Set<String> _clearedKeys = <String>{};
+  static bool _readStateHydrated = false;
+  static bool _readStateHydrating = false;
+  static Timer? _readStatePersistTimer;
 
   static void setBackendToken(String token) {
     _apiClient.setBearerToken(token);
     if (token.trim().isEmpty) {
       notices.value = const <UserNotificationItem>[];
       pagination.value = const PaginationMeta.initial(limit: _pageSize);
+      _readKeys.clear();
+      _clearedKeys.clear();
+      _readStateHydrated = false;
+      _readStateHydrating = false;
+      _readStatePersistTimer?.cancel();
+      readStateVersion.value += 1;
       return;
     }
     unawaited(refresh());
@@ -126,6 +139,7 @@ class UserNotificationState {
         );
         return;
       }
+      await _ensureReadStateHydrated();
 
       final role = AppRoleState.isProvider ? 'provider' : 'finder';
       final result = await _runWithAuthRetry(() {
@@ -134,9 +148,17 @@ class UserNotificationState {
         );
       });
       final dataRows = _safeList(result['data']);
-      notices.value = dataRows
+      final mapped = dataRows
           .map(UserNotificationItem.fromMap)
           .toList(growable: false);
+      mapped.sort((a, b) {
+        final right = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final left = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final byTime = right.compareTo(left);
+        if (byTime != 0) return byTime;
+        return a.id.compareTo(b.id);
+      });
+      notices.value = mapped;
       pagination.value = PaginationMeta.fromMap(
         _safeMap(result['pagination']),
         fallbackPage: targetPage,
@@ -156,6 +178,51 @@ class UserNotificationState {
     } finally {
       loading.value = false;
     }
+  }
+
+  static bool isRead(String key) {
+    final normalized = _normalizeStateKey(key);
+    if (normalized.isEmpty) return false;
+    return _readKeys.contains(normalized);
+  }
+
+  static bool isCleared(String key) {
+    final normalized = _normalizeStateKey(key);
+    if (normalized.isEmpty) return false;
+    return _clearedKeys.contains(normalized);
+  }
+
+  static Future<void> markRead(String key) async {
+    await markReadMany(<String>[key]);
+  }
+
+  static Future<void> markReadMany(Iterable<String> keys) async {
+    var changed = false;
+    for (final raw in keys) {
+      final normalized = _normalizeStateKey(raw);
+      if (normalized.isEmpty) continue;
+      changed = _readKeys.add(normalized) || changed;
+    }
+    if (!changed) return;
+    _bumpReadStateVersion();
+    _scheduleReadStatePersist();
+  }
+
+  static Future<void> clear(String key) async {
+    await clearMany(<String>[key]);
+  }
+
+  static Future<void> clearMany(Iterable<String> keys) async {
+    var changed = false;
+    for (final raw in keys) {
+      final normalized = _normalizeStateKey(raw);
+      if (normalized.isEmpty) continue;
+      changed = _clearedKeys.add(normalized) || changed;
+      changed = _readKeys.add(normalized) || changed;
+    }
+    if (!changed) return;
+    _bumpReadStateVersion();
+    _scheduleReadStatePersist();
   }
 
   static Future<bool> _ensureBackendToken() async {
@@ -204,6 +271,78 @@ class UserNotificationState {
       if (!refreshed) rethrow;
       return task();
     }
+  }
+
+  static Future<void> _ensureReadStateHydrated() async {
+    if (_readStateHydrated || _readStateHydrating) return;
+    _readStateHydrating = true;
+    try {
+      final result = await _runWithAuthRetry(() {
+        return _apiClient.getJson('/api/users/notifications/read-state');
+      });
+      final row = _safeMap(result['data']);
+      _readKeys
+        ..clear()
+        ..addAll(_normalizedKeyList(row['readKeys']));
+      _clearedKeys
+        ..clear()
+        ..addAll(_normalizedKeyList(row['clearedKeys']));
+      _readStateHydrated = true;
+      _bumpReadStateVersion();
+    } catch (_) {
+      _readStateHydrated = false;
+    } finally {
+      _readStateHydrating = false;
+    }
+  }
+
+  static void _scheduleReadStatePersist() {
+    _readStatePersistTimer?.cancel();
+    _readStatePersistTimer = Timer(const Duration(milliseconds: 250), () {
+      unawaited(_persistReadState());
+    });
+  }
+
+  static Future<void> _persistReadState() async {
+    final ready = await _ensureBackendToken();
+    if (!ready) return;
+    final readKeys = _readKeys.take(_maxReadStateKeys).toList(growable: false);
+    final clearedKeys = _clearedKeys
+        .take(_maxReadStateKeys)
+        .toList(growable: false);
+    try {
+      await _runWithAuthRetry(() {
+        return _apiClient.putJson('/api/users/notifications/read-state', {
+          'replace': true,
+          'readKeys': readKeys,
+          'clearedKeys': clearedKeys,
+        });
+      });
+    } catch (_) {
+      // Keep local read state and retry on the next mutation.
+    }
+  }
+
+  static void _bumpReadStateVersion() {
+    readStateVersion.value += 1;
+  }
+
+  static List<String> _normalizedKeyList(dynamic value) {
+    if (value is! List) return const <String>[];
+    final result = <String>{};
+    for (final item in value) {
+      final normalized = _normalizeStateKey(item.toString());
+      if (normalized.isEmpty) continue;
+      result.add(normalized);
+      if (result.length >= _maxReadStateKeys) break;
+    }
+    return result.toList(growable: false);
+  }
+
+  static String _normalizeStateKey(String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return '';
+    return normalized;
   }
 
   static Map<String, dynamic> _safeMap(dynamic value) {

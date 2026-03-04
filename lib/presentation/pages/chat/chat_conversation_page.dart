@@ -24,6 +24,7 @@ class ChatConversationPage extends StatefulWidget {
 
 class _ChatConversationPageState extends State<ChatConversationPage> {
   final TextEditingController _inputController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
   bool _sending = false;
   bool _loading = true;
@@ -40,7 +41,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   @override
   void initState() {
     super.initState();
-    unawaited(ChatState.markThreadAsRead(widget.thread.id, syncThreads: true));
+    unawaited(_syncReadState(syncThreads: true));
     unawaited(ChatState.flushQueuedMessages(threadId: widget.thread.id));
     unawaited(_loadInitial());
     unawaited(_bindRealtimeMessages());
@@ -55,6 +56,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       unawaited(subscription.cancel());
     }
     _fallbackRefreshTimer?.cancel();
+    _scrollController.dispose();
     _inputController.dispose();
     super.dispose();
   }
@@ -122,10 +124,25 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           ),
         Expanded(
           child: ListView.builder(
+            controller: _scrollController,
             padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
             itemCount: messages.length,
             itemBuilder: (context, index) {
-              return _MessageBubble(message: messages[index]);
+              final message = messages[index];
+              final previous = index > 0 ? messages[index - 1] : null;
+              final showDateHeader =
+                  previous == null ||
+                  !_isSameCalendarDay(previous.sentAt, message.sentAt);
+              return Column(
+                children: [
+                  if (showDateHeader)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _ChatDateChip(label: _dateLabel(message.sentAt)),
+                    ),
+                  _MessageBubble(message: message),
+                ],
+              );
             },
           ),
         ),
@@ -147,6 +164,8 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         _loadedPages = 1;
         _loading = false;
       });
+      unawaited(_syncReadState(syncThreads: true));
+      _scheduleScrollToLatest(animated: false);
       _ackDeliveredFromMessages(result.items);
     } catch (_) {
       if (!mounted) return;
@@ -171,12 +190,13 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         _latestMessages = result.items;
         _pagination = result.pagination;
       });
+      _scheduleScrollToLatest(animated: false);
       _ackDeliveredFromMessages(result.items);
       final hasUnread = ChatState.threads.value.any(
         (thread) => thread.id == widget.thread.id && thread.unreadCount > 0,
       );
       if (hasUnread) {
-        unawaited(ChatState.markThreadAsRead(widget.thread.id));
+        unawaited(_syncReadState(syncThreads: true));
       }
     } catch (_) {}
   }
@@ -198,6 +218,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     _messagesSubscription = stream.listen(
       (snapshot) {
         if (!mounted) return;
+        final shouldStickToLatest = _isNearLatest();
         final needsReadAck = snapshot.docs.any((doc) {
           final row = doc.data();
           final senderUid = (row['senderUid'] ?? '').toString().trim();
@@ -236,8 +257,11 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             _loading = false;
           }
         });
+        if (shouldStickToLatest) {
+          _scheduleScrollToLatest(animated: true);
+        }
         if (needsReadAck) {
-          unawaited(ChatState.markThreadAsRead(widget.thread.id));
+          unawaited(_syncReadState());
         }
         if (deliveryIds.isNotEmpty) {
           unawaited(
@@ -268,6 +292,13 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       if (!mounted || _realtimeActive || _loading || _sending) return;
       unawaited(_refreshLatest());
     });
+  }
+
+  Future<void> _syncReadState({bool syncThreads = false}) {
+    return ChatState.markThreadAsRead(
+      widget.thread.id,
+      syncThreads: syncThreads,
+    );
   }
 
   ChatMessage _toRealtimeMessage(Map<String, dynamic> row, String currentUid) {
@@ -436,6 +467,33 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     return unique;
   }
 
+  bool _isSameCalendarDay(DateTime left, DateTime right) {
+    final a = left.toLocal();
+    final b = right.toLocal();
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _dateLabel(DateTime value) {
+    final date = value.toLocal();
+    const months = <String>[
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    final day = date.day.toString().padLeft(2, '0');
+    final month = months[date.month - 1];
+    return '$day $month';
+  }
+
   Future<void> _sendMessage() async {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
@@ -454,6 +512,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       ]);
       _inputController.clear();
     });
+    _scheduleScrollToLatest(animated: true);
     setState(() => _sending = true);
     try {
       final sent = await ChatState.sendMessage(
@@ -463,6 +522,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       );
       if (!mounted) return;
       _replaceLocalMessage(localId, sent);
+      _scheduleScrollToLatest(animated: true);
       if (!_realtimeActive) {
         await _refreshLatest();
       }
@@ -514,6 +574,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           pending,
         ]);
       });
+      _scheduleScrollToLatest(animated: true);
       setState(() => _sending = true);
       final sent = await ChatState.sendImageMessage(
         threadId: widget.thread.id,
@@ -523,6 +584,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       );
       if (!mounted) return;
       _replaceLocalMessage(localId, sent);
+      _scheduleScrollToLatest(animated: true);
       if (!_realtimeActive) {
         await _refreshLatest();
       }
@@ -560,6 +622,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             .toList(growable: false),
       );
     });
+    _scheduleScrollToLatest(animated: true);
   }
 
   void _removeLocalMessage(String localId) {
@@ -567,6 +630,28 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       _latestMessages = _latestMessages
           .where((message) => message.id != localId)
           .toList(growable: false);
+    });
+  }
+
+  bool _isNearLatest() {
+    if (!_scrollController.hasClients) return true;
+    final position = _scrollController.position;
+    return (position.maxScrollExtent - position.pixels) <= 80;
+  }
+
+  void _scheduleScrollToLatest({required bool animated}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final target = _scrollController.position.maxScrollExtent;
+      if (animated) {
+        _scrollController.animateTo(
+          target,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+        );
+        return;
+      }
+      _scrollController.jumpTo(target);
     });
   }
 }
@@ -604,13 +689,45 @@ class _ChatHeader extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'last seen just now',
+                  _lastActivityLabel(thread.updatedAt),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  String _lastActivityLabel(DateTime updatedAt) {
+    final delta = DateTime.now().difference(updatedAt.toLocal());
+    if (delta.inMinutes < 1) return 'Active just now';
+    if (delta.inHours < 1) return 'Active ${delta.inMinutes}m ago';
+    if (delta.inDays < 1) return 'Active ${delta.inHours}h ago';
+    return 'Active ${delta.inDays}d ago';
+  }
+}
+
+class _ChatDateChip extends StatelessWidget {
+  final String label;
+
+  const _ChatDateChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
