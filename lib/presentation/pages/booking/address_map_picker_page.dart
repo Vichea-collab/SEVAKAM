@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -61,11 +62,13 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   final TextEditingController _searchController = TextEditingController();
   final fm.MapController _webMapController = fm.MapController();
   late LatLng _selectedPoint;
+  LatLng? _currentLiveLocation;
   GoogleMapController? _googleMapController;
   String _selectedAddress = 'Phnom Penh, Cambodia';
   bool _searching = false;
   bool _locating = false;
   bool _hasLocationPermission = false;
+  StreamSubscription<Position>? _positionSubscription;
 
   bool get _useOpenStreetMap {
     // Keep Android debug/emulator stable even when Google Maps SDK key
@@ -95,6 +98,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   void dispose() {
     _searchController.dispose();
     _googleMapController?.dispose();
+    _positionSubscription?.cancel();
     super.dispose();
   }
 
@@ -253,15 +257,20 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   Widget _buildMap() {
     if (_useOpenStreetMap) return _buildOpenStreetMap();
     return GoogleMap(
-      initialCameraPosition: const CameraPosition(
-        target: _phnomPenh,
+      initialCameraPosition: CameraPosition(
+        target: _selectedPoint,
         zoom: 11.5,
       ),
       myLocationEnabled: _hasLocationPermission,
       // Use the custom "current location" action so we can enforce Phnom Penh bounds.
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
-      onMapCreated: (controller) => _googleMapController = controller,
+      onMapCreated: (controller) {
+        _googleMapController = controller;
+        if (_selectedPoint != _phnomPenh) {
+          _moveCamera(_selectedPoint, zoom: 15.0);
+        }
+      },
       onTap: (point) {
         if (!_isInsidePhnomPenh(point)) {
           _showMessage(
@@ -283,10 +292,58 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   }
 
   Widget _buildOpenStreetMap() {
+    final markers = <fm.Marker>[
+      fm.Marker(
+        width: 42,
+        height: 42,
+        point: ll.LatLng(
+          _selectedPoint.latitude,
+          _selectedPoint.longitude,
+        ),
+        child: const Icon(
+          Icons.location_pin,
+          size: 38,
+          color: Colors.red,
+        ),
+      ),
+    ];
+
+    if (_currentLiveLocation != null) {
+      markers.add(
+        fm.Marker(
+          width: 24,
+          height: 24,
+          point: ll.LatLng(
+            _currentLiveLocation!.latitude,
+            _currentLiveLocation!.longitude,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.blue.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: const BoxDecoration(
+                  color: Colors.blue,
+                  shape: BoxShape.circle,
+                  border: Border.fromBorderSide(
+                    BorderSide(color: Colors.white, width: 2),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return fm.FlutterMap(
       mapController: _webMapController,
       options: fm.MapOptions(
-        initialCenter: ll.LatLng(_phnomPenh.latitude, _phnomPenh.longitude),
+        initialCenter: ll.LatLng(_selectedPoint.latitude, _selectedPoint.longitude),
         initialZoom: 11.5,
         minZoom: 10.5,
         maxZoom: 18,
@@ -310,23 +367,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
           subdomains: const ['a', 'b', 'c', 'd'],
           userAgentPackageName: 'com.example.servicefinder',
         ),
-        fm.MarkerLayer(
-          markers: [
-            fm.Marker(
-              width: 42,
-              height: 42,
-              point: ll.LatLng(
-                _selectedPoint.latitude,
-                _selectedPoint.longitude,
-              ),
-              child: const Icon(
-                Icons.location_pin,
-                size: 38,
-                color: Colors.red,
-              ),
-            ),
-          ],
-        ),
+        fm.MarkerLayer(markers: markers),
       ],
     );
   }
@@ -454,17 +495,19 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     return true;
   }
 
-  Future<void> _useCurrentLocation() async {
-    setState(() => _locating = true);
+  Future<void> _useCurrentLocation({bool silent = false}) async {
+    if (!silent) setState(() => _locating = true);
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _showMessage(
-          'Location service is disabled. Please turn it on.',
-          type: AppToastType.warning,
-        );
-        if (!kIsWeb) {
-          await Geolocator.openLocationSettings();
+        if (!silent) {
+          _showMessage(
+            'Location service is disabled. Please turn it on.',
+            type: AppToastType.warning,
+          );
+          if (!kIsWeb) {
+            await Geolocator.openLocationSettings();
+          }
         }
         return;
       }
@@ -475,173 +518,153 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        setState(() => _hasLocationPermission = false);
-        if (permission == LocationPermission.deniedForever) {
-          _showPermissionDialog();
-        } else {
-          _showMessage(
-            'Location permission denied.',
-            type: AppToastType.warning,
-          );
+        if (!silent) {
+          setState(() => _hasLocationPermission = false);
+          if (permission == LocationPermission.deniedForever) {
+            _showPermissionDialog();
+          } else {
+            _showMessage(
+              'Location permission denied.',
+              type: AppToastType.warning,
+            );
+          }
         }
         return;
       }
       setState(() => _hasLocationPermission = true);
 
+      _startLiveTracking();
+
       final position = await _resolveBestCurrentPosition();
       if (position == null) {
-        _showMessage(
-          'Unable to get your current location.',
-          type: AppToastType.error,
-        );
-        return;
-      }
-      final point = LatLng(position.latitude, position.longitude);
-      final debugNetworkPoint = await _resolveApproxNetworkLocation();
-      if (_shouldPreferNetworkFallback(
-        position: position,
-        gpsPoint: point,
-        networkPoint: debugNetworkPoint,
-      )) {
-        final networkPoint = debugNetworkPoint!;
-        setState(() => _selectedPoint = networkPoint);
-        await _moveCamera(networkPoint, zoom: 15.0);
-        await _reverseGeocode(networkPoint);
-        _showMessage(
-          'Using emulator/network location for better accuracy.',
-          type: AppToastType.info,
-        );
+        if (!silent) {
+          _showMessage(
+            'Unable to get your current location. Please try moving the map manually.',
+            type: AppToastType.error,
+          );
+        }
         return;
       }
 
+      final point = LatLng(position.latitude, position.longitude);
+
+      if (!silent && kDebugMode && !kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        final distFromGoogleHq = Geolocator.distanceBetween(
+          position.latitude, position.longitude, 37.422, -122.084);
+        if (distFromGoogleHq < 1000) {
+           _showMessage(
+            'Simulator is at Google HQ (USA). Please set its location to Phnom Penh in emulator settings.',
+            type: AppToastType.warning,
+          );
+        }
+      }
+
       final outsidePhnomPenh = !_isInsidePhnomPenh(point);
-      final reverseMatched =
-          outsidePhnomPenh && await _isReverseGeocodedInPhnomPenh(point);
-      if (outsidePhnomPenh && !reverseMatched) {
+      if (outsidePhnomPenh) {
         final networkPoint = await _resolveApproxNetworkLocation();
         if (networkPoint != null) {
           setState(() => _selectedPoint = networkPoint);
           await _moveCamera(networkPoint, zoom: 15.0);
           await _reverseGeocode(networkPoint);
-          _showMessage(
-            'Using network location fallback for Phnom Penh.',
-            type: AppToastType.info,
-          );
+          if (!silent) {
+            _showMessage(
+              'Using network location fallback for Phnom Penh.',
+              type: AppToastType.info,
+            );
+          }
           return;
         }
-        _moveToCity(_fixedCity);
-        _showMessage(
-          'Current location (${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}) is outside Phnom Penh. Only Phnom Penh locations are supported.',
-          type: AppToastType.warning,
-        );
+
+        if (!silent) {
+          _moveToCity(_fixedCity);
+          _showMessage(
+            'Your location is outside Phnom Penh. Showing city center instead.',
+            type: AppToastType.warning,
+          );
+        }
         return;
       }
-      setState(() => _selectedPoint = point);
+
+      setState(() {
+        _selectedPoint = point;
+      });
       await _moveCamera(point, zoom: 15.0);
       await _reverseGeocode(point);
-    } catch (_) {
-      _showMessage('Cannot access current location.', type: AppToastType.error);
+    } catch (e) {
+      debugPrint('Location error: $e');
+      if (!silent) {
+        _showMessage('Cannot access current location.', type: AppToastType.error);
+      }
     } finally {
-      if (mounted) {
+      if (mounted && !silent) {
         setState(() => _locating = false);
       }
     }
   }
 
-  Future<Position?> _resolveBestCurrentPosition() async {
-    final candidates = <Position>[];
-
-    try {
-      final LocationSettings primarySettings =
-          (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
-          ? AndroidSettings(
-              accuracy: LocationAccuracy.bestForNavigation,
-              forceLocationManager: true,
-              timeLimit: const Duration(seconds: 12),
-            )
-          : const LocationSettings(
-              accuracy: LocationAccuracy.best,
-              timeLimit: Duration(seconds: 12),
-            );
-      final current = await Geolocator.getCurrentPosition(
-        locationSettings: primarySettings,
-      );
-      candidates.add(current);
-    } catch (_) {}
-
-    try {
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-        final secondary = await Geolocator.getCurrentPosition(
-          locationSettings: AndroidSettings(
-            accuracy: LocationAccuracy.high,
-            forceLocationManager: false,
-            timeLimit: const Duration(seconds: 8),
-          ),
-        );
-        candidates.add(secondary);
+  void _startLiveTracking() {
+    _positionSubscription?.cancel();
+    _positionSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      ),
+    ).listen((position) {
+      if (mounted) {
+        setState(() {
+          _currentLiveLocation = LatLng(position.latitude, position.longitude);
+        });
       }
-    } catch (_) {}
+    }, onError: (e) {
+      debugPrint('Live tracking error: $e');
+    });
+  }
 
+  Future<Position?> _resolveBestCurrentPosition() async {
     try {
       final lastKnown = await Geolocator.getLastKnownPosition();
       if (lastKnown != null && _isPositionFresh(lastKnown)) {
-        candidates.add(lastKnown);
+        return lastKnown;
       }
     } catch (_) {}
 
     try {
-      final streamed = await Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 8),
-        ),
-      ).first.timeout(const Duration(seconds: 8));
-      candidates.add(streamed);
+      final LocationSettings highAccuracy =
+          (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+          ? AndroidSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: const Duration(seconds: 12),
+            )
+          : const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: Duration(seconds: 12),
+            );
+      return await Geolocator.getCurrentPosition(locationSettings: highAccuracy);
     } catch (_) {}
 
-    if (candidates.isEmpty) return null;
+    try {
+      final LocationSettings lowAccuracy =
+          (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+          ? AndroidSettings(
+              accuracy: LocationAccuracy.low,
+              timeLimit: const Duration(seconds: 10),
+              forceLocationManager: true,
+            )
+          : const LocationSettings(
+              accuracy: LocationAccuracy.low,
+              timeLimit: Duration(seconds: 10),
+            );
+      return await Geolocator.getCurrentPosition(locationSettings: lowAccuracy);
+    } catch (_) {}
 
-    Position best = candidates.first;
-    double bestScore = _locationScore(best);
-    for (final candidate in candidates.skip(1)) {
-      final score = _locationScore(candidate);
-      if (score < bestScore) {
-        best = candidate;
-        bestScore = score;
-      }
-    }
-    return best;
-  }
-
-  double _locationScore(Position position) {
-    final point = LatLng(position.latitude, position.longitude);
-    final insidePenalty = _isInsidePhnomPenh(point) ? 0.0 : 1000000.0;
-    final distanceToCenter = Geolocator.distanceBetween(
-      _phnomPenh.latitude,
-      _phnomPenh.longitude,
-      position.latitude,
-      position.longitude,
-    );
-    final accuracyPenalty = position.accuracy.isFinite ? position.accuracy : 0;
-    final staleMinutes = _positionAgeMinutes(position);
-    final stalePenalty = staleMinutes > 20 ? staleMinutes * 2000 : 0.0;
-    final mockedPenalty = position.isMocked ? 5000.0 : 0.0;
-    return insidePenalty +
-        distanceToCenter +
-        (accuracyPenalty * 0.25) +
-        stalePenalty +
-        mockedPenalty;
+    return null;
   }
 
   bool _isPositionFresh(Position position) {
-    return _positionAgeMinutes(position) <= 30;
-  }
-
-  double _positionAgeMinutes(Position position) {
     final nowUtc = DateTime.now().toUtc();
     final timestampUtc = position.timestamp.toUtc();
     final diff = nowUtc.difference(timestampUtc).abs();
-    return diff.inSeconds / 60.0;
+    return diff.inMinutes <= 30;
   }
 
   Future<void> _prepareLocationPermissions() async {
@@ -660,6 +683,11 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
             permission == LocationPermission.always ||
             permission == LocationPermission.whileInUse;
       });
+
+      if (_hasLocationPermission) {
+        _startLiveTracking();
+        _useCurrentLocation(silent: true);
+      }
     } catch (_) {
       if (mounted) {
         setState(() => _hasLocationPermission = false);
@@ -689,7 +717,6 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
             : formatted;
       });
     } catch (_) {
-      // Keep current label when reverse geocoding fails.
     }
   }
 
@@ -715,7 +742,6 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       if (display.isEmpty) return;
       setState(() => _selectedAddress = display);
     } catch (_) {
-      // Keep current label when reverse geocoding fails.
     }
   }
 
@@ -833,72 +859,6 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     return meters <= _phnomPenhMaxDistanceMeters;
   }
 
-  Future<bool> _isReverseGeocodedInPhnomPenh(LatLng point) async {
-    try {
-      if (_useOpenStreetMap) {
-        final uri = Uri.https('nominatim.openstreetmap.org', '/reverse', {
-          'lat': '${point.latitude}',
-          'lon': '${point.longitude}',
-          'format': 'jsonv2',
-          'accept-language': 'en',
-        });
-        final response = await http.get(
-          uri,
-          headers: const {
-            'User-Agent':
-                'servicefinder/1.0 (contact: support@servicefinder.local)',
-          },
-        );
-        if (response.statusCode != 200) return false;
-        final body = jsonDecode(response.body);
-        if (body is! Map<String, dynamic>) return false;
-        final display = (body['display_name'] ?? '').toString().toLowerCase();
-        if (display.contains('phnom penh')) return true;
-        final address = body['address'];
-        if (address is Map<String, dynamic>) {
-          for (final value in address.values) {
-            if ('${value ?? ''}'.toLowerCase().contains('phnom penh')) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      final uri = Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
-        'latlng': '${point.latitude},${point.longitude}',
-        'region': 'kh',
-        'key': _apiKey,
-      });
-      final response = await http.get(uri);
-      if (response.statusCode != 200) return false;
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-      final results = (body['results'] as List<dynamic>? ?? []);
-      if (results.isEmpty) return false;
-      for (final item in results) {
-        final entry = item as Map<String, dynamic>;
-        final formatted = (entry['formatted_address'] ?? '')
-            .toString()
-            .toLowerCase();
-        if (formatted.contains('phnom penh')) return true;
-        final components =
-            (entry['address_components'] as List<dynamic>? ?? []);
-        for (final component in components) {
-          final map = component as Map<String, dynamic>;
-          final longName = (map['long_name'] ?? '').toString().toLowerCase();
-          final shortName = (map['short_name'] ?? '').toString().toLowerCase();
-          if (longName.contains('phnom penh') ||
-              shortName.contains('phnom penh')) {
-            return true;
-          }
-        }
-      }
-      return false;
-    } catch (_) {
-      return false;
-    }
-  }
-
   Future<LatLng?> _resolveApproxNetworkLocation() async {
     if (kIsWeb) return null;
 
@@ -931,39 +891,9 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
           return point;
         }
       } catch (_) {
-        // Continue to next endpoint.
       }
     }
     return null;
-  }
-
-  bool _shouldPreferNetworkFallback({
-    required Position position,
-    required LatLng gpsPoint,
-    required LatLng? networkPoint,
-  }) {
-    if (networkPoint == null) return false;
-    if (!kDebugMode ||
-        kIsWeb ||
-        defaultTargetPlatform != TargetPlatform.android) {
-      return false;
-    }
-
-    final gpsToNetworkMeters = _distanceMeters(gpsPoint, networkPoint);
-    if (gpsToNetworkMeters < 1200) return false;
-
-    final gpsToCityCenterMeters = _distanceMeters(gpsPoint, _phnomPenh);
-    final looksSyntheticCenter = gpsToCityCenterMeters <= 150;
-    return position.isMocked || looksSyntheticCenter;
-  }
-
-  double _distanceMeters(LatLng a, LatLng b) {
-    return Geolocator.distanceBetween(
-      a.latitude,
-      a.longitude,
-      b.latitude,
-      b.longitude,
-    );
   }
 
   double? _extractDouble(Map<String, dynamic> map, List<String> keys) {

@@ -1,4 +1,8 @@
 {
   "cmake.ignoreCMakeListsMissing": true,
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.import.exclusions": [
+    "**/android/**"
+  ],
+  "java.import.gradle.enabled": false
 }

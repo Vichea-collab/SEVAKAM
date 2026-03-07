@@ -34,120 +34,111 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: SizedBox(
-        height: 94,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 14,
-              right: 14,
-              bottom: 8,
-              child: Container(
-                height: 68,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x1A2D4678),
-                      blurRadius: 20,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return SizedBox(
+      height: 94 + bottomPadding,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
+        children: [
+          Container(
+            height: 68 + bottomPadding,
+            padding: EdgeInsets.only(bottom: bottomPadding, left: 8, right: 8),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x1A2D4678),
+                  blurRadius: 20,
+                  offset: Offset(0, -4),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _NavItem(
-                        icon: Icons.home_rounded,
-                        label: 'Home',
-                        selected: _isCurrent(AppBottomTab.home),
-                        onTap: () => _goTo(context, AppBottomTab.home),
-                      ),
-                    ),
-                    Expanded(
-                      child: _NavItem(
-                        icon: Icons.notifications_none_rounded,
-                        label: 'Notification',
-                        selected: _isCurrent(AppBottomTab.notification),
-                        onTap: () => _goTo(context, AppBottomTab.notification),
-                      ),
-                    ),
-                    const SizedBox(width: 80),
-                    Expanded(
-                      child: _NavItem(
-                        icon: Icons.list_alt_rounded,
-                        label: 'Order',
-                        selected: _isCurrent(AppBottomTab.order),
-                        onTap: () => _goTo(context, AppBottomTab.order),
-                      ),
-                    ),
-                    Expanded(
-                      child: _NavItem(
-                        icon: Icons.person_rounded,
-                        label: 'Profile',
-                        selected: _isCurrent(AppBottomTab.profile),
-                        onTap: () => _goTo(context, AppBottomTab.profile),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              ],
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 28,
-              child: Center(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _goTo(context, AppBottomTab.post),
-                  child: SizedBox(
-                    width: 76,
-                    height: 76,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Transform.rotate(
-                          angle: 0.785398, // 45deg: diamond
-                          child: Container(
-                            width: 62,
-                            height: 62,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [Color(0xFF1E63FF), Color(0xFF3EA2FF)],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.white, width: 3),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x4D1E63FF),
-                                  blurRadius: 18,
-                                  offset: Offset(0, 9),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Icon(
-                          Icons.add_rounded,
-                          color: Colors.white,
-                          size: 34,
-                        ),
-                      ],
-                    ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.home_rounded,
+                    label: 'Home',
+                    selected: _isCurrent(AppBottomTab.home),
+                    onTap: () => _goTo(context, AppBottomTab.home),
                   ),
                 ),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.notifications_none_rounded,
+                    label: 'Notification',
+                    selected: _isCurrent(AppBottomTab.notification),
+                    onTap: () => _goTo(context, AppBottomTab.notification),
+                  ),
+                ),
+                const SizedBox(width: 80),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.list_alt_rounded,
+                    label: 'Order',
+                    selected: _isCurrent(AppBottomTab.order),
+                    onTap: () => _goTo(context, AppBottomTab.order),
+                  ),
+                ),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.person_rounded,
+                    label: 'Profile',
+                    selected: _isCurrent(AppBottomTab.profile),
+                    onTap: () => _goTo(context, AppBottomTab.profile),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            bottom: bottomPadding + 20,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _goTo(context, AppBottomTab.post),
+              child: SizedBox(
+                width: 76,
+                height: 76,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Transform.rotate(
+                      angle: 0.785398, // 45deg: diamond
+                      child: Container(
+                        width: 62,
+                        height: 62,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF1E63FF), Color(0xFF3EA2FF)],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x4D1E63FF),
+                              blurRadius: 18,
+                              offset: Offset(0, 9),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.add_rounded,
+                      color: Colors.white,
+                      size: 34,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
