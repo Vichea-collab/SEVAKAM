@@ -36,6 +36,7 @@ class ProfileSettingsState {
   static final ValueNotifier<ProviderProfessionData> providerProfession =
       ValueNotifier(ProviderProfessionData.defaults());
   static final ValueNotifier<int> providerCompletedOrders = ValueNotifier(0);
+  static final ValueNotifier<bool> providerVerified = ValueNotifier(false);
 
   static final ValueNotifier<PaymentMethod> finderPaymentMethod = ValueNotifier(
     PaymentMethod.creditCard,

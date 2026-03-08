@@ -54,25 +54,31 @@ class ProviderPostItem {
   final bool availableNow;
   final String timeLabel;
   final String avatarPath;
+  final bool isVerified;
+  final double? latitude;
+  final double? longitude;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   const ProviderPostItem({
     required this.id,
-    this.providerUid = '',
+    required this.providerUid,
     required this.providerName,
     this.providerType = 'individual',
     this.providerCompanyName = '',
     this.providerMaxWorkers = 1,
     required this.category,
     required this.service,
-    this.services = const <String>[],
+    required this.services,
     required this.area,
     required this.details,
     required this.ratePerHour,
     required this.availableNow,
     required this.timeLabel,
     required this.avatarPath,
+    this.isVerified = false,
+    this.latitude,
+    this.longitude,
     this.createdAt,
     this.updatedAt,
   });

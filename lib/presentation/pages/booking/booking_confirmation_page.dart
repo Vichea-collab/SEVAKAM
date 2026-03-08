@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/order.dart';
 import '../../widgets/booking_step_progress.dart';
 import '../../widgets/primary_button.dart';
@@ -255,7 +256,7 @@ class _ServiceDetailCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundImage: AssetImage(order.provider.imagePath),
+                  backgroundImage: safeImageProvider(order.provider.imagePath),
                 ),
                 const SizedBox(width: 10),
                 Expanded(

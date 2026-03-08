@@ -4,5 +4,6 @@
   "java.import.exclusions": [
     "**/android/**"
   ],
-  "java.import.gradle.enabled": false
+  "java.import.gradle.enabled": false,
+  "python.terminal.useEnvFile": true
 }

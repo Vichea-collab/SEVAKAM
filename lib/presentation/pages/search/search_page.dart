@@ -6,10 +6,13 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/safe_image_provider.dart';
+import '../../../core/utils/category_utils.dart';
 import '../../../domain/entities/provider_portal.dart';
 import '../../../domain/entities/provider.dart';
 import '../../../domain/entities/service.dart';
 import '../../state/catalog_state.dart';
+import '../../state/favorite_state.dart';
 import '../../state/provider_post_state.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/category_chip.dart';
@@ -233,9 +236,11 @@ class _SearchPageState extends State<SearchPage> {
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).cardColor,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.divider),
+                              border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                              ),
                             ),
                             child: Text(
                               _selectedCategory == null
@@ -262,7 +267,7 @@ class _SearchPageState extends State<SearchPage> {
                                 onTap: () => _toggleCategory(category.name),
                               );
                             },
-                            separatorBuilder: (_, _) =>
+                            separatorBuilder: (context, index) =>
                                 const SizedBox(width: AppSpacing.md),
                             itemCount: filteredCategories.length,
                           ),
@@ -292,8 +297,12 @@ class _SearchPageState extends State<SearchPage> {
                         const SizedBox(height: 4),
                         Text(
                           'Browse all live provider posts in one screen.',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: AppColors.textSecondary),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(context).hintColor,
+                              ),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -333,6 +342,11 @@ class _SearchPageState extends State<SearchPage> {
                         ...visibleServices.map(
                           (item) => _ServiceListTile(
                             item: item,
+                            providerUid: _findMatchedProvider(
+                              item.category,
+                              item.title,
+                              query,
+                            )?.uid,
                             providerName: _findMatchedProvider(
                               item.category,
                               item.title,
@@ -563,22 +577,6 @@ class _SearchPageState extends State<SearchPage> {
     return null;
   }
 
-  Color _accentFromCategory(String category) {
-    switch (category.trim().toLowerCase()) {
-      case 'plumber':
-        return const Color(0xFF0E8AD6);
-      case 'electrician':
-        return const Color(0xFFF59E0B);
-      case 'cleaner':
-        return const Color(0xFF10B981);
-      case 'home appliance':
-      case 'appliance':
-        return const Color(0xFF6366F1);
-      default:
-        return AppColors.primary;
-    }
-  }
-
   ProviderSection? _providerSectionForCategory({
     required String category,
     required String serviceFilter,
@@ -657,7 +655,7 @@ class _SearchPageState extends State<SearchPage> {
       role: role,
       rating: 4.8,
       imagePath: value.avatarPath,
-      accentColor: _accentFromCategory(role),
+      accentColor: accentForCategory(role),
       services: value.services.toList(growable: false)..sort(),
       providerType: value.providerType,
       companyName: value.providerCompanyName,
@@ -688,14 +686,11 @@ class _ProviderAggregate {
   });
 
   factory _ProviderAggregate.fromPost(ProviderPostItem post) {
-    final imagePath = post.avatarPath.startsWith('assets/')
-        ? post.avatarPath
-        : 'assets/images/profile.jpg';
     return _ProviderAggregate(
       providerUid: post.providerUid.trim(),
       providerName: post.providerName.trim(),
       category: post.category.trim(),
-      avatarPath: imagePath,
+      avatarPath: post.avatarPath,
       providerType: post.providerType,
       providerCompanyName: post.providerCompanyName.trim(),
       providerMaxWorkers: post.providerMaxWorkers < 1
@@ -772,10 +767,10 @@ class _SearchFieldState extends State<_SearchField> {
       curve: Curves.easeOutCubic,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: focused ? AppColors.primary : AppColors.divider,
+          color: focused ? AppColors.primary : Theme.of(context).dividerColor,
           width: focused ? 1.6 : 1,
         ),
       ),
@@ -823,7 +818,7 @@ class _SearchChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.divider),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: Text(
             label,
@@ -839,11 +834,13 @@ class _SearchChip extends StatelessWidget {
 
 class _ServiceListTile extends StatelessWidget {
   final ServiceItem item;
+  final String? providerUid;
   final String? providerName;
   final VoidCallback onTap;
 
   const _ServiceListTile({
     required this.item,
+    this.providerUid,
     this.providerName,
     required this.onTap,
   });
@@ -859,15 +856,19 @@ class _ServiceListTile extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 89)),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.35)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundImage: AssetImage(item.imagePath),
+              Hero(
+                tag: 'service-${item.title}',
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundImage: safeImageProvider(item.imagePath),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -883,6 +884,22 @@ class _ServiceListTile extends StatelessWidget {
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ),
+                        if (providerUid != null)
+                          ValueListenableBuilder<Set<String>>(
+                            valueListenable: FavoriteState.favoriteUids,
+                            builder: (context, favorites, _) {
+                              final isFav = favorites.contains(providerUid!);
+                              return GestureDetector(
+                                onTap: () => FavoriteState.toggleFavorite(providerUid!),
+                                child: Icon(
+                                  isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                  color: isFav ? AppColors.danger : AppColors.textSecondary,
+                                  size: 18,
+                                ),
+                              );
+                            },
+                          ),
+                        const SizedBox(width: 8),
                         const Icon(
                           Icons.star,
                           size: 14,
@@ -992,7 +1009,7 @@ class _SortPill extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: active ? AppColors.primary : Colors.white,
+            color: active ? AppColors.primary : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.primary),
           ),
@@ -1091,13 +1108,15 @@ class _SortOptionTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(
             children: [
-              Icon(icon, color: AppColors.textSecondary),
+              Icon(icon, color: Theme.of(context).hintColor),
               const SizedBox(width: 12),
               Expanded(child: Text(label)),
               Icon(
                 selected ? Icons.check_circle : Icons.radio_button_unchecked,
                 size: 18,
-                color: selected ? AppColors.primary : AppColors.textSecondary,
+                color: selected
+                    ? AppColors.primary
+                    : Theme.of(context).hintColor,
               ),
             ],
           ),

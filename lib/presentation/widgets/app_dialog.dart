@@ -1,7 +1,86 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import '../../core/constants/app_colors.dart';
 
 enum AppDialogTone { primary, info, success, warning, danger }
+
+Future<void> showLottieSuccessDialog({
+  required BuildContext context,
+  required String title,
+  required String message,
+  String confirmText = 'Continue',
+  String? lottieUrl,
+}) {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => _LottieSuccessDialog(
+      title: title,
+      message: message,
+      confirmText: confirmText,
+      lottieUrl: lottieUrl,
+    ),
+  );
+}
+
+class _LottieSuccessDialog extends StatelessWidget {
+  final String title;
+  final String message;
+  final String confirmText;
+  final String? lottieUrl;
+
+  const _LottieSuccessDialog({
+    required this.title,
+    required this.message,
+    required this.confirmText,
+    this.lottieUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Lottie.network(
+              lottieUrl ??
+                  'https://assets10.lottiefiles.com/packages/lf20_awSQu9.json',
+              height: 150,
+              repeat: false,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(confirmText),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 Future<bool?> showAppConfirmDialog({
   required BuildContext context,

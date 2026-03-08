@@ -16,22 +16,44 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _fade;
-  late final Animation<double> _scale;
+  late final Animation<double> _logoScale;
+  late final Animation<double> _logoFade;
+  late final Animation<double> _textFade;
+  late final Animation<Offset> _textSlide;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 1400),
     );
-    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _scale = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+
+    _logoScale = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack),
+      ),
     );
+    _logoFade = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
+    );
+
+    _textFade = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.4, 0.9, curve: Curves.easeOut),
+    );
+    _textSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
+        .animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.4, 0.9, curve: Curves.easeOutCubic),
+      ),
+    );
+
     _controller.forward();
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(milliseconds: 3200), () {
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, OnboardingPage.routeName);
     });
@@ -59,13 +81,14 @@ class _SplashPageState extends State<SplashPage>
         child: Column(
           children: [
             const Spacer(),
-            FadeTransition(
-              opacity: _fade,
-              child: ScaleTransition(
-                scale: _scale,
-                child: Column(
-                  children: [
-                    Container(
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FadeTransition(
+                  opacity: _logoFade,
+                  child: ScaleTransition(
+                    scale: _logoScale,
+                    child: Container(
                       height: 168,
                       width: 168,
                       padding: const EdgeInsets.all(20),
@@ -90,44 +113,57 @@ class _SplashPageState extends State<SplashPage>
                         fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    Text(
+                  ),
+                ),
+                const SizedBox(height: 24),
+                FadeTransition(
+                  opacity: _textFade,
+                  child: SlideTransition(
+                    position: _textSlide,
+                    child: Text(
                       'SEVAKAM',
                       style: Theme.of(context)
                           .textTheme
-                          .titleLarge
+                          .headlineMedium
                           ?.copyWith(
                             color: Colors.white,
-                            letterSpacing: 1.1,
-                            fontWeight: FontWeight.w700,
+                            letterSpacing: 2.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            FadeTransition(
+              opacity: _textFade,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Loading...',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(
+                            color: Colors.white70,
+                            letterSpacing: 0.5,
                           ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-              child: Column(
-                children: [
-                  const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Loading...',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: Colors.white70),
-                  ),
-                ],
               ),
             ),
           ],

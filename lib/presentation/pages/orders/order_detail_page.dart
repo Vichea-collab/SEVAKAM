@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/order.dart';
 import '../../state/chat_state.dart';
 import '../../state/order_state.dart';
@@ -83,6 +84,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   @override
   Widget build(BuildContext context) {
     final hasReview = _order.hasReview;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -100,7 +102,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 _order.serviceName,
                 style: Theme.of(
                   context,
-                ).textTheme.titleLarge?.copyWith(color: AppColors.textPrimary),
+                ).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
               ),
               Text(
                 'Order ID: #${_order.id}',
@@ -112,9 +114,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,7 +124,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     Text(
                       'Your provider starts - ${_dateLabel(_order.scheduledAt)} @ ${_order.timeRange}',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -182,7 +184,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                           : 'This booking has been cancelled.')
                     : 'Your order has been booked!',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -196,14 +198,14 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
-                      backgroundImage: AssetImage(_order.provider.imagePath),
+                      backgroundImage: safeImageProvider(_order.provider.imagePath),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -214,7 +216,6 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                             _order.provider.name,
                             style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(
-                                  color: AppColors.textPrimary,
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
@@ -254,15 +255,15 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 'Service Details',
                 style: Theme.of(
                   context,
-                ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
+                ).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
               ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -570,8 +571,8 @@ class _StatusStepper extends StatelessWidget {
                       color: index == 0
                           ? Colors.transparent
                           : reached
-                          ? AppColors.primary
-                          : AppColors.divider,
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).dividerColor,
                     ),
                   ),
                   AnimatedContainer(
@@ -579,11 +580,11 @@ class _StatusStepper extends StatelessWidget {
                     width: isCurrent ? 24 : 20,
                     height: isCurrent ? 24 : 20,
                     decoration: BoxDecoration(
-                      color: reached ? AppColors.primary : AppColors.divider,
+                      color: reached ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isCurrent
-                            ? AppColors.primary.withValues(alpha: 89)
+                            ? Theme.of(context).colorScheme.primary.withValues(alpha: 89)
                             : Colors.transparent,
                         width: 3,
                       ),
@@ -591,7 +592,7 @@ class _StatusStepper extends StatelessWidget {
                     child: Icon(
                       reached ? Icons.check : Icons.circle,
                       size: reached ? 12 : 8,
-                      color: reached ? Colors.white : AppColors.textSecondary,
+                      color: reached ? Colors.white : Theme.of(context).hintColor,
                     ),
                   ),
                   Expanded(
@@ -600,8 +601,8 @@ class _StatusStepper extends StatelessWidget {
                       color: index == steps.length - 1
                           ? Colors.transparent
                           : (index < activeIndex)
-                          ? AppColors.primary
-                          : AppColors.divider,
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).dividerColor,
                     ),
                   ),
                 ],
@@ -610,7 +611,7 @@ class _StatusStepper extends StatelessWidget {
               Text(
                 steps[index],
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: reached ? AppColors.primary : AppColors.textSecondary,
+                  color: reached ? Theme.of(context).colorScheme.primary : Theme.of(context).hintColor,
                   fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
@@ -762,7 +763,6 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -788,7 +788,7 @@ class _AmountRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.bodyLarge?.copyWith(
       fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-      color: bold ? AppColors.primary : AppColors.textPrimary,
+      color: bold ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
     );
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),

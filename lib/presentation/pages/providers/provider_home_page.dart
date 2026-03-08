@@ -395,14 +395,11 @@ class _ProviderAggregate {
   });
 
   factory _ProviderAggregate.fromPost(ProviderPostItem post) {
-    final imagePath = post.avatarPath.startsWith('assets/')
-        ? post.avatarPath
-        : 'assets/images/profile.jpg';
     return _ProviderAggregate(
       providerUid: post.providerUid.trim(),
       providerName: post.providerName.trim(),
       category: post.category.trim(),
-      avatarPath: imagePath,
+      avatarPath: post.avatarPath,
       providerType: post.providerType,
       providerCompanyName: post.providerCompanyName.trim(),
       providerMaxWorkers: post.providerMaxWorkers < 1

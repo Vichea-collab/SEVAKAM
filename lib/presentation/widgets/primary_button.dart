@@ -47,7 +47,13 @@ class PrimaryButton extends StatelessWidget {
             Icon(icon, size: 18, color: labelColor),
             const SizedBox(width: 8),
           ],
-          Text(label, style: labelStyle),
+          Flexible(
+            child: Text(
+              label,
+              style: labelStyle,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           if (iconTrailing) ...[
             const SizedBox(width: 8),
             Icon(icon, size: 18, color: labelColor),

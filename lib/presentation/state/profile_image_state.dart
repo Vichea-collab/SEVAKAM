@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 
+import '../../core/utils/safe_image_provider.dart';
 import 'app_role_state.dart';
 
 class ProfileImageState {
@@ -65,7 +66,7 @@ class ProfileImageState {
     if (bytes != null) return MemoryImage(bytes);
     final url = _urlForRole(targetRole);
     if (url.isEmpty) return null;
-    return NetworkImage(url);
+    return safeImageProvider(url);
   }
 
   static ImageProvider<Object>? avatarProviderForRole({
@@ -75,7 +76,7 @@ class ProfileImageState {
     if (bytes != null) return MemoryImage(bytes);
     final url = _urlForRole(isProvider);
     if (url.isEmpty) return null;
-    return NetworkImage(url);
+    return safeImageProvider(url);
   }
 
   static ValueNotifier<Uint8List?> _notifierForRole(bool isProvider) =>

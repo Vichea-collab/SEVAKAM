@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../../domain/entities/provider_portal.dart';
 import '../../state/chat_state.dart';
@@ -386,7 +387,7 @@ class _FinderPostTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 23,
-                backgroundImage: AssetImage(post.avatarPath),
+                backgroundImage: safeImageProvider(post.avatarPath),
               ),
               const SizedBox(width: 12),
               Expanded(

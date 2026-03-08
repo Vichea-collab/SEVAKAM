@@ -20,6 +20,7 @@ class ProviderReview {
   final int daysAgo;
   final DateTime? reviewedAt;
   final String comment;
+  final List<String> photoUrls;
 
   const ProviderReview({
     required this.reviewerName,
@@ -29,6 +30,7 @@ class ProviderReview {
     required this.daysAgo,
     this.reviewedAt,
     required this.comment,
+    this.photoUrls = const [],
   });
 }
 
@@ -40,6 +42,7 @@ class ProviderProfile {
   final String about;
   final List<String> projectImages;
   final List<ProviderReview> reviews;
+  final List<DateTime> blockedDates;
 
   const ProviderProfile({
     required this.provider,
@@ -49,6 +52,7 @@ class ProviderProfile {
     required this.about,
     required this.projectImages,
     required this.reviews,
+    this.blockedDates = const [],
   });
 
   double get averageRating {

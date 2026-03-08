@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/chat.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../state/chat_state.dart';
+import '../../state/app_role_state.dart';
 import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/app_top_bar.dart';
@@ -220,6 +222,8 @@ class _ChatThreadTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasUnread = thread.unreadCount > 0;
+    final accentColor = AppRoleState.isProvider ? const Color(0xFF818CF8) : AppColors.primary;
+    final isActive = DateTime.now().difference(thread.updatedAt.toLocal()).inMinutes < 5;
 
     Future<void> openConversation() async {
       final currentPage = ChatState.threadPagination.value.page;
@@ -238,15 +242,35 @@ class _ChatThreadTile extends StatelessWidget {
       onTap: openConversation,
       child: InkWell(
         onTap: openConversation,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: hasUnread ? accentColor.withValues(alpha: 0.03) : Colors.transparent,
+          ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundImage: AssetImage(thread.avatarPath),
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundImage: safeImageProvider(thread.avatarPath),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: isActive ? AppColors.success : AppColors.danger,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2.5),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,59 +280,69 @@ class _ChatThreadTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             thread.title,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  fontWeight: hasUnread
-                                      ? FontWeight.w700
-                                      : FontWeight.w600,
-                                ),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: const Color(0xFF0F172A),
+                              fontWeight: hasUnread ? FontWeight.w800 : FontWeight.w700,
+                              fontSize: 16,
+                              letterSpacing: -0.3,
+                            ),
                           ),
                         ),
                         Text(
                           _timeLabel(thread.updatedAt),
-                          style: Theme.of(context).textTheme.bodyMedium,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: hasUnread ? accentColor : const Color(0xFF64748B),
+                            fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      thread.subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: hasUnread
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                        color: hasUnread
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                      ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            thread.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
+                              color: hasUnread ? const Color(0xFF1E293B) : const Color(0xFF64748B),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        if (hasUnread)
+                          Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [accentColor, accentColor.withValues(alpha: 0.85)],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: accentColor.withValues(alpha: 0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              '${thread.unreadCount}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              if (hasUnread)
-                Container(
-                  constraints: const BoxConstraints(
-                    minWidth: 20,
-                    minHeight: 20,
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.all(Radius.circular(11)),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    thread.unreadCount > 99 ? '99+' : '${thread.unreadCount}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
@@ -317,6 +351,14 @@ class _ChatThreadTile extends StatelessWidget {
   }
 
   String _timeLabel(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inDays >= 7) {
+      return '${dateTime.day}/${dateTime.month}';
+    } else if (diff.inDays >= 1) {
+      final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      return days[dateTime.weekday - 1];
+    }
     final hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
     final minute = dateTime.minute.toString().padLeft(2, '0');
     final suffix = dateTime.hour >= 12 ? 'PM' : 'AM';

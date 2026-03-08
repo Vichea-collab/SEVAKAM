@@ -191,6 +191,7 @@ class OrderItem {
   final OrderStatus status;
   final double? rating;
   final String reviewComment;
+  final List<String> photoUrls;
   final DateTime? reviewedAt;
   final OrderStatusTimeline timeline;
 
@@ -213,6 +214,7 @@ class OrderItem {
     required this.status,
     this.rating,
     this.reviewComment = '',
+    this.photoUrls = const [],
     this.reviewedAt,
     this.timeline = const OrderStatusTimeline(),
   });
@@ -223,6 +225,7 @@ class OrderItem {
     OrderStatus? status,
     double? rating,
     String? reviewComment,
+    List<String>? photoUrls,
     DateTime? reviewedAt,
     OrderStatusTimeline? timeline,
   }) {
@@ -245,6 +248,7 @@ class OrderItem {
       status: status ?? this.status,
       rating: rating ?? this.rating,
       reviewComment: reviewComment ?? this.reviewComment,
+      photoUrls: photoUrls ?? this.photoUrls,
       reviewedAt: reviewedAt ?? this.reviewedAt,
       timeline: timeline ?? this.timeline,
     );

@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/app_toast.dart';
+import '../../../core/utils/safe_image_provider.dart';
 import '../../../data/network/backend_api_client.dart';
 import '../../../domain/entities/chat.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../state/chat_state.dart';
+import '../../state/app_role_state.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/pressable_scale.dart';
 
@@ -663,49 +665,118 @@ class _ChatHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final status = _activityStatus(thread.updatedAt);
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x0A0F172A),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(4, 8, 8, 10),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF64748B)),
           ),
-          CircleAvatar(
-            radius: 18,
-            backgroundImage: AssetImage(thread.avatarPath),
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundImage: safeImageProvider(thread.avatarPath),
+              ),
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: status.color,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   thread.title,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF0F172A),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
                   ),
                 ),
                 Text(
-                  _lastActivityLabel(thread.updatedAt),
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  status.label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: status.color,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
+          ),
+          _HeaderAction(
+            icon: Icons.info_outline_rounded,
+            onTap: () {
+              // Show context info
+            },
           ),
         ],
       ),
     );
   }
 
-  String _lastActivityLabel(DateTime updatedAt) {
+  ({String label, Color color}) _activityStatus(DateTime updatedAt) {
     final delta = DateTime.now().difference(updatedAt.toLocal());
-    if (delta.inMinutes < 1) return 'Active just now';
-    if (delta.inHours < 1) return 'Active ${delta.inMinutes}m ago';
-    if (delta.inDays < 1) return 'Active ${delta.inHours}h ago';
-    return 'Active ${delta.inDays}d ago';
+    if (delta.inMinutes < 5) {
+      return (label: 'Active now', color: AppColors.success);
+    }
+    if (delta.inHours < 1) {
+      return (label: 'Active ${delta.inMinutes}m ago', color: AppColors.danger);
+    }
+    if (delta.inDays < 1) {
+      return (label: 'Active ${delta.inHours}h ago', color: AppColors.danger);
+    }
+    return (label: 'Active ${delta.inDays}d ago', color: AppColors.danger);
+  }
+}
+
+class _HeaderAction extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _HeaderAction({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: onTap,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: const Color(0xFF64748B), size: 20),
+        ),
+      ),
+    );
   }
 }
 
@@ -717,16 +788,19 @@ class _ChatDateChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(14),
+        color: const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Colors.white,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: const Color(0xFF64748B),
           fontWeight: FontWeight.w700,
+          fontSize: 11,
+          letterSpacing: 0.5,
         ),
       ),
     );
@@ -740,77 +814,117 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final align = message.fromMe ? Alignment.centerRight : Alignment.centerLeft;
-    final bubbleColor = message.fromMe ? const Color(0xFFCEF6B8) : Colors.white;
+    final fromMe = message.fromMe;
+    final accentColor = AppRoleState.isProvider ? const Color(0xFF818CF8) : AppColors.primary;
+    final bubbleColor = fromMe ? accentColor : Colors.white;
+    final textColor = fromMe ? Colors.white : const Color(0xFF0F172A);
+
     final hasImage =
         message.type == ChatMessageType.image &&
         message.imageUrl.trim().isNotEmpty;
     final hasText = message.text.trim().isNotEmpty;
 
     return Align(
-      alignment: align,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        constraints: const BoxConstraints(maxWidth: 280),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: bubbleColor,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (hasImage)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  message.imageUrl,
-                  width: 240,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 240,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0x1A000000),
-                      borderRadius: BorderRadius.circular(10),
+      alignment: fromMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment:
+            fromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            constraints: const BoxConstraints(maxWidth: 280),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: bubbleColor,
+              gradient: fromMe ? LinearGradient(
+                colors: [accentColor, accentColor.withValues(alpha: 0.9)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ) : null,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(20),
+                topRight: const Radius.circular(20),
+                bottomLeft: Radius.circular(fromMe ? 20 : 4),
+                bottomRight: Radius.circular(fromMe ? 4 : 20),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: fromMe
+                      ? accentColor.withValues(alpha: 0.2)
+                      : const Color(0x080F172A),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasImage)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: SafeImage(
+                        source: message.imageUrl,
+                        width: 240,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                    child: Text(
-                      'Image unavailable',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                if (hasText)
+                  Text(
+                    message.text,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: textColor,
+                      fontSize: 15,
+                      height: 1.4,
                     ),
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _timeLabel(message.sentAt),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF94A3B8),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
-            if (hasImage && hasText) const SizedBox(height: 8),
-            if (hasText)
-              Text(message.text, style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _timeLabel(message.sentAt),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(fontSize: 11),
-                  ),
-                  if (message.fromMe) ...[
-                    const SizedBox(width: 6),
-                    Icon(
-                      _statusIcon(message.deliveryStatus),
-                      size: 12,
-                      color: _statusColor(message.deliveryStatus),
-                    ),
-                  ],
+                if (fromMe) ...[
+                  const SizedBox(width: 4),
+                  _buildStatusIcon(accentColor),
                 ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
     );
+  }
+
+  Widget _buildStatusIcon(Color accentColor) {
+    IconData icon;
+    Color color = const Color(0xFF94A3B8);
+    switch (message.deliveryStatus) {
+      case ChatDeliveryStatus.sending:
+        icon = Icons.access_time_rounded;
+      case ChatDeliveryStatus.sent:
+        icon = Icons.check_rounded;
+      case ChatDeliveryStatus.delivered:
+        icon = Icons.done_all_rounded;
+      case ChatDeliveryStatus.seen:
+        icon = Icons.done_all_rounded;
+        color = accentColor;
+    }
+    return Icon(icon, size: 12, color: color);
   }
 
   String _timeLabel(DateTime time) {
@@ -818,29 +932,6 @@ class _MessageBubble extends StatelessWidget {
     final minute = time.minute.toString().padLeft(2, '0');
     final suffix = time.hour >= 12 ? 'PM' : 'AM';
     return '$hour:$minute $suffix';
-  }
-
-  IconData _statusIcon(ChatDeliveryStatus status) {
-    switch (status) {
-      case ChatDeliveryStatus.sending:
-        return Icons.schedule_rounded;
-      case ChatDeliveryStatus.sent:
-        return Icons.done_rounded;
-      case ChatDeliveryStatus.delivered:
-      case ChatDeliveryStatus.seen:
-        return Icons.done_all_rounded;
-    }
-  }
-
-  Color _statusColor(ChatDeliveryStatus status) {
-    switch (status) {
-      case ChatDeliveryStatus.seen:
-        return AppColors.primary;
-      case ChatDeliveryStatus.sending:
-      case ChatDeliveryStatus.sent:
-      case ChatDeliveryStatus.delivered:
-        return AppColors.textSecondary;
-    }
   }
 }
 
@@ -857,21 +948,37 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = AppRoleState.isProvider ? const Color(0xFF818CF8) : AppColors.primary;
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.divider.withValues(alpha: 0.5))),
+      ),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          IconButton(
-            onPressed: onPickImage,
-            icon: const Icon(Icons.attach_file),
-          ),
+          _ComposerAction(icon: Icons.add_circle_outline_rounded, onTap: onPickImage),
+          const SizedBox(width: 8),
           Expanded(
-            child: TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                hintText: 'Message',
-                isDense: true,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: controller,
+                maxLines: 4,
+                minLines: 1,
+                style: const TextStyle(fontSize: 15),
+                decoration: const InputDecoration(
+                  hintText: 'Type a message...',
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                ),
               ),
             ),
           ),
@@ -880,14 +987,50 @@ class _Composer extends StatelessWidget {
             onTap: onSend,
             child: InkWell(
               onTap: onSend,
-              borderRadius: BorderRadius.circular(20),
-              child: const Padding(
-                padding: EdgeInsets.all(8),
-                child: Icon(Icons.send, color: AppColors.primary),
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ComposerAction extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _ComposerAction({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: onTap,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          child: Icon(icon, color: const Color(0xFF64748B), size: 24),
+        ),
       ),
     );
   }

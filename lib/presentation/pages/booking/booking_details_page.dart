@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_calendar_picker.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/entities/provider.dart';
 import '../../state/booking_catalog_state.dart';
@@ -544,7 +545,7 @@ class _ProviderCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundImage: AssetImage(draft.provider.imagePath),
+            backgroundImage: safeImageProvider(draft.provider.imagePath),
           ),
           const SizedBox(width: 10),
           Expanded(

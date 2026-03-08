@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/safe_image_provider.dart';
+import '../../../core/utils/category_utils.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../domain/entities/provider.dart';
@@ -13,16 +15,18 @@ import '../../state/profile_image_state.dart';
 import '../../state/profile_settings_state.dart';
 import '../../state/provider_post_state.dart';
 import '../../widgets/app_bottom_nav.dart';
-import '../../widgets/app_state_panel.dart';
+
 import '../../widgets/category_chip.dart';
 import '../../widgets/pressable_scale.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/service_card.dart';
 import '../chat/chat_list_page.dart';
+import '../favorites/favorites_page.dart';
 import '../providers/provider_home_page.dart';
 import '../providers/provider_detail_page.dart';
 import '../providers/provider_posts_page.dart';
 import '../search/search_page.dart';
+import '../../widgets/shimmer_loading.dart';
 
 class HomePage extends StatefulWidget {
   static const String routeName = '/home';
@@ -69,169 +73,161 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _handleRefresh,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              const SliverToBoxAdapter(child: _TopHeader()),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.xl,
-                ),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    const _SearchBar(),
-                    const SizedBox(height: AppSpacing.md),
-                    const _FeaturedBanner(),
-                    const SizedBox(height: AppSpacing.lg),
-                    const _ProviderPostSection(),
-                    SectionTitle(
-                      title: 'Browse all categories',
-                      actionLabel: 'View all',
-                      onAction: () => Navigator.push(
-                        context,
-                        slideFadeRoute(const ProviderHomePage()),
-                      ),
+      body: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            const _TopHeader(),
+            SliverPadding(
+              padding: const EdgeInsets.only(
+                top: AppSpacing.lg,
+                left: AppSpacing.lg,
+                right: AppSpacing.lg,
+                bottom: AppSpacing.xl,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  const _SearchBar(),
+                  const SizedBox(height: AppSpacing.md),
+                  const _FeaturedBanner(),
+                  const SizedBox(height: AppSpacing.lg),
+                  SectionTitle(
+                    title: 'Browse all categories',
+                    actionLabel: 'View all',
+                    onAction: () => Navigator.push(
+                      context,
+                      slideFadeRoute(const ProviderHomePage()),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    ValueListenableBuilder<bool>(
-                      valueListenable: CatalogState.loading,
-                      builder: (context, catalogLoading, _) {
-                        return ValueListenableBuilder(
-                          valueListenable: CatalogState.categories,
-                          builder: (context, categories, _) {
-                            if (categories.isEmpty && catalogLoading) {
-                              return const Center(
-                                child: AppStatePanel.loading(
-                                  title: 'Loading categories',
-                                ),
-                              );
-                            }
-                            if (categories.isEmpty) {
-                              return const SizedBox.shrink();
-                            }
-                            return SizedBox(
-                              height: 150,
-                              child: ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                itemBuilder: (context, index) {
-                                  final category = categories[index];
-                                  return CategoryChip(
-                                    category: category,
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      slideFadeRoute(
-                                        SearchPage(
-                                          initialCategory: category.name,
-                                        ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: CatalogState.loading,
+                    builder: (context, catalogLoading, _) {
+                      return ValueListenableBuilder(
+                        valueListenable: CatalogState.categories,
+                        builder: (context, categories, _) {
+                          if (categories.isEmpty && catalogLoading) {
+                            return const CategoryShimmerList();
+                          }
+                          if (categories.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          return SizedBox(
+                            height: 150,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              cacheExtent: 500,
+                              itemBuilder: (context, index) {
+                                final category = categories[index];
+                                return CategoryChip(
+                                  category: category,
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    slideFadeRoute(
+                                      SearchPage(
+                                        initialCategory: category.name,
                                       ),
                                     ),
-                                  );
-                                },
-                                separatorBuilder: (_, _) =>
-                                    const SizedBox(width: AppSpacing.md),
-                                itemCount: categories.length,
-                              ),
-                            );
-                          },
-                        );
-                      },
+                                  ),
+                                );
+                              },
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(width: AppSpacing.md),
+                              itemCount: categories.length,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  SectionTitle(
+                    title: 'Popular services',
+                    actionLabel: 'See all',
+                    onAction: () => Navigator.push(
+                      context,
+                      slideFadeRoute(const SearchPage()),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    SectionTitle(
-                      title: 'Popular services',
-                      actionLabel: 'See all',
-                      onAction: () => Navigator.push(
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: CatalogState.loading,
+                    builder: (context, catalogLoading, _) {
+                      return ValueListenableBuilder(
+                        valueListenable: CatalogState.services,
+                        builder: (context, services, child) {
+                          final popular = CatalogState.popularServices(
+                            limit: 6,
+                          );
+                          if (popular.isEmpty && catalogLoading) {
+                            return const ServiceCardShimmerList();
+                          }
+                          if (popular.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          return SizedBox(
+                            height: 230,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              cacheExtent: 500,
+                              itemBuilder: (context, index) {
+                                final service = popular[index];
+                                return ServiceCard(
+                                  item: service,
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    slideFadeRoute(
+                                      SearchPage(
+                                        initialQuery: service.title,
+                                        initialCategory: service.category,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(width: AppSpacing.md),
+                              itemCount: popular.length,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  const _ProviderPostSection(),
+                  Center(
+                    child: PressableScale(
+                      onTap: () => Navigator.push(
                         context,
                         slideFadeRoute(const SearchPage()),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    ValueListenableBuilder<bool>(
-                      valueListenable: CatalogState.loading,
-                      builder: (context, catalogLoading, _) {
-                        return ValueListenableBuilder(
-                          valueListenable: CatalogState.services,
-                          builder: (context, services, child) {
-                            final popular = CatalogState.popularServices(
-                              limit: 6,
-                            );
-                            if (popular.isEmpty && catalogLoading) {
-                              return const Center(
-                                child: AppStatePanel.loading(
-                                  title: 'Loading popular services',
-                                ),
-                              );
-                            }
-                            if (popular.isEmpty) {
-                              return const SizedBox.shrink();
-                            }
-                            return SizedBox(
-                              height: 230,
-                              child: ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                itemBuilder: (context, index) {
-                                  final service = popular[index];
-                                  return ServiceCard(
-                                    item: service,
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      slideFadeRoute(
-                                        SearchPage(
-                                          initialQuery: service.title,
-                                          initialCategory: service.category,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                                separatorBuilder: (_, _) =>
-                                    const SizedBox(width: AppSpacing.md),
-                                itemCount: popular.length,
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Center(
-                      child: PressableScale(
+                      child: InkWell(
                         onTap: () => Navigator.push(
                           context,
                           slideFadeRoute(const SearchPage()),
                         ),
-                        child: InkWell(
-                          onTap: () => Navigator.push(
-                            context,
-                            slideFadeRoute(const SearchPage()),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
                           ),
-                          borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            child: Text(
-                              "Don't see what you are looking for?\nView all services",
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: AppColors.primary),
-                            ),
+                          child: Text(
+                            "Don't see what you are looking for?\nView all services",
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: AppColors.primary),
                           ),
                         ),
                       ),
                     ),
-                  ]),
-                ),
+                  ),
+                ]),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: const AppBottomNav(current: AppBottomTab.home),
@@ -276,194 +272,235 @@ class _TopHeaderState extends State<_TopHeader> {
       unawaited(ChatState.refreshUnreadCount());
     }
 
-    return ValueListenableBuilder<ProfileFormData>(
-      valueListenable: ProfileSettingsState.finderProfile,
-      builder: (context, profile, _) {
-        final displayName = profile.name.trim().isEmpty
-            ? 'Service Finder'
-            : profile.name.trim();
-        final city = profile.city.trim().isEmpty
-            ? 'Phnom Penh'
-            : profile.city.trim();
-        return Container(
-          padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.splashStart, AppColors.splashEnd],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    Future<void> openFavorites() async {
+      await Navigator.push(context, slideFadeRoute(const FavoritesPage()));
+    }
+
+    return SliverToBoxAdapter(
+      child: ValueListenableBuilder<ProfileFormData>(
+        valueListenable: ProfileSettingsState.finderProfile,
+        builder: (context, profile, _) {
+          final displayName = profile.name.trim().isEmpty
+              ? 'Service Finder'
+              : profile.name.trim();
+          final city = profile.city.trim().isEmpty
+              ? 'Phnom Penh'
+              : profile.city.trim();
+          return Container(
+            padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.splashStart, AppColors.splashEnd],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
             ),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 230),
-                      shape: BoxShape.circle,
-                    ),
-                    child: ValueListenableBuilder(
-                      valueListenable: ProfileImageState.listenableForRole(
-                        isProvider: false,
-                      ),
-                      builder: (context, value, child) {
-                        final image = ProfileImageState.avatarProvider(
-                          isProvider: false,
-                        );
-                        return CircleAvatar(
-                          radius: 19,
-                          backgroundColor: const Color(0xFFEAF1FF),
-                          backgroundImage: image,
-                          child: image == null
-                              ? const Icon(
-                                  Icons.person,
-                                  color: AppColors.primary,
-                                  size: 18,
-                                )
-                              : null,
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Welcome back',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: Colors.white70),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 230),
+                          shape: BoxShape.circle,
                         ),
+                        child: ValueListenableBuilder(
+                          valueListenable: ProfileImageState.listenableForRole(
+                            isProvider: false,
+                          ),
+                          builder: (context, value, child) {
+                            final image = ProfileImageState.avatarProvider(
+                              isProvider: false,
+                            );
+                            return CircleAvatar(
+                              radius: 19,
+                              backgroundColor: const Color(0xFFEAF1FF),
+                              backgroundImage: image,
+                              child: image == null
+                                  ? const Icon(
+                                      Icons.person,
+                                      color: AppColors.primary,
+                                      size: 18,
+                                    )
+                                  : null,
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome back',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: Colors.white70),
+                            ),
+                            Text(
+                              displayName,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PressableScale(
+                        onTap: openChats,
+                        child: InkWell(
+                          onTap: openChats,
+                          borderRadius: BorderRadius.circular(10),
+                          child: ValueListenableBuilder<int>(
+                            valueListenable: ChatState.unreadCount,
+                            builder: (context, unreadThreads, _) {
+                              return Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Container(
+                                    height: 34,
+                                    width: 34,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryDark,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x20000000),
+                                          blurRadius: 6,
+                                          offset: Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.message_outlined,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  if (unreadThreads > 0)
+                                    Positioned(
+                                      top: -4,
+                                      right: -4,
+                                      child: Container(
+                                        constraints: const BoxConstraints(
+                                          minWidth: 16,
+                                          minHeight: 16,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEF4444),
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 1.2,
+                                          ),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          unreadThreads > 99
+                                              ? '99+'
+                                              : '$unreadThreads',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 9,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      PressableScale(
+                        onTap: openFavorites,
+                        child: InkWell(
+                          onTap: openFavorites,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            height: 34,
+                            width: 34,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryDark,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x20000000),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.favorite_border_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x18000000),
+                          blurRadius: 6,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 16,
+                          color: AppColors.primaryDark,
+                        ),
+                        const SizedBox(width: 6),
                         Text(
-                          displayName,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(color: Colors.white),
+                          city,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: AppColors.primaryDark,
+                              ),
                         ),
                       ],
                     ),
                   ),
-                  PressableScale(
-                    onTap: openChats,
-                    child: InkWell(
-                      onTap: openChats,
-                      borderRadius: BorderRadius.circular(10),
-                      child: ValueListenableBuilder<int>(
-                        valueListenable: ChatState.unreadCount,
-                        builder: (context, unreadThreads, _) {
-                          return Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                height: 34,
-                                width: 34,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryDark,
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x20000000),
-                                      blurRadius: 6,
-                                      offset: Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.message_outlined,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                              if (unreadThreads > 0)
-                                Positioned(
-                                  top: -4,
-                                  right: -4,
-                                  child: Container(
-                                    constraints: const BoxConstraints(
-                                      minWidth: 16,
-                                      minHeight: 16,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFEF4444),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 1.2,
-                                      ),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      unreadThreads > 99
-                                          ? '99+'
-                                          : '$unreadThreads',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 9,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x18000000),
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 16,
-                      color: AppColors.primaryDark,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      city,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.primaryDark,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -479,9 +516,9 @@ class _SearchBar extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
         child: Row(
           children: [
@@ -612,9 +649,7 @@ class _ProviderPostSection extends StatelessWidget {
           valueListenable: ProviderPostState.posts,
           builder: (context, posts, _) {
             if (posts.isEmpty && postLoading) {
-              return const Center(
-                child: AppStatePanel.loading(title: 'Loading provider posts'),
-              );
+              return const ProviderPostShimmerList();
             }
             if (posts.isEmpty) {
               return const SizedBox.shrink();
@@ -657,27 +692,41 @@ class _ProviderPostTile extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.divider),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundImage: AssetImage(post.avatarPath),
+                  Hero(
+                    tag: 'provider-${post.providerUid}',
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundImage: safeImageProvider(post.avatarPath),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      post.providerName,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+                    child: Row(
+                      children: [
+                        Text(
+                          post.providerName,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (post.isVerified) ...[
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.verified_rounded,
+                            color: AppColors.primary,
+                            size: 16,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   Text(
@@ -693,7 +742,7 @@ class _ProviderPostTile extends StatelessWidget {
               Text(
                 '${post.serviceLabel} • ${post.timeLabel}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).hintColor,
                 ),
               ),
               const SizedBox(height: 4),
@@ -730,9 +779,6 @@ class _ProviderPostTile extends StatelessWidget {
 
   ProviderItem _providerFromPost(ProviderPostItem seed) {
     final role = seed.category.trim().isEmpty ? 'Cleaner' : seed.category;
-    final imagePath = seed.avatarPath.startsWith('assets/')
-        ? seed.avatarPath
-        : 'assets/images/profile.jpg';
     final services = _servicesForProvider(seed);
     return ProviderItem(
       uid: seed.providerUid.trim(),
@@ -741,8 +787,8 @@ class _ProviderPostTile extends StatelessWidget {
           : seed.providerName.trim(),
       role: role,
       rating: 4.8,
-      imagePath: imagePath,
-      accentColor: _accentFromCategory(role),
+      imagePath: seed.avatarPath,
+      accentColor: accentForCategory(role),
       services: services,
       providerType: seed.providerType,
       companyName: seed.providerCompanyName.trim(),
@@ -776,22 +822,6 @@ class _ProviderPostTile extends StatelessWidget {
     final services = values.toList(growable: false)..sort();
     return services;
   }
-
-  Color _accentFromCategory(String category) {
-    switch (category.trim().toLowerCase()) {
-      case 'plumber':
-        return const Color(0xFF0E8AD6);
-      case 'electrician':
-        return const Color(0xFFF59E0B);
-      case 'cleaner':
-        return const Color(0xFF10B981);
-      case 'home appliance':
-      case 'appliance':
-        return const Color(0xFF6366F1);
-      default:
-        return AppColors.primary;
-    }
-  }
 }
 
 class _HomePostPill extends StatelessWidget {
@@ -804,13 +834,13 @@ class _HomePostPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF1FF),
+        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
         text,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: AppColors.primary,
+          color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.w700,
         ),
       ),

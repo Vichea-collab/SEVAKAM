@@ -38,7 +38,7 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(_loadOrders(forceNetwork: true));
+      unawaited(_loadOrders(forceNetwork: true, page: 1));
     });
   }
 
@@ -203,33 +203,35 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                                               ],
                                             )
                                           : ListView.separated(
-                                              key: ValueKey<String>(
-                                                'orders_${visibleOrders.length}_${pagination.page}_${_activeTab.name}_$_filter',
-                                              ),
-                                              physics:
-                                                  const AlwaysScrollableScrollPhysics(),
-                                              itemCount: visibleOrders.length,
-                                              separatorBuilder: (_, _) =>
-                                                  const SizedBox(
-                                                    height: AppSpacing.md,
-                                                  ),
-                                              itemBuilder: (context, index) {
-                                                final order =
-                                                    visibleOrders[index];
-                                                return _OrderCard(
-                                                  order: order,
-                                                  onTap: () =>
-                                                      _openOrder(order),
-                                                  onMarkCompleted:
-                                                      order.status ==
-                                                          OrderStatus.started
-                                                      ? () => _markCompleted(
-                                                          order,
-                                                        )
-                                                      : null,
-                                                );
-                                              },
+                                            key: ValueKey<String>(
+                                              'orders_${visibleOrders.length}_${pagination.page}_${_activeTab.name}_$_filter',
                                             ),
+                                            physics:
+                                                const AlwaysScrollableScrollPhysics(),
+                                            itemCount: visibleOrders.length,
+                                            cacheExtent: 1000,
+                                            separatorBuilder: (_, _) =>
+                                                const SizedBox(
+                                                  height: AppSpacing.md,
+                                                ),
+                                            itemBuilder: (context, index) {
+                                              final order =
+                                                  visibleOrders[index];
+                                              return _OrderCard(
+                                                order: order,
+                                                onTap: () =>
+                                                    _openOrder(order),
+                                                onMarkCompleted:
+                                                    order.status ==
+                                                        OrderStatus.started
+                                                    ? () => _markCompleted(
+                                                        order,
+                                                      )
+                                                    : null,
+                                              );
+                                            },
+                                          ),
+
                                     ),
                                   ),
                           ),

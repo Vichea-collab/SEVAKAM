@@ -93,6 +93,7 @@ class ProviderPostRemoteDataSource {
     final updatedAt = _parseDate(row['updatedAt']);
     final services = _parseServices(row['services']);
     final primaryService = (row['service'] ?? '').toString().trim();
+    final avatarUrl = (row['providerAvatarUrl'] ?? '').toString().trim();
     return ProviderPostItem(
       id: id.isEmpty ? DateTime.now().millisecondsSinceEpoch.toString() : id,
       providerUid: (row['providerUid'] ?? '').toString(),
@@ -113,7 +114,7 @@ class ProviderPostRemoteDataSource {
       ratePerHour: _toRate(row['ratePerHour']),
       availableNow: row['availableNow'] == true,
       timeLabel: _timeLabel(createdAt),
-      avatarPath: 'assets/images/profile.jpg',
+      avatarPath: avatarUrl.isNotEmpty ? avatarUrl : 'assets/images/profile.jpg',
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../../domain/entities/profile_settings.dart';
 import '../../../domain/entities/provider_portal.dart';
@@ -57,28 +58,6 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
               valueListenable: FinderPostState.pagination,
               builder: (context, pagination, _) {
                 final currentPage = _normalizedPage(pagination.page);
-                final listBody = isLoading && posts.isEmpty
-                    ? const SizedBox(
-                        height: 320,
-                        child: Center(
-                          child: AppStatePanel.loading(
-                            title: 'Loading finder requests',
-                          ),
-                        ),
-                      )
-                    : posts.isEmpty
-                    ? const AppStatePanel.empty(
-                        title: 'No finder requests yet',
-                        message: 'New requests will appear here.',
-                      )
-                    : Column(
-                        key: ValueKey<String>(
-                          'provider_home_posts_${posts.length}_${pagination.page}',
-                        ),
-                        children: posts
-                            .map((post) => _FinderPostTile(post: post))
-                            .toList(growable: false),
-                      );
 
                 return Scaffold(
                   body: SafeArea(
@@ -141,7 +120,30 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                                 const SizedBox(height: 12),
                                 AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 220),
-                                  child: listBody,
+                                  child: isLoading && posts.isEmpty
+                                      ? const SizedBox(
+                                          height: 320,
+                                          child: Center(
+                                            child: AppStatePanel.loading(
+                                              title: 'Loading finder requests',
+                                            ),
+                                          ),
+                                        )
+                                      : posts.isEmpty
+                                          ? const AppStatePanel.empty(
+                                              title: 'No finder requests yet',
+                                              message: 'New requests will appear here.',
+                                            )
+                                          : ListView.builder(
+                                              key: ValueKey<String>(
+                                                'provider_home_posts_${posts.length}_${pagination.page}',
+                                              ),
+                                              shrinkWrap: true,
+                                              physics: const NeverScrollableScrollPhysics(),
+                                              itemCount: posts.length,
+                                              cacheExtent: 1000,
+                                              itemBuilder: (context, index) => _FinderPostTile(post: posts[index]),
+                                            ),
                                 ),
                                 if (pagination.totalPages > 1) ...[
                                   const SizedBox(height: 12),
@@ -565,7 +567,7 @@ class _FinderPostTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 23,
-                backgroundImage: AssetImage(post.avatarPath),
+                backgroundImage: safeImageProvider(post.avatarPath),
               ),
               const SizedBox(width: 12),
               Expanded(

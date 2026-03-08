@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../state/app_role_state.dart';
+import '../../state/app_state.dart';
 import '../../state/auth_state.dart';
 import '../../state/profile_image_state.dart';
 import '../../state/profile_settings_state.dart';
@@ -46,9 +47,7 @@ class ProfilePage extends StatelessWidget {
                     const SizedBox(height: 20),
                     Text(
                       'Account',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),
                     _ActionTile(
@@ -89,20 +88,18 @@ class ProfilePage extends StatelessWidget {
                     const SizedBox(height: 18),
                     Text(
                       'Preferences',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
-                        vertical: 13,
+                        vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.divider),
+                        border: Border.all(color: Theme.of(context).dividerColor),
                       ),
                       child: Row(
                         children: [
@@ -110,12 +107,59 @@ class ProfilePage extends StatelessWidget {
                             height: 34,
                             width: 34,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEAF1FF),
+                              color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
+                            child: Icon(
+                              Icons.dark_mode_outlined,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Dark Mode',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                          ValueListenableBuilder<ThemeMode>(
+                            valueListenable: AppState.themeMode,
+                            builder: (context, themeMode, _) {
+                              return Switch(
+                                value: themeMode == ThemeMode.dark,
+                                onChanged: (value) => AppState.toggleTheme(),
+                                activeTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                                activeThumbColor: Theme.of(context).colorScheme.primary,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Theme.of(context).dividerColor),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            height: 34,
+                            width: 34,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
                               Icons.swap_horiz_rounded,
-                              color: AppColors.primary,
+                              color: Theme.of(context).colorScheme.primary,
                               size: 18,
                             ),
                           ),
@@ -143,8 +187,8 @@ class ProfilePage extends StatelessWidget {
                                 (route) => false,
                               );
                             },
-                            activeTrackColor: AppColors.primaryLight,
-                            activeThumbColor: AppColors.primary,
+                            activeTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                            activeThumbColor: Theme.of(context).colorScheme.primary,
                           ),
                         ],
                       ),
@@ -159,10 +203,10 @@ class ProfilePage extends StatelessWidget {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: AppColors.danger.withValues(alpha: 55),
+                              color: AppColors.danger.withValues(alpha: 0.3),
                             ),
                           ),
                           alignment: Alignment.center,
@@ -220,17 +264,17 @@ class _ProfileHero extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.splashStart, AppColors.splashEnd],
+        gradient: LinearGradient(
+          colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x26005BBB),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
             blurRadius: 20,
-            offset: Offset(0, 10),
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -239,7 +283,7 @@ class _ProfileHero extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 220),
+              color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: ValueListenableBuilder(
@@ -310,14 +354,14 @@ class _ActionTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.divider),
-            boxShadow: const [
+            border: Border.all(color: Theme.of(context).dividerColor),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x10000000),
+                color: Theme.of(context).shadowColor.withValues(alpha: 0.06),
                 blurRadius: 10,
-                offset: Offset(0, 4),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -327,24 +371,23 @@ class _ActionTile extends StatelessWidget {
                 height: 36,
                 width: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF1FF),
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 20),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   label,
                   style: const TextStyle(
-                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).hintColor,
               ),
             ],
           ),

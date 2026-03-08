@@ -22,6 +22,7 @@ import '../profile/payment_page.dart';
 import 'provider_home_page.dart';
 import 'provider_profession_page.dart';
 import 'provider_verification_page.dart';
+import 'provider_availability_page.dart';
 
 class ProviderProfilePage extends StatefulWidget {
   static const String routeName = '/provider/profile';
@@ -82,7 +83,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
               'Profile information',
               style: Theme.of(
                 context,
-              ).textTheme.titleMedium?.copyWith(color: AppColors.textPrimary),
+              ).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(height: 10),
             _ActionTile(
@@ -104,6 +105,15 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
             ),
             const SizedBox(height: 10),
             _ActionTile(
+              icon: Icons.calendar_month_outlined,
+              label: 'Availability',
+              onTap: () => Navigator.push(
+                context,
+                slideFadeRoute(const ProviderAvailabilityPage()),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _ActionTile(
               icon: Icons.verified_user_outlined,
               label: 'Verification',
               onTap: () => Navigator.push(
@@ -116,7 +126,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
               'Subscription & payments',
               style: Theme.of(
                 context,
-              ).textTheme.titleMedium?.copyWith(color: AppColors.textPrimary),
+              ).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(height: 10),
             _ActionTile(
@@ -130,7 +140,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
               'General preferences',
               style: Theme.of(
                 context,
-              ).textTheme.titleMedium?.copyWith(color: AppColors.textPrimary),
+              ).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(height: 10),
             _ActionTile(
@@ -154,15 +164,15 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.swap_horiz_rounded,
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -171,25 +181,30 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                   ),
-                  Switch(
-                    value: true,
-                    onChanged: (value) async {
-                      if (value) return;
-                      final error = await AuthState.switchRole(
-                        toProvider: false,
-                      );
-                      if (!context.mounted) return;
-                      if (error != null) {
-                        AppToast.warning(context, error);
-                        return;
-                      }
-                      Navigator.of(context).pushAndRemoveUntil(
-                        slideFadeRoute(const HomePage()),
-                        (route) => false,
+                  ValueListenableBuilder<AppRole>(
+                    valueListenable: AppRoleState.role,
+                    builder: (context, role, _) {
+                      return Switch(
+                        value: role == AppRole.provider,
+                        onChanged: (value) async {
+                          if (value) return;
+                          final error = await AuthState.switchRole(
+                            toProvider: false,
+                          );
+                          if (!context.mounted) return;
+                          if (error != null) {
+                            AppToast.warning(context, error);
+                            return;
+                          }
+                          Navigator.of(context).pushAndRemoveUntil(
+                            slideFadeRoute(const HomePage()),
+                            (route) => false,
+                          );
+                        },
+                        activeTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                        activeThumbColor: Theme.of(context).colorScheme.primary,
                       );
                     },
-                    activeTrackColor: AppColors.primaryLight,
-                    activeThumbColor: AppColors.primary,
                   ),
                 ],
               ),
@@ -204,10 +219,10 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.danger.withValues(alpha: 55),
+                      color: AppColors.danger.withValues(alpha: 0.3),
                     ),
                   ),
                   alignment: Alignment.center,
@@ -259,17 +274,17 @@ class _ProviderHero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0D5CC7), Color(0xFF616DEB)],
+        gradient: LinearGradient(
+          colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x33005BBB),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
             blurRadius: 18,
-            offset: Offset(0, 8),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -279,7 +294,7 @@ class _ProviderHero extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 235),
+              color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: ValueListenableBuilder(
@@ -310,21 +325,37 @@ class _ProviderHero extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      profile.name.trim().isEmpty
-                          ? 'Provider'
-                          : profile.name.trim(),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        shadows: const [
-                          Shadow(
-                            color: Color(0x66000000),
-                            blurRadius: 6,
-                            offset: Offset(0, 1),
+                    Row(
+                      children: [
+                        Text(
+                          profile.name.trim().isEmpty
+                              ? 'Provider'
+                              : profile.name.trim(),
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            shadows: const [
+                              Shadow(
+                                color: Color(0x66000000),
+                                blurRadius: 6,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 6),
+                        ValueListenableBuilder<bool>(
+                          valueListenable: ProfileSettingsState.providerVerified,
+                          builder: (context, isVerified, _) {
+                            if (!isVerified) return const SizedBox.shrink();
+                            return const Icon(
+                              Icons.verified_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            );
+                          },
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -418,9 +449,9 @@ class _ActionTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.divider),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: Row(
             children: [
@@ -428,16 +459,16 @@ class _ActionTile extends StatelessWidget {
                 height: 34,
                 width: 34,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF1FF),
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 19),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 19),
               ),
               const SizedBox(width: 10),
               Expanded(child: Text(label)),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).hintColor,
               ),
             ],
           ),

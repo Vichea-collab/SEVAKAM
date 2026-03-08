@@ -106,6 +106,7 @@ class ProviderProfessionData {
   final String providerType;
   final String companyName;
   final String maxWorkers;
+  final List<DateTime> blockedDates;
 
   const ProviderProfessionData({
     required this.serviceName,
@@ -117,6 +118,7 @@ class ProviderProfessionData {
     required this.providerType,
     required this.companyName,
     required this.maxWorkers,
+    this.blockedDates = const [],
   });
 
   factory ProviderProfessionData.defaults() {
@@ -130,6 +132,7 @@ class ProviderProfessionData {
       providerType: 'individual',
       companyName: '',
       maxWorkers: '1',
+      blockedDates: [],
     );
   }
 
@@ -143,6 +146,7 @@ class ProviderProfessionData {
     String? providerType,
     String? companyName,
     String? maxWorkers,
+    List<DateTime>? blockedDates,
   }) {
     return ProviderProfessionData(
       serviceName: serviceName ?? this.serviceName,
@@ -154,6 +158,7 @@ class ProviderProfessionData {
       providerType: providerType ?? this.providerType,
       companyName: companyName ?? this.companyName,
       maxWorkers: maxWorkers ?? this.maxWorkers,
+      blockedDates: blockedDates ?? this.blockedDates,
     );
   }
 
@@ -168,6 +173,9 @@ class ProviderProfessionData {
       providerType: (map['providerType'] ?? '').toString(),
       companyName: (map['companyName'] ?? '').toString(),
       maxWorkers: (map['maxWorkers'] ?? '').toString(),
+      blockedDates: (map['blockedDates'] as List? ?? [])
+          .map((e) => DateTime.parse(e.toString()))
+          .toList(),
     );
   }
 
@@ -182,6 +190,7 @@ class ProviderProfessionData {
       'providerType': providerType,
       'companyName': companyName,
       'maxWorkers': maxWorkers,
+      'blockedDates': blockedDates.map((e) => e.toIso8601String()).toList(),
     };
   }
 }

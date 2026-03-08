@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../core/constants/app_colors.dart';
 
@@ -10,6 +11,7 @@ class AppStatePanel extends StatelessWidget {
   final String? message;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final String? lottieUrl;
 
   const AppStatePanel({
     super.key,
@@ -18,12 +20,14 @@ class AppStatePanel extends StatelessWidget {
     this.message,
     this.actionLabel,
     this.onAction,
+    this.lottieUrl,
   });
 
   const AppStatePanel.loading({
     super.key,
     this.title = 'Loading data...',
     this.message,
+    this.lottieUrl,
   }) : type = AppStatePanelType.loading,
        actionLabel = null,
        onAction = null;
@@ -32,6 +36,7 @@ class AppStatePanel extends StatelessWidget {
     super.key,
     this.title = 'No data available',
     this.message,
+    this.lottieUrl,
   }) : type = AppStatePanelType.empty,
        actionLabel = null,
        onAction = null;
@@ -42,6 +47,7 @@ class AppStatePanel extends StatelessWidget {
     this.message,
     this.actionLabel = 'Try again',
     required this.onAction,
+    this.lottieUrl,
   }) : type = AppStatePanelType.error;
 
   @override
@@ -51,29 +57,34 @@ class AppStatePanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: visual.background,
-              borderRadius: BorderRadius.circular(14),
+          if (lottieUrl != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Lottie.network(lottieUrl!, height: 120, repeat: true),
+            )
+          else
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: visual.background,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(visual.icon, color: visual.foreground),
             ),
-            child: Icon(visual.icon, color: visual.foreground),
-          ),
           const SizedBox(height: 10),
           Text(
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
             ),
           ),
           if ((message ?? '').trim().isNotEmpty) ...[
@@ -83,10 +94,10 @@ class AppStatePanel extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).hintColor),
             ),
           ],
-          if (type == AppStatePanelType.loading) ...[
+          if (type == AppStatePanelType.loading && lottieUrl == null) ...[
             const SizedBox(height: 12),
             const SizedBox(
               width: 18,

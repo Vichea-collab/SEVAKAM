@@ -5,9 +5,11 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/safe_image_provider.dart';
 import '../../../data/network/backend_api_client.dart';
 import '../../../domain/entities/order.dart';
 import '../../state/order_state.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/booking_step_progress.dart';
 import '../../widgets/primary_button.dart';
@@ -134,9 +136,9 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,9 +183,9 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Column(
                   children: [
@@ -257,6 +259,14 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
         }
         order = verified;
       }
+
+      if (!mounted) return;
+      await showLottieSuccessDialog(
+        context: context,
+        title: 'Booking Successful!',
+        message:
+            'Your booking for ${order.serviceName} has been placed successfully.',
+      );
 
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -392,7 +402,7 @@ class _AmountRow extends StatelessWidget {
           Text(
             '\$${amount.toStringAsFixed(0)}',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: bold ? AppColors.primary : AppColors.textPrimary,
+              color: bold ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
               fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
@@ -426,18 +436,18 @@ class _PaymentTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEAF1FF) : Colors.white,
+          color: selected ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1) : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.divider,
+            color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
             width: selected ? 1.6 : 1,
           ),
           boxShadow: selected
-              ? const [
+              ? [
                   BoxShadow(
-                    color: Color(0x1F1D4ED8),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                     blurRadius: 14,
-                    offset: Offset(0, 5),
+                    offset: const Offset(0, 5),
                   ),
                 ]
               : null,
@@ -449,13 +459,13 @@ class _PaymentTile extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: selected ? AppColors.primary : const Color(0xFFEAF1FF),
+                color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(11),
               ),
               child: Icon(
                 icon,
                 size: 19,
-                color: selected ? Colors.white : AppColors.primary,
+                color: selected ? Colors.white : Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(width: 10),
@@ -466,14 +476,13 @@ class _PaymentTile extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).hintColor,
                     ),
                   ),
                 ],
@@ -481,7 +490,7 @@ class _PaymentTile extends StatelessWidget {
             ),
             Icon(
               selected ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: selected ? AppColors.primary : AppColors.textSecondary,
+              color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).hintColor,
             ),
           ],
         ),
@@ -533,7 +542,7 @@ class _KhqrCheckoutSheetState extends State<_KhqrCheckoutSheet> {
           Text(
             'Amount: \$$amount ${widget.session.currency}',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -542,22 +551,21 @@ class _KhqrCheckoutSheetState extends State<_KhqrCheckoutSheet> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.divider),
+              border: Border.all(color: Theme.of(context).dividerColor),
             ),
             child: Column(
               children: [
                 if (imageUrl.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      imageUrl,
+                    child: SafeImage(
+                      source: imageUrl,
                       height: 220,
                       width: 220,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) =>
-                          _KhqrPayloadBox(payload: payload),
+                      errorBuilder: _KhqrPayloadBox(payload: payload),
                     ),
                   )
                 else
@@ -576,7 +584,7 @@ class _KhqrCheckoutSheetState extends State<_KhqrCheckoutSheet> {
               _statusMessage,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).hintColor),
             ),
           ],
           const SizedBox(height: 12),
@@ -651,15 +659,15 @@ class _KhqrPayloadBox extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFF),
+        color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: SelectableText(
         payload.isEmpty ? 'KHQR payload is unavailable.' : payload,
         style: Theme.of(
           context,
-        ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+        ).textTheme.bodySmall?.copyWith(color: Theme.of(context).hintColor),
       ),
     );
   }
@@ -687,7 +695,7 @@ class _InfoRow extends StatelessWidget {
               value,
               textAlign: TextAlign.right,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w500,
               ),
             ),

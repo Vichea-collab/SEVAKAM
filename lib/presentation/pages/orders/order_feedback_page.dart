@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../domain/entities/order.dart';
@@ -17,6 +19,8 @@ class OrderFeedbackPage extends StatefulWidget {
 class _OrderFeedbackPageState extends State<OrderFeedbackPage> {
   late int _rating;
   late final TextEditingController _feedbackController;
+  final List<String> _photoPaths = [];
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -32,6 +36,16 @@ class _OrderFeedbackPageState extends State<OrderFeedbackPage> {
   void dispose() {
     _feedbackController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    if (_photoPaths.length >= 5) return;
+    final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (picked != null) {
+      setState(() {
+        _photoPaths.add(picked.path);
+      });
+    }
   }
 
   @override
@@ -65,6 +79,56 @@ class _OrderFeedbackPageState extends State<OrderFeedbackPage> {
               ),
               const SizedBox(height: 10),
               Text(
+                'Add photos (optional)',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 80,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    ..._photoPaths.map((path) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(File(path), width: 80, height: 80, fit: BoxFit.cover),
+                          ),
+                          Positioned(
+                            top: 2,
+                            right: 2,
+                            child: GestureDetector(
+                              onTap: () => setState(() => _photoPaths.remove(path)),
+                              child: Container(
+                                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 16),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+                    if (_photoPaths.length < 5)
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Theme.of(context).dividerColor),
+                          ),
+                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textSecondary),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
                 'Write in below box',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
@@ -93,6 +157,7 @@ class _OrderFeedbackPageState extends State<OrderFeedbackPage> {
       status: OrderStatus.completed,
       rating: _rating.toDouble(),
       reviewComment: comment,
+      photoUrls: _photoPaths,
     );
     Navigator.pop(context, updated);
   }

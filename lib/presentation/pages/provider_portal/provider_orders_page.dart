@@ -43,7 +43,7 @@ class _ProviderOrdersPageState extends State<ProviderOrdersPage>
     _tab = widget.initialTab;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(_loadOrders(forceNetwork: true));
+      unawaited(_loadOrders(forceNetwork: true, page: 1));
     });
   }
 

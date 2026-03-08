@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+import '../core/constants/app_colors.dart';
 import '../core/firebase/firebase_bootstrap.dart';
 import '../core/theme/app_theme.dart';
 import '../domain/entities/provider.dart';
@@ -22,6 +23,7 @@ import 'pages/orders/orders_page.dart';
 import 'pages/post/client_post_page.dart';
 import 'pages/booking/booking_address_page.dart';
 import 'pages/notifications/notifications_page.dart';
+import 'pages/favorites/favorites_page.dart';
 import 'pages/profile/profile_page.dart';
 import 'pages/profile/edit_profile_page.dart';
 import 'pages/profile/notification_page.dart';
@@ -35,10 +37,13 @@ import 'pages/provider_portal/provider_orders_page.dart';
 import 'pages/provider_portal/provider_profile_page.dart';
 import 'pages/provider_portal/provider_profession_page.dart';
 import 'pages/provider_portal/provider_verification_page.dart';
+import 'pages/provider_portal/provider_availability_page.dart';
 import 'state/booking_catalog_state.dart';
 import 'state/app_role_state.dart';
+import 'state/app_state.dart';
 import 'state/chat_state.dart';
 import 'state/user_notification_state.dart';
+import 'widgets/notification_messenger_sheet.dart';
 
 class ServiceFinderApp extends StatefulWidget {
   const ServiceFinderApp({super.key});
@@ -52,60 +57,71 @@ class _ServiceFinderAppState extends State<ServiceFinderApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: _navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      initialRoute: SplashPage.routeName,
-      builder: (context, child) {
-        return _GlobalNotificationHost(
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppState.themeMode,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
           navigatorKey: _navigatorKey,
-          child: child ?? const SizedBox.shrink(),
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: themeMode,
+          initialRoute: SplashPage.routeName,
+          builder: (context, child) {
+            return _GlobalNotificationHost(
+              navigatorKey: _navigatorKey,
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+          routes: {
+            SplashPage.routeName: (_) => const SplashPage(),
+            WelcomePage.routeName: (_) => const WelcomePage(),
+            OnboardingPage.routeName: (_) => const OnboardingPage(),
+            CustomerAuthPage.routeName: (_) => const CustomerAuthPage(),
+            ProviderAuthPage.routeName: (_) => const ProviderAuthPage(),
+            ForgotPasswordFlow.routeName: (_) => const ForgotPasswordFlow(),
+            HomePage.routeName: (_) => const HomePage(),
+            ProviderHomePage.routeName: (_) => const ProviderHomePage(),
+            ProviderPostsPage.routeName: (_) => const ProviderPostsPage(),
+            SearchPage.routeName: (_) => const SearchPage(),
+            ChatListPage.routeName: (_) => const ChatListPage(),
+            OrdersPage.routeName: (_) => const OrdersPage(),
+            ClientPostPage.routeName: (_) => const ClientPostPage(),
+            NotificationsPage.routeName: (_) => const NotificationsPage(),
+            FavoritesPage.routeName: (_) => const FavoritesPage(),
+            '/booking/address': (_) => BookingAddressPage(
+                  draft: BookingCatalogState.defaultBookingDraft(
+                    provider: const ProviderItem(
+                      name: 'Service Provider',
+                      role: 'Cleaner',
+                      rating: 4.8,
+                      imagePath: 'assets/images/profile.jpg',
+                      accentColor: Color(0xFFEAF1FF),
+                    ),
+                  ),
+                ),
+            ProfilePage.routeName: (_) => const ProfilePage(),
+            EditProfilePage.routeName: (_) => const EditProfilePage(),
+            ProfileNotificationPage.routeName: (_) =>
+                const ProfileNotificationPage(),
+            PaymentPage.routeName: (_) => const PaymentPage(),
+            HelpSupportPage.routeName: (_) => const HelpSupportPage(),
+            ProviderPortalHomePage.routeName: (_) =>
+                const ProviderPortalHomePage(),
+            ProviderFinderSearchPage.routeName: (_) =>
+                const ProviderFinderSearchPage(),
+            ProviderNotificationsPage.routeName: (_) =>
+                const ProviderNotificationsPage(),
+            ProviderPostPage.routeName: (_) => const ProviderPostPage(),
+            ProviderOrdersPage.routeName: (_) => const ProviderOrdersPage(),
+            ProviderProfilePage.routeName: (_) => const ProviderProfilePage(),
+            ProviderProfessionPage.routeName: (_) =>
+                const ProviderProfessionPage(),
+            ProviderVerificationPage.routeName: (_) =>
+                const ProviderVerificationPage(),
+            '/provider/availability': (_) => const ProviderAvailabilityPage(),
+          },
         );
-      },
-      routes: {
-        SplashPage.routeName: (_) => const SplashPage(),
-        WelcomePage.routeName: (_) => const WelcomePage(),
-        OnboardingPage.routeName: (_) => const OnboardingPage(),
-        CustomerAuthPage.routeName: (_) => const CustomerAuthPage(),
-        ProviderAuthPage.routeName: (_) => const ProviderAuthPage(),
-        ForgotPasswordFlow.routeName: (_) => const ForgotPasswordFlow(),
-        HomePage.routeName: (_) => const HomePage(),
-        ProviderHomePage.routeName: (_) => const ProviderHomePage(),
-        ProviderPostsPage.routeName: (_) => const ProviderPostsPage(),
-        SearchPage.routeName: (_) => const SearchPage(),
-        ChatListPage.routeName: (_) => const ChatListPage(),
-        OrdersPage.routeName: (_) => const OrdersPage(),
-        ClientPostPage.routeName: (_) => const ClientPostPage(),
-        NotificationsPage.routeName: (_) => const NotificationsPage(),
-        '/booking/address': (_) => BookingAddressPage(
-          draft: BookingCatalogState.defaultBookingDraft(
-            provider: const ProviderItem(
-              name: 'Service Provider',
-              role: 'Cleaner',
-              rating: 4.8,
-              imagePath: 'assets/images/profile.jpg',
-              accentColor: Color(0xFFEAF1FF),
-            ),
-          ),
-        ),
-        ProfilePage.routeName: (_) => const ProfilePage(),
-        EditProfilePage.routeName: (_) => const EditProfilePage(),
-        ProfileNotificationPage.routeName: (_) =>
-            const ProfileNotificationPage(),
-        PaymentPage.routeName: (_) => const PaymentPage(),
-        HelpSupportPage.routeName: (_) => const HelpSupportPage(),
-        ProviderPortalHomePage.routeName: (_) => const ProviderPortalHomePage(),
-        ProviderFinderSearchPage.routeName: (_) =>
-            const ProviderFinderSearchPage(),
-        ProviderNotificationsPage.routeName: (_) =>
-            const ProviderNotificationsPage(),
-        ProviderPostPage.routeName: (_) => const ProviderPostPage(),
-        ProviderOrdersPage.routeName: (_) => const ProviderOrdersPage(),
-        ProviderProfilePage.routeName: (_) => const ProviderProfilePage(),
-        ProviderProfessionPage.routeName: (_) => const ProviderProfessionPage(),
-        ProviderVerificationPage.routeName: (_) =>
-            const ProviderVerificationPage(),
       },
     );
   }
@@ -182,7 +198,14 @@ class _GlobalNotificationHostState extends State<_GlobalNotificationHost> {
         : latest.message.trim();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _showTopBanner(title: latest.title.trim(), message: summary);
+      _showTopBanner(
+        title: latest.title.trim(),
+        message: summary,
+        onReply: () {
+          _removeActiveBanner();
+          _openQuickMessenger();
+        },
+      );
     });
   }
 
@@ -241,6 +264,10 @@ class _GlobalNotificationHostState extends State<_GlobalNotificationHost> {
       onView: () {
         _removeActiveBanner();
         unawaited(_openDeepLinkFromData(message.data));
+      },
+      onReply: () {
+        _removeActiveBanner();
+        _openQuickMessenger();
       },
     );
   }
@@ -315,6 +342,7 @@ class _GlobalNotificationHostState extends State<_GlobalNotificationHost> {
     required String title,
     required String message,
     VoidCallback? onView,
+    VoidCallback? onReply,
   }) {
     final overlay = widget.navigatorKey.currentState?.overlay;
     if (overlay == null) return;
@@ -336,6 +364,7 @@ class _GlobalNotificationHostState extends State<_GlobalNotificationHost> {
                   final route = AppRoleState.notificationRoute();
                   widget.navigatorKey.currentState?.pushNamed(route);
                 },
+            onReply: onReply,
             onDismiss: _removeActiveBanner,
           ),
         );
@@ -344,6 +373,21 @@ class _GlobalNotificationHostState extends State<_GlobalNotificationHost> {
     _activeBannerEntry = banner;
     overlay.insert(banner);
     _activeBannerTimer = Timer(const Duration(seconds: 5), _removeActiveBanner);
+  }
+
+  void _openQuickMessenger() {
+    final context = widget.navigatorKey.currentContext;
+    if (context == null) return;
+    unawaited(
+      showNotificationMessengerSheet(
+        context,
+        title: 'Messenger',
+        subtitle: 'Recent conversations',
+        threads: ChatState.threads.value,
+        accentColor:
+            AppRoleState.isProvider ? const Color(0xFF818CF8) : const Color(0xFF005BBB),
+      ),
+    );
   }
 
   void _removeActiveBanner() {
@@ -364,90 +408,170 @@ class _TopNoticeBanner extends StatelessWidget {
   final String message;
   final VoidCallback onView;
   final VoidCallback onDismiss;
+  final VoidCallback? onReply;
 
   const _TopNoticeBanner({
     required this.title,
     required this.message,
     required this.onView,
     required this.onDismiss,
+    this.onReply,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isProvider = AppRoleState.isProvider;
+    final surfaceColor = isProvider ? const Color(0xFF1E293B) : Colors.white;
+    final textColor = isProvider ? Colors.white : const Color(0xFF0F172A);
+    final subColor = isProvider
+        ? Colors.white.withValues(alpha: 0.7)
+        : const Color(0xFF64748B);
+    final accentColor = isProvider ? const Color(0xFF818CF8) : AppColors.primary;
+
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onView,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF252531),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 18,
-                offset: Offset(0, 8),
-              ),
-            ],
+      child: Container(
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isProvider
+                ? Colors.white.withValues(alpha: 0.1)
+                : AppColors.divider,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 2),
-                child: Icon(
-                  Icons.notifications_active_rounded,
-                  size: 18,
-                  color: Color(0xFFBCA7FF),
+          boxShadow: [
+            BoxShadow(
+              color: isProvider
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : const Color(0x1A0F172A),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+              onTap: onView,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        Icons.notifications_active_rounded,
+                        color: accentColor,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            message,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: subColor,
+                              fontSize: 13.5,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: onDismiss,
+                      icon: Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: subColor,
+                      ),
+                      constraints: const BoxConstraints.tightFor(
+                        width: 32,
+                        height: 32,
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  '$title: $message',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500,
-                    height: 1.3,
+            ),
+            Container(
+              height: 1,
+              color: isProvider
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : AppColors.divider.withValues(alpha: 0.5),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: onView,
+                    child: Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      child: Text(
+                        'View Details',
+                        style: TextStyle(
+                          color: accentColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: onView,
-                style: TextButton.styleFrom(
-                  minimumSize: const Size(40, 30),
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                ),
-                child: const Text(
-                  'View',
-                  style: TextStyle(
-                    color: Color(0xFFD5C5FF),
-                    fontWeight: FontWeight.w600,
+                if (onReply != null) ...[
+                  Container(
+                    width: 1,
+                    height: 24,
+                    color: isProvider
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : AppColors.divider.withValues(alpha: 0.5),
                   ),
-                ),
-              ),
-              IconButton(
-                onPressed: onDismiss,
-                icon: const Icon(
-                  Icons.close_rounded,
-                  size: 18,
-                  color: Color(0xFFCFCFDD),
-                ),
-                constraints: const BoxConstraints.tightFor(
-                  width: 26,
-                  height: 26,
-                ),
-                padding: EdgeInsets.zero,
-                splashRadius: 16,
-              ),
-            ],
-          ),
+                  Expanded(
+                    child: InkWell(
+                      onTap: onReply,
+                      child: Container(
+                        height: 48,
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Reply',
+                          style: TextStyle(
+                            color: accentColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
         ),
       ),
     );

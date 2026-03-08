@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/safe_image_provider.dart';
 import '../../domain/entities/provider.dart';
+import '../state/favorite_state.dart';
 
 class ProviderCard extends StatelessWidget {
   final ProviderItem provider;
@@ -14,14 +16,14 @@ class ProviderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
-        boxShadow: const [
+        border: Border.all(color: Theme.of(context).dividerColor),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x10000000),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.06),
             blurRadius: 10,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -36,9 +38,38 @@ class ProviderCard extends StatelessWidget {
                 color: provider.accentColor,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Image.asset(provider.imagePath, fit: BoxFit.cover),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: SafeImage(source: provider.imagePath, fit: BoxFit.cover),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: ValueListenableBuilder<Set<String>>(
+                      valueListenable: FavoriteState.favoriteUids,
+                      builder: (context, favorites, _) {
+                        final isFav = favorites.contains(provider.uid);
+                        return GestureDetector(
+                          onTap: () => FavoriteState.toggleFavorite(provider.uid),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                              color: isFav ? AppColors.danger : AppColors.textSecondary,
+                              size: 18,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -56,7 +87,7 @@ class ProviderCard extends StatelessWidget {
             provider.role,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).hintColor),
           ),
           const SizedBox(height: 8),
           SizedBox(
@@ -120,7 +151,7 @@ class ProviderCard extends StatelessWidget {
         (item) => Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF1FF),
+            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -128,7 +159,7 @@ class ProviderCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -140,13 +171,13 @@ class ProviderCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             '+$remaining',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: Theme.of(context).hintColor,
               fontWeight: FontWeight.w600,
             ),
           ),

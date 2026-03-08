@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/provider.dart';
 import '../../../domain/entities/provider_portal.dart';
 import '../../../domain/entities/provider_profile.dart';
@@ -385,16 +386,19 @@ class _ProviderSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundImage: avatarProvider,
-                child: avatarProvider == null
-                    ? const Icon(
-                        Icons.person,
-                        size: 16,
-                        color: AppColors.primary,
-                      )
-                    : null,
+              Hero(
+                tag: 'provider-${profile.provider.uid}',
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundImage: avatarProvider,
+                  child: avatarProvider == null
+                      ? const Icon(
+                          Icons.person,
+                          size: 16,
+                          color: AppColors.primary,
+                        )
+                      : null,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -451,16 +455,7 @@ class _ProviderSummaryCard extends StatelessWidget {
   }
 
   ImageProvider<Object>? _imageProviderFromPath(String raw) {
-    final value = raw.trim();
-    if (value.isEmpty) return null;
-    if (value.startsWith('assets/')) {
-      return AssetImage(value);
-    }
-    final uri = Uri.tryParse(value);
-    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
-      return NetworkImage(value);
-    }
-    return null;
+    return safeImageProvider(raw);
   }
 }
 
@@ -611,8 +606,8 @@ class _CompanyInfoSection extends StatelessWidget {
             itemBuilder: (context, index) {
               return ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  profile.projectImages[index],
+                child: SafeImage(
+                  source: profile.projectImages[index],
                   width: 120,
                   fit: BoxFit.cover,
                 ),
@@ -772,16 +767,7 @@ class _ReviewCard extends StatelessWidget {
   }
 
   ImageProvider<Object>? _imageProviderFromPath(String raw) {
-    final value = raw.trim();
-    if (value.isEmpty) return null;
-    if (value.startsWith('assets/')) {
-      return AssetImage(value);
-    }
-    final uri = Uri.tryParse(value);
-    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
-      return NetworkImage(value);
-    }
-    return null;
+    return safeImageProvider(raw);
   }
 
   String _reviewTimestamp(ProviderReview review) {

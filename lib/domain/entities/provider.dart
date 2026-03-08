@@ -11,6 +11,9 @@ class ProviderItem {
   final String providerType;
   final String companyName;
   final int maxWorkers;
+  final bool isVerified;
+  final double? latitude;
+  final double? longitude;
 
   const ProviderItem({
     this.uid = '',
@@ -23,6 +26,9 @@ class ProviderItem {
     this.providerType = 'individual',
     this.companyName = '',
     this.maxWorkers = 1,
+    this.isVerified = false,
+    this.latitude,
+    this.longitude,
   });
 
   bool get isCompany => providerType.trim().toLowerCase() == 'company';

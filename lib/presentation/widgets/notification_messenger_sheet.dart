@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/safe_image_provider.dart';
 import '../../domain/entities/chat.dart';
 import 'pressable_scale.dart';
 
@@ -180,6 +181,7 @@ class _NotificationMessengerSheetState
 
   Widget _buildConversation() {
     final thread = _activeThread!;
+    final status = _activityStatus(thread.updatedAt);
     return Column(
       children: [
         Padding(
@@ -192,7 +194,7 @@ class _NotificationMessengerSheetState
               ),
               CircleAvatar(
                 radius: 18,
-                backgroundImage: AssetImage(thread.avatarPath),
+                backgroundImage: safeImageProvider(thread.avatarPath),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -207,10 +209,10 @@ class _NotificationMessengerSheetState
                       ),
                     ),
                     Text(
-                      'Active now',
+                      status.label,
                       style: Theme.of(
                         context,
-                      ).textTheme.bodySmall?.copyWith(color: AppColors.success),
+                      ).textTheme.bodySmall?.copyWith(color: status.color),
                     ),
                   ],
                 ),
@@ -228,7 +230,10 @@ class _NotificationMessengerSheetState
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
             itemCount: _activeMessages.length,
             itemBuilder: (context, index) {
-              return _MessengerBubble(message: _activeMessages[index]);
+              return _MessengerBubble(
+                message: _activeMessages[index],
+                accentColor: widget.accentColor,
+              );
             },
           ),
         ),
@@ -312,6 +317,20 @@ class _NotificationMessengerSheetState
           ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     _activeThread = updatedThread;
   }
+
+  ({String label, Color color}) _activityStatus(DateTime updatedAt) {
+    final delta = DateTime.now().difference(updatedAt.toLocal());
+    if (delta.inMinutes < 5) {
+      return (label: 'Active now', color: AppColors.success);
+    }
+    if (delta.inHours < 1) {
+      return (label: 'Active ${delta.inMinutes}m ago', color: AppColors.danger);
+    }
+    if (delta.inDays < 1) {
+      return (label: 'Active ${delta.inHours}h ago', color: AppColors.danger);
+    }
+    return (label: 'Active ${delta.inDays}d ago', color: AppColors.danger);
+  }
 }
 
 class _MessengerThreadTile extends StatelessWidget {
@@ -327,25 +346,50 @@ class _MessengerThreadTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isActive = DateTime.now().difference(thread.updatedAt.toLocal()).inMinutes < 5;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.divider),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.divider.withValues(alpha: 0.8)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x080F172A),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundImage: AssetImage(thread.avatarPath),
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundImage: safeImageProvider(thread.avatarPath),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: isActive ? AppColors.success : AppColors.danger,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,15 +399,17 @@ class _MessengerThreadTile extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       thread.subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
+                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -377,24 +423,36 @@ class _MessengerThreadTile extends StatelessWidget {
                     _timeLabel(thread.updatedAt),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   if (thread.unreadCount > 0)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2,
+                        horizontal: 8,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: accentColor,
-                        borderRadius: BorderRadius.circular(99),
+                        gradient: LinearGradient(
+                          colors: [accentColor, accentColor.withValues(alpha: 0.85)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: accentColor.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Text(
                         '${thread.unreadCount}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 10,
                         ),
                       ),
                     ),
@@ -408,6 +466,11 @@ class _MessengerThreadTile extends StatelessWidget {
   }
 
   String _timeLabel(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inDays >= 1) {
+      return '${dateTime.day}/${dateTime.month}';
+    }
     final hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
     final minute = dateTime.minute.toString().padLeft(2, '0');
     final suffix = dateTime.hour >= 12 ? 'PM' : 'AM';
@@ -417,45 +480,94 @@ class _MessengerThreadTile extends StatelessWidget {
 
 class _MessengerBubble extends StatelessWidget {
   final ChatMessage message;
+  final Color accentColor;
 
-  const _MessengerBubble({required this.message});
+  const _MessengerBubble({required this.message, required this.accentColor});
 
   @override
   Widget build(BuildContext context) {
     final fromMe = message.fromMe;
     return Align(
       alignment: fromMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        constraints: const BoxConstraints(maxWidth: 280),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: fromMe ? const Color(0xFFDCEBFF) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: fromMe ? const Color(0xFFBDD7FF) : AppColors.divider,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
+      child: Column(
+        crossAxisAlignment:
+            fromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            constraints: const BoxConstraints(maxWidth: 280),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              gradient: fromMe ? LinearGradient(
+                colors: [accentColor, accentColor.withValues(alpha: 0.9)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ) : null,
+              color: fromMe ? null : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(fromMe ? 18 : 4),
+                bottomRight: Radius.circular(fromMe ? 4 : 18),
+              ),
+              boxShadow: [
+                if (fromMe)
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+              ],
+            ),
+            child: Text(
               message.text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: fromMe ? Colors.white : AppColors.textPrimary,
+                fontSize: 14.5,
+                height: 1.4,
+              ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              _timeLabel(message.sentAt),
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _timeLabel(message.sentAt),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 10,
+                  ),
+                ),
+                if (fromMe) ...[
+                  const SizedBox(width: 4),
+                  _buildStatusIcon(),
+                ],
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
+  }
+
+  Widget _buildStatusIcon() {
+    IconData icon;
+    Color color = AppColors.textSecondary;
+    switch (message.deliveryStatus) {
+      case ChatDeliveryStatus.sending:
+        icon = Icons.access_time_rounded;
+      case ChatDeliveryStatus.sent:
+        icon = Icons.check_rounded;
+      case ChatDeliveryStatus.delivered:
+        icon = Icons.done_all_rounded;
+      case ChatDeliveryStatus.seen:
+        icon = Icons.done_all_rounded;
+        color = accentColor;
+    }
+    return Icon(icon, size: 12, color: color);
   }
 
   String _timeLabel(DateTime time) {

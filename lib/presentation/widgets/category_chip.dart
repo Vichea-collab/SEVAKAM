@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/category_utils.dart';
 import '../../domain/entities/category.dart';
 import 'pressable_scale.dart';
 
@@ -13,43 +14,9 @@ class CategoryChip extends StatelessWidget {
     this.onTap,
   });
 
-  IconData _iconFor(String name) {
-    switch (name) {
-      case 'plumber':
-        return Icons.plumbing;
-      case 'electrician':
-        return Icons.bolt;
-      case 'cleaner':
-        return Icons.cleaning_services;
-      case 'appliance':
-        return Icons.ac_unit;
-      case 'maintenance':
-        return Icons.handyman;
-      default:
-        return Icons.handyman;
-    }
-  }
-
-  Color _accentFor(String name) {
-    switch (name) {
-      case 'plumber':
-        return const Color(0xFF0284C7);
-      case 'electrician':
-        return const Color(0xFFF59E0B);
-      case 'cleaner':
-        return const Color(0xFF10B981);
-      case 'appliance':
-        return const Color(0xFF6366F1);
-      case 'maintenance':
-        return const Color(0xFF8B5CF6);
-      default:
-        return AppColors.primary;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final accent = _accentFor(category.icon);
+    final accent = accentForCategory(category.name);
     return PressableScale(
       onTap: onTap,
       child: InkWell(
@@ -76,7 +43,11 @@ class CategoryChip extends StatelessWidget {
               CircleAvatar(
                 radius: 28,
                 backgroundColor: accent,
-                child: Icon(_iconFor(category.icon), color: Colors.white, size: 28),
+                child: Icon(
+                  iconForCategory(category.name),
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
               const SizedBox(height: 12),
               Text(

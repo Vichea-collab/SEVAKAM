@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/safe_image_provider.dart';
 import '../../domain/entities/service.dart';
 import 'pressable_scale.dart';
 
@@ -41,14 +42,16 @@ class ServiceCard extends StatelessWidget {
             children: [
               Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.asset(
-                      item.imagePath,
-                      height: 78,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
+                  Hero(
+                    tag: 'service-${item.title}',
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: SafeImage(
+                        source: item.imagePath,
+                        height: 78,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),                    ),
                   ),
                   Positioned(
                     left: 8,

@@ -16,4 +16,11 @@ class AppColors {
   static const Color success = Color(0xFF16A34A);
   static const Color warning = Color(0xFFF59E0B);
   static const Color danger = Color(0xFFEF4444);
+
+  // Dark Mode
+  static const Color bgDark = Color(0xFF0F172A);
+  static const Color surfaceDark = Color(0xFF1E293B);
+  static const Color textPrimaryDark = Color(0xFFF8FAFC);
+  static const Color textSecondaryDark = Color(0xFF94A3B8);
+  static const Color dividerDark = Color(0xFF334155);
 }
