@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
-import '../state/app_role_state.dart';
 
 enum AppBottomTab { home, notification, post, order, profile }
 
@@ -21,29 +20,14 @@ class AppBottomNav extends StatelessWidget {
     if (onTabChanged != null) {
       onTabChanged!(tab);
     } else {
-      switch (tab) {
-        case AppBottomTab.home:
-          Navigator.pushReplacementNamed(context, AppRoleState.homeRoute());
-          break;
-        case AppBottomTab.notification:
-          Navigator.pushReplacementNamed(context, AppRoleState.notificationRoute());
-          break;
-        case AppBottomTab.post:
-          Navigator.pushReplacementNamed(context, AppRoleState.postRoute());
-          break;
-        case AppBottomTab.order:
-          Navigator.pushReplacementNamed(context, AppRoleState.orderRoute());
-          break;
-        case AppBottomTab.profile:
-          Navigator.pushReplacementNamed(context, AppRoleState.profileRoute());
-          break;
-      }
+      Navigator.pushReplacementNamed(context, '/main');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    const accentColor = AppColors.primary;
 
     return SizedBox(
       height: 94 + bottomPadding,
@@ -73,23 +57,26 @@ class AppBottomNav extends StatelessWidget {
                     label: 'Home',
                     selected: _isCurrent(AppBottomTab.home),
                     onTap: () => _goTo(context, AppBottomTab.home),
+                    accentColor: accentColor,
                   ),
                 ),
                 Expanded(
                   child: _NavItem(
                     icon: Icons.notifications_none_rounded,
-                    label: 'Notification',
+                    label: 'Inbox',
                     selected: _isCurrent(AppBottomTab.notification),
                     onTap: () => _goTo(context, AppBottomTab.notification),
+                    accentColor: accentColor,
                   ),
                 ),
                 const SizedBox(width: 80),
                 Expanded(
                   child: _NavItem(
                     icon: Icons.list_alt_rounded,
-                    label: 'Order',
+                    label: 'Orders',
                     selected: _isCurrent(AppBottomTab.order),
                     onTap: () => _goTo(context, AppBottomTab.order),
+                    accentColor: accentColor,
                   ),
                 ),
                 Expanded(
@@ -98,6 +85,7 @@ class AppBottomNav extends StatelessWidget {
                     label: 'Profile',
                     selected: _isCurrent(AppBottomTab.profile),
                     onTap: () => _goTo(context, AppBottomTab.profile),
+                    accentColor: accentColor,
                   ),
                 ),
               ],
@@ -126,12 +114,15 @@ class AppBottomNav extends StatelessWidget {
                             colors: [Color(0xFF1E63FF), Color(0xFF3EA2FF)],
                           ),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: const [
+                          border: Border.all(
+                            color: Colors.white, 
+                            width: 3,
+                          ),
+                          boxShadow: [
                             BoxShadow(
-                              color: Color(0x4D1E63FF),
+                              color: accentColor.withValues(alpha: 0.3),
                               blurRadius: 18,
-                              offset: Offset(0, 9),
+                              offset: const Offset(0, 9),
                             ),
                           ],
                         ),
@@ -158,17 +149,22 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final Color accentColor;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
+    required this.accentColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.primary : AppColors.textSecondary;
+    final color = selected 
+        ? accentColor 
+        : AppColors.textSecondary;
+    
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: onTap,
@@ -182,7 +178,7 @@ class _NavItem extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 color: selected
-                    ? const Color(0x1F1E63FF)
+                    ? accentColor.withValues(alpha: 0.15)
                     : Colors.transparent,
                 shape: BoxShape.circle,
               ),

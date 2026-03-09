@@ -8,7 +8,6 @@ import '../../../core/utils/page_transition.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../state/order_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/pagination_bar.dart';
@@ -198,9 +197,6 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                         ],
                       ),
                     ),
-                  ),
-                  bottomNavigationBar: const AppBottomNav(
-                    current: AppBottomTab.order,
                   ),
                 );
               },

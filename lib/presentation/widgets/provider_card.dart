@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/utils/safe_image_provider.dart';
 import '../../domain/entities/provider.dart';
 import '../state/favorite_state.dart';
+import 'star_rating.dart';
 
 class ProviderCard extends StatelessWidget {
   final ProviderItem provider;
@@ -109,13 +110,16 @@ class ProviderCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.star, size: 14, color: Color(0xFFF59E0B)),
-              const SizedBox(width: 4),
+              StarRating(rating: provider.rating),
+              const SizedBox(width: 6),
               Text(
                 provider.rating.toStringAsFixed(1),
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFF59E0B),
+                    ),
               ),
               const Spacer(),
               SizedBox(

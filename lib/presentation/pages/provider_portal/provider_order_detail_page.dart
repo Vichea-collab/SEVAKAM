@@ -10,7 +10,6 @@ import '../../../core/utils/app_toast.dart';
 import '../../../data/network/backend_api_client.dart';
 import '../../../domain/entities/provider_portal.dart';
 import '../../state/order_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/order_status_timeline.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/primary_button.dart';
@@ -250,7 +249,6 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: AppBottomTab.order),
     );
   }
 

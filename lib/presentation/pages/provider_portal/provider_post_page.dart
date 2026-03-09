@@ -9,7 +9,6 @@ import '../../../domain/entities/provider_portal.dart';
 import '../../state/auth_state.dart';
 import '../../state/catalog_state.dart';
 import '../../state/provider_post_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/primary_button.dart';
 import 'provider_home_page.dart';
@@ -289,7 +288,6 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: AppBottomTab.post),
     );
   }
 

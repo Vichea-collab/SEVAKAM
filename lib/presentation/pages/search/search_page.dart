@@ -17,6 +17,7 @@ import '../../state/provider_post_state.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/category_chip.dart';
 import '../../widgets/pressable_scale.dart';
+import '../../widgets/star_rating.dart';
 import '../providers/provider_category_page.dart';
 import '../providers/provider_posts_page.dart';
 
@@ -340,20 +341,20 @@ class _SearchPageState extends State<SearchPage> {
                         ),
                         const SizedBox(height: 12),
                         ...visibleServices.map(
-                          (item) => _ServiceListTile(
-                            item: item,
-                            providerUid: _findMatchedProvider(
+                          (item) {
+                            final matchedProvider = _findMatchedProvider(
                               item.category,
                               item.title,
                               query,
-                            )?.uid,
-                            providerName: _findMatchedProvider(
-                              item.category,
-                              item.title,
-                              query,
-                            )?.name,
-                            onTap: () => _openServiceResult(item, query),
-                          ),
+                            );
+                            return _ServiceListTile(
+                              item: item,
+                              providerUid: matchedProvider?.uid,
+                              providerName: matchedProvider?.name,
+                              providerRating: matchedProvider?.rating,
+                              onTap: () => _openServiceResult(item, query),
+                            );
+                          },
                         ),
                         if (filteredPopular.length > _visibleCount)
                           Padding(
@@ -846,17 +847,20 @@ class _ServiceListTile extends StatelessWidget {
   final ServiceItem item;
   final String? providerUid;
   final String? providerName;
+  final double? providerRating;
   final VoidCallback onTap;
 
   const _ServiceListTile({
     required this.item,
     this.providerUid,
     this.providerName,
+    this.providerRating,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final displayRating = providerRating ?? item.rating;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
@@ -909,16 +913,19 @@ class _ServiceListTile extends StatelessWidget {
                               );
                             },
                           ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.star,
-                          size: 14,
-                          color: Color(0xFFF59E0B),
-                        ),
-                        const SizedBox(width: 4),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        StarRating(rating: displayRating),
+                        const SizedBox(width: 6),
                         Text(
-                          item.rating.toStringAsFixed(1),
-                          style: Theme.of(context).textTheme.bodyMedium,
+                          displayRating.toStringAsFixed(1),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFF59E0B),
+                          ),
                         ),
                       ],
                     ),
@@ -1135,3 +1142,4 @@ class _SortOptionTile extends StatelessWidget {
     );
   }
 }
+

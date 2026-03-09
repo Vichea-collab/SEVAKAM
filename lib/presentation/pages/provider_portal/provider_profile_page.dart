@@ -10,7 +10,6 @@ import '../../state/auth_state.dart';
 import '../../state/order_state.dart';
 import '../../state/profile_image_state.dart';
 import '../../state/profile_settings_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/pressable_scale.dart';
@@ -303,7 +302,6 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
           ],
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: AppBottomTab.profile),
     );
   }
 

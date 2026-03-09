@@ -14,7 +14,6 @@ import '../../state/chat_state.dart';
 import '../../state/finder_post_state.dart';
 import '../../state/profile_image_state.dart';
 import '../../state/profile_settings_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/pagination_bar.dart';
 import '../../widgets/pressable_scale.dart';
@@ -160,9 +159,6 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                         ],
                       ),
                     ),
-                  ),
-                  bottomNavigationBar: const AppBottomNav(
-                    current: AppBottomTab.home,
                   ),
                 );
               },

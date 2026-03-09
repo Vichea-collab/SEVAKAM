@@ -6,7 +6,6 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../domain/entities/order.dart';
 import '../../state/order_state.dart';
 import '../../state/user_notification_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/app_top_bar.dart';
@@ -304,9 +303,6 @@ class _NotificationsPageState extends State<NotificationsPage>
                             ],
                           ),
                         ),
-                      ),
-                      bottomNavigationBar: const AppBottomNav(
-                        current: AppBottomTab.notification,
                       ),
                     );
                   },

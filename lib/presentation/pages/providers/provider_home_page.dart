@@ -8,7 +8,6 @@ import '../../../core/utils/page_transition.dart';
 import '../../../domain/entities/provider.dart';
 import '../../../domain/entities/provider_portal.dart';
 import '../../state/provider_post_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/provider_card.dart';
 import '../../widgets/section_title.dart';
@@ -225,9 +224,6 @@ class _ProviderHomePageState extends State<ProviderHomePage> {
                         ],
                       ),
                     ),
-                  ),
-                  bottomNavigationBar: const AppBottomNav(
-                    current: AppBottomTab.home,
                   ),
                 );
               },

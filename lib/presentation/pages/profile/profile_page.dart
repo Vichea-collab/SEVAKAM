@@ -7,7 +7,6 @@ import '../../state/app_state.dart';
 import '../../state/auth_state.dart';
 import '../../state/profile_image_state.dart';
 import '../../state/profile_settings_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/pressable_scale.dart';
@@ -228,7 +227,6 @@ class ProfilePage extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: AppBottomTab.profile),
     );
   }
 

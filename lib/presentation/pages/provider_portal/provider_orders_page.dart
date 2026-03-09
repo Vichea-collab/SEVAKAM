@@ -8,7 +8,6 @@ import '../../../data/network/backend_api_client.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../../domain/entities/provider_portal.dart';
 import '../../state/order_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/pagination_bar.dart';
@@ -215,9 +214,6 @@ class _ProviderOrdersPageState extends State<ProviderOrdersPage>
                         ],
                       ),
                     ),
-                  ),
-                  bottomNavigationBar: const AppBottomNav(
-                    current: AppBottomTab.order,
                   ),
                 );
               },

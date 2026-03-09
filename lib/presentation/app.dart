@@ -449,8 +449,7 @@ class _GlobalNotificationHostState extends State<_GlobalNotificationHost> {
         title: 'Messenger',
         subtitle: 'Recent conversations',
         threads: ChatState.threads.value,
-        accentColor:
-            AppRoleState.isProvider ? const Color(0xFF818CF8) : const Color(0xFF005BBB),
+        accentColor: AppColors.primary,
       ),
     );
   }
@@ -485,13 +484,10 @@ class _TopNoticeBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isProvider = AppRoleState.isProvider;
-    final surfaceColor = isProvider ? const Color(0xFF1E293B) : Colors.white;
-    final textColor = isProvider ? Colors.white : const Color(0xFF0F172A);
-    final subColor = isProvider
-        ? Colors.white.withValues(alpha: 0.7)
-        : const Color(0xFF64748B);
-    final accentColor = isProvider ? const Color(0xFF818CF8) : AppColors.primary;
+    const surfaceColor = Colors.white;
+    const textColor = Color(0xFF0F172A);
+    const subColor = Color(0xFF64748B);
+    const accentColor = AppColors.primary;
 
     return Material(
       color: Colors.transparent,
@@ -500,17 +496,13 @@ class _TopNoticeBanner extends StatelessWidget {
           color: surfaceColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isProvider
-                ? Colors.white.withValues(alpha: 0.1)
-                : AppColors.divider,
+            color: AppColors.divider,
           ),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: isProvider
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : const Color(0x1A0F172A),
+              color: Color(0x1A0F172A),
               blurRadius: 24,
-              offset: const Offset(0, 12),
+              offset: Offset(0, 12),
             ),
           ],
         ),
@@ -532,7 +524,7 @@ class _TopNoticeBanner extends StatelessWidget {
                         color: accentColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.notifications_active_rounded,
                         color: accentColor,
                         size: 22,
@@ -545,7 +537,7 @@ class _TopNoticeBanner extends StatelessWidget {
                         children: [
                           Text(
                             title,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: textColor,
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -557,7 +549,7 @@ class _TopNoticeBanner extends StatelessWidget {
                             message,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: subColor,
                               fontSize: 13.5,
                               height: 1.4,
@@ -568,7 +560,7 @@ class _TopNoticeBanner extends StatelessWidget {
                     ),
                     IconButton(
                       onPressed: onDismiss,
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.close_rounded,
                         size: 20,
                         color: subColor,
@@ -585,9 +577,7 @@ class _TopNoticeBanner extends StatelessWidget {
             ),
             Container(
               height: 1,
-              color: isProvider
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : AppColors.divider.withValues(alpha: 0.5),
+              color: AppColors.divider.withValues(alpha: 0.5),
             ),
             Row(
               children: [
@@ -597,7 +587,7 @@ class _TopNoticeBanner extends StatelessWidget {
                     child: Container(
                       height: 48,
                       alignment: Alignment.center,
-                      child: Text(
+                      child: const Text(
                         'View Details',
                         style: TextStyle(
                           color: accentColor,
@@ -612,9 +602,7 @@ class _TopNoticeBanner extends StatelessWidget {
                   Container(
                     width: 1,
                     height: 24,
-                    color: isProvider
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : AppColors.divider.withValues(alpha: 0.5),
+                    color: AppColors.divider.withValues(alpha: 0.5),
                   ),
                   Expanded(
                     child: InkWell(
@@ -622,7 +610,7 @@ class _TopNoticeBanner extends StatelessWidget {
                       child: Container(
                         height: 48,
                         alignment: Alignment.center,
-                        child: Text(
+                        child: const Text(
                           'Reply',
                           style: TextStyle(
                             color: accentColor,

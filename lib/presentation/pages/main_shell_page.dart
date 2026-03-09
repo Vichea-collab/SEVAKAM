@@ -28,16 +28,18 @@ class _MainShellPageState extends State<MainShellPage> {
   @override
   void initState() {
     super.initState();
-    activeTab.addListener(_onTabChanged);
+    activeTab.addListener(_onStateChanged);
+    AppRoleState.role.addListener(_onStateChanged);
   }
 
   @override
   void dispose() {
-    activeTab.removeListener(_onTabChanged);
+    activeTab.removeListener(_onStateChanged);
+    AppRoleState.role.removeListener(_onStateChanged);
     super.dispose();
   }
 
-  void _onTabChanged() {
+  void _onStateChanged() {
     if (mounted) setState(() {});
   }
 
@@ -63,6 +65,7 @@ class _MainShellPageState extends State<MainShellPage> {
 
     return Scaffold(
       body: IndexedStack(
+        key: ValueKey('main_shell_${isProvider ? 'provider' : 'finder'}'),
         index: activeTab.value.index,
         children: children,
       ),

@@ -11,7 +11,6 @@ import '../../state/auth_state.dart';
 import '../../state/catalog_state.dart';
 import '../../state/finder_post_state.dart';
 import '../../state/profile_settings_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/primary_button.dart';
 
@@ -278,7 +277,6 @@ class _ClientPostPageState extends State<ClientPostPage> {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: AppBottomTab.post),
     );
   }
 

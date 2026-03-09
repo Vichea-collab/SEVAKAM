@@ -14,7 +14,6 @@ import '../../state/chat_state.dart';
 import '../../state/profile_image_state.dart';
 import '../../state/profile_settings_state.dart';
 import '../../state/provider_post_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 
 import '../../widgets/category_chip.dart';
 import '../../widgets/pressable_scale.dart';
@@ -230,7 +229,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: AppBottomTab.home),
     );
   }
 }

@@ -7,8 +7,6 @@ import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/chat.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../state/chat_state.dart';
-import '../../state/app_role_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/pagination_bar.dart';
@@ -156,9 +154,6 @@ class _ChatListPageState extends State<ChatListPage> {
                       ],
                     ),
                   ),
-                  bottomNavigationBar: const AppBottomNav(
-                    current: AppBottomTab.home,
-                  ),
                 );
               },
             );
@@ -233,7 +228,7 @@ class _ChatThreadTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasUnread = thread.unreadCount > 0;
-    final accentColor = AppRoleState.isProvider ? const Color(0xFF818CF8) : AppColors.primary;
+    const accentColor = AppColors.primary;
     final isActive = DateTime.now().difference(thread.lastActiveAt.toLocal()).inMinutes < 5;
 
     void openConversation() {

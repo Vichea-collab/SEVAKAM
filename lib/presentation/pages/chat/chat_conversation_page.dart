@@ -925,8 +925,7 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fromMe = message.fromMe;
-    final accentColor =
-        AppRoleState.isProvider ? const Color(0xFF818CF8) : AppColors.primary;
+    const accentColor = AppColors.primary;
     final bubbleColor = fromMe ? accentColor : Colors.white;
     final textColor = fromMe ? Colors.white : const Color(0xFF0F172A);
 
@@ -1283,7 +1282,7 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = AppRoleState.isProvider ? const Color(0xFF818CF8) : AppColors.primary;
+    const accentColor = AppColors.primary;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,

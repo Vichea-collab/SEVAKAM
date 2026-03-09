@@ -3,7 +3,6 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/category_utils.dart';
 import '../../state/favorite_state.dart';
 import '../../state/provider_post_state.dart';
-import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/provider_card.dart';
@@ -92,7 +91,6 @@ class FavoritesPage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: AppBottomTab.home),
     );
   }
 
