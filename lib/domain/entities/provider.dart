@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/category_utils.dart';
+import 'provider_portal.dart';
 
 class ProviderItem {
   final String uid;
@@ -8,9 +10,6 @@ class ProviderItem {
   final String imagePath;
   final Color accentColor;
   final List<String> services;
-  final String providerType;
-  final String companyName;
-  final int maxWorkers;
   final bool isVerified;
   final double? latitude;
   final double? longitude;
@@ -24,18 +23,25 @@ class ProviderItem {
     required this.imagePath,
     required this.accentColor,
     this.services = const <String>[],
-    this.providerType = 'individual',
-    this.companyName = '',
-    this.maxWorkers = 1,
     this.isVerified = false,
     this.latitude,
     this.longitude,
     this.blockedDates = const [],
   });
 
-  bool get isCompany => providerType.trim().toLowerCase() == 'company';
-
-  int get safeMaxWorkers => maxWorkers < 1 ? 1 : maxWorkers;
+  factory ProviderItem.fromPost(ProviderPostItem post) {
+    final role = post.category.trim().isEmpty ? 'Cleaner' : post.category;
+    return ProviderItem(
+      uid: post.providerUid,
+      name: post.providerName.trim().isEmpty ? 'Service Provider' : post.providerName,
+      role: role,
+      rating: post.rating,
+      imagePath: post.avatarPath,
+      accentColor: accentForCategory(role),
+      services: post.serviceList,
+      blockedDates: post.blockedDates,
+    );
+  }
 }
 
 class ProviderSection {

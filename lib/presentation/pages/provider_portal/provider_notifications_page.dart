@@ -1,17 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../domain/entities/provider_portal.dart';
-import '../../state/order_state.dart';
-import '../../state/user_notification_state.dart';
-import '../../widgets/app_dialog.dart';
-import '../../widgets/app_state_panel.dart';
-import '../../widgets/app_top_bar.dart';
-import '../../widgets/pressable_scale.dart';
-import '../chat/chat_list_page.dart';
-import 'provider_home_page.dart';
+import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/domain/entities/provider_portal.dart';
+import 'package:servicefinder/presentation/state/order_state.dart';
+import 'package:servicefinder/presentation/state/user_notification_state.dart';
+import 'package:servicefinder/presentation/widgets/app_dialog.dart';
+import 'package:servicefinder/presentation/widgets/app_state_panel.dart';
+import 'package:servicefinder/presentation/widgets/app_top_bar.dart';
+import 'package:servicefinder/presentation/widgets/pressable_scale.dart';
+import 'package:servicefinder/presentation/pages/chat/chat_list_page.dart';
+import 'package:servicefinder/presentation/pages/main_shell_page.dart';
+import 'package:servicefinder/presentation/widgets/app_bottom_nav.dart';
 import 'provider_orders_page.dart';
 
 class ProviderNotificationsPage extends StatefulWidget {
@@ -169,10 +170,7 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage>
                               AppTopBar(
                                 title: 'Notifications',
                                 showBack: true,
-                                onBack: () => Navigator.pushReplacementNamed(
-                                  context,
-                                  ProviderPortalHomePage.routeName,
-                                ),
+                                onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
                                 actions: [
                                   IconButton(
                                     onPressed: () => _openMessenger(context),

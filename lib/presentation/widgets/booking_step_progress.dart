@@ -14,7 +14,7 @@ extension BookingFlowStepX on BookingFlowStep {
       case BookingFlowStep.serviceFields:
         return 'Service';
       case BookingFlowStep.payment:
-        return 'Payment';
+        return 'Summary';
       case BookingFlowStep.confirmation:
         return 'Done';
     }

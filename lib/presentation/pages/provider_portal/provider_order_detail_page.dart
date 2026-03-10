@@ -4,15 +4,15 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/utils/app_toast.dart';
-import '../../../data/network/backend_api_client.dart';
-import '../../../domain/entities/provider_portal.dart';
-import '../../state/order_state.dart';
-import '../../widgets/order_status_timeline.dart';
-import '../../widgets/app_top_bar.dart';
-import '../../widgets/primary_button.dart';
+import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/utils/app_toast.dart';
+import 'package:servicefinder/data/network/backend_api_client.dart';
+import 'package:servicefinder/domain/entities/provider_portal.dart';
+import 'package:servicefinder/presentation/state/order_state.dart';
+import 'package:servicefinder/presentation/widgets/order_status_timeline.dart';
+import 'package:servicefinder/presentation/widgets/app_top_bar.dart';
+import 'package:servicefinder/presentation/widgets/primary_button.dart';
 
 class ProviderOrderDetailPage extends StatefulWidget {
   final ProviderOrderItem order;
@@ -83,7 +83,7 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppTopBar(
-                title: 'Orders Information',
+                title: 'Order Information',
                 subtitle: _order.address,
                 onBack: () => Navigator.pop(context, _order),
               ),
@@ -172,11 +172,6 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
                       value: _order.scheduleDate,
                     ),
                     _InfoRow(label: 'Time slot', value: _order.scheduleTime),
-                    _InfoRow(
-                      label: 'Duration',
-                      value: '${_order.hours} hour(s)',
-                    ),
-                    _InfoRow(label: 'Workers', value: '${_order.workers}'),
                     if (_order.homeType.trim().isNotEmpty)
                       _InfoRow(label: 'Home type', value: _order.homeType),
                     if (_order.additionalService.trim().isNotEmpty)
@@ -189,11 +184,6 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
                       label: 'Address link',
                       value: _resolvedAddressLink(_order),
                     ),
-                    if (_order.paymentMethod.trim().isNotEmpty)
-                      _InfoRow(
-                        label: 'Payment method',
-                        value: _paymentMethodLabel(_order.paymentMethod),
-                      ),
                     if (_order.finderNote.trim().isNotEmpty)
                       _InfoRow(label: 'Finder note', value: _order.finderNote),
                     if (_hasVisibleServiceInputs(_order.serviceInputs)) ...[
@@ -208,22 +198,6 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
                       const SizedBox(height: 8),
                       ..._buildServiceInputWidgets(_order.serviceInputs),
                     ],
-                    const Divider(height: 22),
-                    _AmountRow(label: 'Sub Total', amount: _order.subtotal),
-                    _AmountRow(
-                      label: 'Processing fee',
-                      amount: _order.processingFee,
-                    ),
-                    _AmountRow(
-                      label: 'Promo discount',
-                      amount: -_order.discount,
-                    ),
-                    const SizedBox(height: 4),
-                    _AmountRow(
-                      label: 'Booking Cost',
-                      amount: _order.total,
-                      bold: true,
-                    ),
                   ],
                 ),
               ),
@@ -231,11 +205,10 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
               _ActionPanel(
                 status: _order.state,
                 busy: _updatingStatus,
-                onAccept: () => _updateStatus(ProviderOrderState.onTheWay),
+                onAccept: () => _updateStatus(ProviderOrderState.booked),
                 onDecline: () => _updateStatus(ProviderOrderState.declined),
+                onOnTheWay: () => _updateStatus(ProviderOrderState.onTheWay),
                 onMarkStarted: () => _updateStatus(ProviderOrderState.started),
-                onMarkCompleted: () =>
-                    _updateStatus(ProviderOrderState.completed),
               ),
               const SizedBox(height: 10),
               PrimaryButton(
@@ -291,25 +264,6 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
     if (direct.isNotEmpty) return direct;
     final query = Uri.encodeComponent(order.address);
     return 'https://maps.google.com/?q=$query';
-  }
-
-  String _paymentMethodLabel(String raw) {
-    final value = raw.trim().toLowerCase();
-    switch (value) {
-      case 'bank_account':
-      case 'bank account':
-        return 'Credit Card';
-      case 'credit_card':
-      case 'credit card':
-        return 'Credit Card';
-      case 'cash':
-        return 'Cash';
-      case 'khqr':
-      case 'bakong khqr':
-        return 'Bakong KHQR';
-      default:
-        return raw.trim();
-    }
   }
 
   bool _hasVisibleServiceInputs(Map<String, String> inputs) {
@@ -399,7 +353,7 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
     if (timeline.onTheWayAt != null) {
       entries.add(
         StatusTimelineEntry(
-          label: 'Booked',
+          label: 'On the way',
           at: timeline.onTheWayAt!,
           icon: Icons.delivery_dining_rounded,
           color: AppColors.primary,
@@ -455,16 +409,16 @@ class _ActionPanel extends StatelessWidget {
   final bool busy;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
+  final VoidCallback onOnTheWay;
   final VoidCallback onMarkStarted;
-  final VoidCallback onMarkCompleted;
 
   const _ActionPanel({
     required this.status,
     required this.busy,
     required this.onAccept,
     required this.onDecline,
+    required this.onOnTheWay,
     required this.onMarkStarted,
-    required this.onMarkCompleted,
   });
 
   @override
@@ -540,6 +494,13 @@ class _ActionPanel extends StatelessWidget {
                 ),
               ],
             ),
+          ] else if (status == ProviderOrderState.booked) ...[
+            PrimaryButton(
+              label: 'On The Way',
+              icon: Icons.delivery_dining_rounded,
+              tone: PrimaryButtonTone.primary,
+              onPressed: busy ? null : onOnTheWay,
+            ),
           ] else if (status == ProviderOrderState.onTheWay) ...[
             PrimaryButton(
               label: 'Mark Started',
@@ -599,7 +560,7 @@ class _StatusStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final steps = ['Booked', 'Started', 'Completed'];
+    final steps = ['Booked', 'On Way', 'Started', 'Completed'];
     final index = _statusIndex(status);
     return Row(
       children: List.generate(steps.length, (i) {
@@ -671,15 +632,17 @@ class _StatusStepper extends StatelessWidget {
   int _statusIndex(ProviderOrderState value) {
     switch (value) {
       case ProviderOrderState.incoming:
+        return -1;
+      case ProviderOrderState.booked:
         return 0;
       case ProviderOrderState.onTheWay:
-        return 0;
-      case ProviderOrderState.started:
         return 1;
-      case ProviderOrderState.completed:
+      case ProviderOrderState.started:
         return 2;
+      case ProviderOrderState.completed:
+        return 3;
       case ProviderOrderState.declined:
-        return 0;
+        return -1;
     }
   }
 }
@@ -698,8 +661,14 @@ class _ProviderStatusBanner extends StatelessWidget {
         const Color(0xFFFFF4E5),
         const Color(0xFFD97706),
       ),
+      ProviderOrderState.booked => (
+        'Booking accepted and confirmed',
+        Icons.fact_check_rounded,
+        const Color(0xFFEAF1FF),
+        AppColors.primary,
+      ),
       ProviderOrderState.onTheWay => (
-        'Booking accepted and kept as booked',
+        'You are currently on the way',
         Icons.delivery_dining_rounded,
         const Color(0xFFEAF1FF),
         AppColors.primary,
@@ -758,7 +727,8 @@ class _ProviderStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
       ProviderOrderState.incoming => ('Incoming', const Color(0xFFD97706)),
-      ProviderOrderState.onTheWay => ('Booked', const Color(0xFFD97706)),
+      ProviderOrderState.booked => ('Booked', AppColors.primary),
+      ProviderOrderState.onTheWay => ('On the way', AppColors.primary),
       ProviderOrderState.started => ('Started', const Color(0xFF7C6EF2)),
       ProviderOrderState.completed => ('Completed', AppColors.success),
       ProviderOrderState.declined => ('Declined', AppColors.danger),
@@ -866,38 +836,6 @@ class _ServiceInputImageRow extends StatelessWidget {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AmountRow extends StatelessWidget {
-  final String label;
-  final double amount;
-  final bool bold;
-
-  const _AmountRow({
-    required this.label,
-    required this.amount,
-    this.bold = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          const Spacer(),
-          Text(
-            '\$${amount.toStringAsFixed(0)}',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: bold ? AppColors.primary : AppColors.textPrimary,
-              fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
         ],
       ),
     );

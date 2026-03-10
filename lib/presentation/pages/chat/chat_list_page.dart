@@ -263,7 +263,17 @@ class _ChatThreadTile extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundImage: safeImageProvider(thread.avatarPath),
+                    backgroundColor: AppColors.background,
+                    backgroundImage: thread.avatarPath.trim().isNotEmpty
+                        ? safeImageProvider(thread.avatarPath)
+                        : null,
+                    child: thread.avatarPath.trim().isEmpty
+                        ? const Icon(
+                            Icons.person_rounded,
+                            size: 32,
+                            color: AppColors.primary,
+                          )
+                        : null,
                   ),
                   Positioned(
                     right: 0,

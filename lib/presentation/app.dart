@@ -31,7 +31,6 @@ import 'pages/profile/notification_page.dart';
 import 'pages/profile/payment_page.dart';
 import 'pages/profile/help_support_page.dart';
 import 'pages/provider_portal/provider_home_page.dart';
-import 'pages/provider_portal/provider_finder_search_page.dart';
 import 'pages/provider_portal/provider_notifications_page.dart';
 import 'pages/provider_portal/provider_post_page.dart';
 import 'pages/provider_portal/provider_orders_page.dart';
@@ -133,7 +132,7 @@ class _ServiceFinderAppState extends State<ServiceFinderApp> {
                       name: 'Service Provider',
                       role: 'Cleaner',
                       rating: 0,
-                      imagePath: 'assets/images/profile.jpg',
+                      imagePath: '',
                       accentColor: Color(0xFFEAF1FF),
                     ),
                   ),
@@ -156,9 +155,6 @@ class _ServiceFinderAppState extends State<ServiceFinderApp> {
                 break;
               case ProviderPortalHomePage.routeName:
                 page = const ProviderPortalHomePage();
-                break;
-              case ProviderFinderSearchPage.routeName:
-                page = const ProviderFinderSearchPage();
                 break;
               case ProviderNotificationsPage.routeName:
                 page = const ProviderNotificationsPage();

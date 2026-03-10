@@ -101,7 +101,7 @@ class FinderPostRemoteDataSource {
           : (services.isNotEmpty ? services.first : ''),
       services: services,
       location: (row['location'] ?? '').toString(),
-      avatarPath: 'assets/images/profile.jpg',
+      avatarPath: '',
       preferredDate: _parseDate(row['preferredDate']),
       createdAt: createdAt,
       updatedAt: updatedAt,

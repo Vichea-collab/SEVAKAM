@@ -2,16 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/utils/app_toast.dart';
-import '../../../domain/entities/provider_portal.dart';
-import '../../state/auth_state.dart';
-import '../../state/catalog_state.dart';
-import '../../state/provider_post_state.dart';
-import '../../widgets/app_top_bar.dart';
-import '../../widgets/primary_button.dart';
-import 'provider_home_page.dart';
+import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/utils/app_toast.dart';
+import 'package:servicefinder/domain/entities/provider_portal.dart';
+import 'package:servicefinder/presentation/state/auth_state.dart';
+import 'package:servicefinder/presentation/state/catalog_state.dart';
+import 'package:servicefinder/presentation/state/provider_post_state.dart';
+import 'package:servicefinder/presentation/widgets/app_top_bar.dart';
+import 'package:servicefinder/presentation/widgets/primary_button.dart';
+import 'package:servicefinder/presentation/pages/main_shell_page.dart';
+import 'package:servicefinder/presentation/widgets/app_bottom_nav.dart';
 
 class ProviderPostPage extends StatefulWidget {
   static const String routeName = '/provider/post';
@@ -25,7 +26,6 @@ class ProviderPostPage extends StatefulWidget {
 class _ProviderPostPageState extends State<ProviderPostPage> {
   late String _selectedCategory;
   final Set<String> _selectedServices = <String>{};
-  final _priceController = TextEditingController(text: '12');
   final _areaController = TextEditingController(text: 'Phnom Penh, Cambodia');
   final _detailsController = TextEditingController();
   String? _editingPostId;
@@ -64,7 +64,6 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
   void dispose() {
     CatalogState.categories.removeListener(_syncSelectionFromCatalog);
     CatalogState.services.removeListener(_syncSelectionFromCatalog);
-    _priceController.dispose();
     _areaController.dispose();
     _detailsController.dispose();
     super.dispose();
@@ -136,10 +135,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
               AppTopBar(
                 title: 'Post',
                 showBack: true,
-                onBack: () => Navigator.pushReplacementNamed(
-                  context,
-                  ProviderPortalHomePage.routeName,
-                ),
+                onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
                 actions: [
                   TextButton.icon(
                     onPressed: _openManageSheet,
@@ -194,41 +190,6 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                               _PickerField(
                                 label: _selectedServiceLabel,
                                 onTap: _pickService,
-                              ),
-                              const SizedBox(height: 8),
-                              _FieldLabel(label: 'Rate per hour (USD)*'),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _priceController,
-                                      keyboardType: TextInputType.number,
-                                      decoration: _fieldDecoration(
-                                        hintText: 'Enter your hourly rate',
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: AppColors.divider,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      '/hour',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge,
-                                    ),
-                                  ),
-                                ],
                               ),
                               const SizedBox(height: 8),
                               _FieldLabel(label: 'Service area*'),
@@ -292,10 +253,8 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
   }
 
   Future<void> _submit() async {
-    final price = double.tryParse(_priceController.text.trim()) ?? 0;
     if (_selectedCategory.isEmpty ||
         _selectedServices.isEmpty ||
-        price <= 0 ||
         _areaController.text.trim().isEmpty ||
         _detailsController.text.trim().isEmpty) {
       AppToast.error(context, 'Please complete all fields.');
@@ -311,7 +270,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
           services: services,
           area: _areaController.text.trim(),
           details: _detailsController.text.trim(),
-          ratePerHour: price,
+          ratePerHour: 0, // No price required in UI anymore
           availableNow: _availableNow,
         );
       } else {
@@ -321,7 +280,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
           services: services,
           area: _areaController.text.trim(),
           details: _detailsController.text.trim(),
-          ratePerHour: price,
+          ratePerHour: 0, // No price required in UI anymore
           availableNow: _availableNow,
         );
       }
@@ -330,7 +289,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
       _detailsController.clear();
       final successMessage = editingPostId == null
           ? (services.length == 1
-                ? 'Your offer for ${services.first} is now live at \$${price.toStringAsFixed(0)}/hour.'
+                ? 'Your offer for ${services.first} is now live.'
                 : 'Your offer for ${services.length} services is now live.')
           : 'Your provider post was updated successfully.';
       await _showPostSubmitResultSheet(
@@ -340,7 +299,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
         actionLabel: 'Go to Home',
       );
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, ProviderPortalHomePage.routeName);
+      MainShellPage.activeTab.value = AppBottomTab.home;
     } catch (error) {
       if (!mounted) return;
       await _showPostSubmitResultSheet(
@@ -479,7 +438,6 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
       _selectedServices
         ..clear()
         ..addAll(post.serviceList.toSet());
-      _priceController.text = post.ratePerHour.toStringAsFixed(0);
       _areaController.text = post.area;
       _detailsController.text = post.details;
       _availableNow = post.availableNow;

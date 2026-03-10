@@ -23,13 +23,10 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<BookingPriceQuote> quoteFinderOrder(BookingDraft draft) async {
     final payload = <String, dynamic>{
       'providerUid': draft.provider.uid.trim(),
-      'providerType': draft.provider.providerType,
-      'providerCompanyName': draft.provider.companyName,
-      'providerMaxWorkers': draft.provider.safeMaxWorkers,
       'categoryName': draft.categoryName,
       'serviceName': draft.serviceName,
       'hours': draft.hours,
-      'workers': draft.workers,
+      'workers': 1,
       'promoCode': draft.promoCode.trim(),
       'unitPricePerHour': draft.unitPricePerHour,
     };
@@ -54,9 +51,6 @@ class OrderRepositoryImpl implements OrderRepository {
       'providerRole': draft.provider.role,
       'providerRating': draft.provider.rating,
       'providerImagePath': draft.provider.imagePath,
-      'providerType': draft.provider.providerType,
-      'providerCompanyName': draft.provider.companyName,
-      'providerMaxWorkers': draft.provider.safeMaxWorkers,
       'categoryName': draft.categoryName,
       'serviceName': draft.serviceName,
       'addressLabel': draft.address?.label ?? '',
@@ -66,7 +60,7 @@ class OrderRepositoryImpl implements OrderRepository {
       'preferredDate': draft.preferredDate.toIso8601String(),
       'preferredTimeSlot': draft.preferredTimeSlot,
       'hours': draft.hours,
-      'workers': draft.workers,
+      'workers': 1,
       'homeType': _homeTypeToStorage(draft.homeType),
       'paymentMethod': _paymentMethodToStorage(draft.paymentMethod),
       'additionalService': draft.additionalService,
@@ -291,12 +285,6 @@ class OrderRepositoryImpl implements OrderRepository {
       rating: _toDouble(row['providerRating'], fallback: 4.0),
       imagePath: _safeAssetPath(row['providerImagePath']),
       accentColor: const Color(0xFFEAF1FF),
-      providerType: _providerType((row['providerType'] ?? '').toString()),
-      companyName: (row['providerCompanyName'] ?? '').toString(),
-      maxWorkers: _providerMaxWorkers(
-        row['providerMaxWorkers'],
-        _providerType((row['providerType'] ?? '').toString()),
-      ),
       blockedDates: (row['providerBlockedDates'] as List? ?? [])
           .map((e) => DateTime.tryParse(e.toString()))
           .where((e) => e != null)
@@ -384,7 +372,7 @@ class OrderRepositoryImpl implements OrderRepository {
   String _safeAssetPath(dynamic value) {
     final path = (value ?? '').toString().trim();
     if (path.startsWith('assets/')) return path;
-    return 'assets/images/profile.jpg';
+    return '';
   }
 
   HomeAddress _toHomeAddress(Map<String, dynamic> row) {
@@ -488,21 +476,6 @@ class OrderRepositoryImpl implements OrderRepository {
     return '$first$last'.toUpperCase();
   }
 
-  String _providerType(String value) {
-    final normalized = value.trim().toLowerCase();
-    if (normalized == 'company') return 'company';
-    return 'individual';
-  }
-
-  int _providerMaxWorkers(dynamic value, String providerType) {
-    if (providerType != 'company') return 1;
-    if (value is int && value > 0) return value;
-    if (value is num && value > 0) return value.toInt();
-    final parsed = int.tryParse((value ?? '').toString().trim());
-    if (parsed != null && parsed > 0) return parsed;
-    return 1;
-  }
-
   bool _toBool(dynamic value) {
     if (value is bool) return value;
     final text = (value ?? '').toString().trim().toLowerCase();
@@ -568,6 +541,8 @@ class OrderRepositoryImpl implements OrderRepository {
   String _providerStateToStorage(ProviderOrderState state) {
     switch (state) {
       case ProviderOrderState.incoming:
+        return 'booked';
+      case ProviderOrderState.booked:
         return 'booked';
       case ProviderOrderState.onTheWay:
         return 'on_the_way';

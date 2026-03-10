@@ -7,7 +7,6 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../core/utils/safe_image_provider.dart';
-import '../../../core/utils/category_utils.dart';
 import '../../../domain/entities/provider_portal.dart';
 import '../../../domain/entities/provider.dart';
 import '../../../domain/entities/service.dart';
@@ -94,6 +93,16 @@ class _SearchPageState extends State<SearchPage> {
         _safeSetState(() => _bootstrapping = false);
       }
     }
+  }
+
+  Future<void> _handleRefresh() async {
+    try {
+      await Future.wait([
+        CatalogState.refresh(force: true),
+        ProviderPostState.refresh(page: 1),
+        ProviderPostState.refreshAllForLookup(),
+      ]);
+    } catch (_) {}
   }
 
   void _safeSetState(VoidCallback fn) {
@@ -184,185 +193,190 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                   ),
                   Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Recently',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const Spacer(),
-                            if (_recentSearches.isNotEmpty)
-                              TextButton(
-                                onPressed: () =>
-                                    setState(_recentSearches.clear),
-                                child: const Text('Clear'),
+                    child: RefreshIndicator(
+                      onRefresh: _handleRefresh,
+                      color: AppColors.primary,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Recently',
+                                style: Theme.of(context).textTheme.titleMedium,
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: _recentSearches
-                              .map(
-                                (label) => _SearchChip(
-                                  label: label,
-                                  onTap: () => _useRecentSearch(label),
+                              const Spacer(),
+                              if (_recentSearches.isNotEmpty)
+                                TextButton(
+                                  onPressed: () =>
+                                      setState(_recentSearches.clear),
+                                  child: const Text('Clear'),
                                 ),
-                              )
-                              .toList(),
-                        ),
-                        if (_query.trim().isNotEmpty ||
-                            _selectedCategory != null) ...[
-                          const SizedBox(height: 14),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Theme.of(context).dividerColor,
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: _recentSearches
+                                .map(
+                                  (label) => _SearchChip(
+                                    label: label,
+                                    onTap: () => _useRecentSearch(label),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                          if (_query.trim().isNotEmpty ||
+                              _selectedCategory != null) ...[
+                            const SizedBox(height: 14),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Theme.of(context).dividerColor,
+                                ),
+                              ),
+                              child: Text(
+                                _selectedCategory == null
+                                    ? '${filteredPopular.length} results for "${_query.trim()}" around Phnom Penh'
+                                    : '${filteredPopular.length} results in "$_selectedCategory" around Phnom Penh',
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ),
-                            child: Text(
-                              _selectedCategory == null
-                                  ? '${filteredPopular.length} results for "${_query.trim()}" around Phnom Penh'
-                                  : '${filteredPopular.length} results in "$_selectedCategory" around Phnom Penh',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                          ],
+                          const SizedBox(height: 20),
+                          Text(
+                            'Browse all categories',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 150,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemBuilder: (context, index) {
+                                final category = filteredCategories[index];
+                                return CategoryChip(
+                                  category: category,
+                                  onTap: () => _toggleCategory(category.name),
+                                );
+                              },
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSpacing.md),
+                              itemCount: filteredCategories.length,
                             ),
                           ),
-                        ],
-                        const SizedBox(height: 20),
-                        Text(
-                          'Browse all categories',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 150,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemBuilder: (context, index) {
-                              final category = filteredCategories[index];
-                              return CategoryChip(
-                                category: category,
-                                onTap: () => _toggleCategory(category.name),
+                          if (filteredCategories.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                'No categories found.',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Text(
+                                'Provider posts',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: _openAllProviderPosts,
+                                child: const Text('View all'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Browse all live provider posts in one screen.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).hintColor,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Available Providers',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _SortPill(
+                                label: 'Filter',
+                                onTap: _openSortSheet,
+                                active: false,
+                                icon: Icons.tune,
+                              ),
+                              if (_sortOption != null)
+                                _ActiveSortPill(
+                                  label: _sortLabel(_sortOption!),
+                                  onClear: () => setState(() {
+                                    _sortOption = null;
+                                    _visibleCount = 10;
+                                  }),
+                                ),
+                              if (_selectedCategory != null)
+                                _ActiveSortPill(
+                                  label: _selectedCategory!,
+                                  onClear: () => setState(() {
+                                    _selectedCategory = null;
+                                    _visibleCount = 10;
+                                  }),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          ...visibleServices.map(
+                            (item) {
+                              final matchedProvider = _findMatchedProvider(
+                                item.category,
+                                item.title,
+                                query,
+                              );
+                              return _ServiceListTile(
+                                item: item,
+                                providerUid: matchedProvider?.uid,
+                                providerName: matchedProvider?.name,
+                                providerRating: matchedProvider?.rating,
+                                onTap: () => _openServiceResult(item, query),
                               );
                             },
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: AppSpacing.md),
-                            itemCount: filteredCategories.length,
                           ),
-                        ),
-                        if (filteredCategories.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              'No categories found.',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Text(
-                              'Provider posts',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const Spacer(),
-                            TextButton(
-                              onPressed: _openAllProviderPosts,
-                              child: const Text('View all'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Browse all live provider posts in one screen.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(context).hintColor,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Available Providers',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _SortPill(
-                              label: 'Filter',
-                              onTap: _openSortSheet,
-                              active: false,
-                              icon: Icons.tune,
-                            ),
-                            if (_sortOption != null)
-                              _ActiveSortPill(
-                                label: _sortLabel(_sortOption!),
-                                onClear: () => setState(() {
-                                  _sortOption = null;
-                                  _visibleCount = 10;
-                                }),
-                              ),
-                            if (_selectedCategory != null)
-                              _ActiveSortPill(
-                                label: _selectedCategory!,
-                                onClear: () => setState(() {
-                                  _selectedCategory = null;
-                                  _visibleCount = 10;
-                                }),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        ...visibleServices.map(
-                          (item) {
-                            final matchedProvider = _findMatchedProvider(
-                              item.category,
-                              item.title,
-                              query,
-                            );
-                            return _ServiceListTile(
-                              item: item,
-                              providerUid: matchedProvider?.uid,
-                              providerName: matchedProvider?.name,
-                              providerRating: matchedProvider?.rating,
-                              onTap: () => _openServiceResult(item, query),
-                            );
-                          },
-                        ),
-                        if (filteredPopular.length > _visibleCount)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 6, bottom: 8),
-                            child: Center(
-                              child: OutlinedButton(
-                                onPressed: () =>
-                                    setState(() => _visibleCount += 10),
-                                child: const Text('Load more'),
+                          if (filteredPopular.length > _visibleCount)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6, bottom: 8),
+                              child: Center(
+                                child: OutlinedButton(
+                                  onPressed: () =>
+                                      setState(() => _visibleCount += 10),
+                                  child: const Text('Load more'),
+                                ),
                               ),
                             ),
-                          ),
-                        if (filteredPopular.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              'No services found.',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                          if (filteredPopular.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                'No services found.',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -550,31 +564,27 @@ class _SearchPageState extends State<SearchPage> {
     final normalizedService = _normalizeKey(serviceFilter);
     final normalizedQuery = query.trim().toLowerCase();
 
-    final providersByKey = <String, _ProviderAggregate>{};
+    final providersByKey = <String, List<ProviderPostItem>>{};
     for (final post in _providerPostsForLookup) {
       if (post.category.trim().toLowerCase() != normalizedCategory) continue;
       final providerKey = post.providerUid.trim().isNotEmpty
           ? post.providerUid.trim().toLowerCase()
           : post.providerName.trim().toLowerCase();
-      final existing = providersByKey[providerKey];
-      if (existing == null) {
-        providersByKey[providerKey] = _ProviderAggregate.fromPost(post);
-      } else {
-        existing.absorb(post);
-      }
+      providersByKey.putIfAbsent(providerKey, () => []).add(post);
     }
 
     var providers = providersByKey.values
-        .map(_providerFromAggregate)
+        .map((posts) => ProviderItem.fromPost(posts.first))
         .toList(growable: false);
+
     if (normalizedService.isNotEmpty) {
-      providers = providers
-          .where(
-            (provider) => provider.services.any(
-              (service) => _normalizeKey(service) == normalizedService,
-            ),
-          )
-          .toList(growable: false);
+      providers = providers.where((provider) {
+        final key = provider.uid.trim().isNotEmpty 
+            ? provider.uid.trim().toLowerCase() 
+            : provider.name.trim().toLowerCase();
+        final posts = providersByKey[key] ?? [];
+        return posts.any((post) => post.serviceList.any((s) => _normalizeKey(s) == normalizedService));
+      }).toList(growable: false);
     }
     if (normalizedQuery.isNotEmpty) {
       providers = providers
@@ -606,95 +616,6 @@ class _SearchPageState extends State<SearchPage> {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_|_$'), '');
-  }
-
-  ProviderItem _providerFromAggregate(_ProviderAggregate value) {
-    final role = value.category.trim().isEmpty ? 'Cleaner' : value.category;
-    return ProviderItem(
-      uid: value.providerUid,
-      name: value.providerName.isEmpty
-          ? 'Service Provider'
-          : value.providerName,
-      role: role,
-      rating: value.rating,
-      imagePath: value.avatarPath,
-      accentColor: accentForCategory(role),
-      services: value.services.toList(growable: false)..sort(),
-      providerType: value.providerType,
-      companyName: value.providerCompanyName,
-      maxWorkers: value.providerMaxWorkers,
-      blockedDates: value.blockedDates,
-    );
-  }
-}
-
-class _ProviderAggregate {
-  final String providerUid;
-  final String providerName;
-  final String category;
-  final String avatarPath;
-  String providerType;
-  String providerCompanyName;
-  int providerMaxWorkers;
-  final Set<String> services;
-  final List<DateTime> blockedDates;
-  double rating;
-
-  _ProviderAggregate({
-    required this.providerUid,
-    required this.providerName,
-    required this.category,
-    required this.avatarPath,
-    required this.providerType,
-    required this.providerCompanyName,
-    required this.providerMaxWorkers,
-    required this.services,
-    this.blockedDates = const [],
-    this.rating = 0,
-  });
-
-  factory _ProviderAggregate.fromPost(ProviderPostItem post) {
-    return _ProviderAggregate(
-      providerUid: post.providerUid.trim(),
-      providerName: post.providerName.trim(),
-      category: post.category.trim(),
-      avatarPath: post.avatarPath,
-      providerType: post.providerType,
-      providerCompanyName: post.providerCompanyName.trim(),
-      providerMaxWorkers: post.providerMaxWorkers < 1
-          ? 1
-          : post.providerMaxWorkers,
-      services: post.serviceList
-          .map((item) => item.trim())
-          .where((item) => item.isNotEmpty)
-          .toSet(),
-      blockedDates: post.blockedDates,
-      rating: post.rating,
-    );
-  }
-
-  void absorb(ProviderPostItem post) {
-    for (final service in post.serviceList) {
-      final normalized = service.trim();
-      if (normalized.isNotEmpty) {
-        services.add(normalized);
-      }
-    }
-    // Update rating if it's newer or just take it (they should be synced on backend)
-    rating = post.rating;
-    
-    if (post.providerType.trim().toLowerCase() == 'company') {
-      providerType = 'company';
-      if (post.providerCompanyName.trim().isNotEmpty) {
-        providerCompanyName = post.providerCompanyName.trim();
-      }
-      final maxWorkers = post.providerMaxWorkers < 1
-          ? 1
-          : post.providerMaxWorkers;
-      if (maxWorkers > providerMaxWorkers) {
-        providerMaxWorkers = maxWorkers;
-      }
-    }
   }
 }
 
@@ -891,12 +812,25 @@ class _ServiceListTile extends StatelessWidget {
                             valueListenable: FavoriteState.favoriteUids,
                             builder: (context, favorites, _) {
                               final isFav = favorites.contains(providerUid!);
-                              return GestureDetector(
-                                onTap: () => FavoriteState.toggleFavorite(providerUid!),
-                                child: Icon(
-                                  isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                  color: isFav ? AppColors.danger : AppColors.textSecondary,
-                                  size: 18,
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => FavoriteState.toggleFavorite(providerUid!),
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isFav
+                                          ? AppColors.danger.withValues(alpha: 0.1)
+                                          : Theme.of(context).dividerColor.withValues(alpha: 0.05),
+                                    ),
+                                    child: Icon(
+                                      isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                      color: isFav ? AppColors.danger : AppColors.textSecondary,
+                                      size: 16,
+                                    ),
+                                  ),
                                 ),
                               );
                             },
@@ -1167,4 +1101,3 @@ class _SortOptionTile extends StatelessWidget {
     );
   }
 }
-

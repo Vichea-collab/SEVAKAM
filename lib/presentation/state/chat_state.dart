@@ -716,7 +716,7 @@ class ChatState {
         }
       }
     }
-    return 'assets/images/profile.jpg';
+    return '';
   }
 
   static int _normalizedPage(int page) {

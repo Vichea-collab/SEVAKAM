@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_calendar_picker.dart';
-import '../../../core/utils/category_utils.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/order.dart';
@@ -25,30 +24,27 @@ class BookingDetailsPage extends StatefulWidget {
 }
 
 class _BookingDetailsPageState extends State<BookingDetailsPage> {
-  late int _hours;
   late HomeType _homeType;
-  late int _workers;
   late DateTime _preferredDate;
   late String _preferredTime;
   late String _selectedService;
   String? _serviceError;
   bool _refreshingProvider = false;
   late ProviderItem _currentProvider;
+  List<String> _allAvailableServices = [];
 
   @override
   void initState() {
     super.initState();
     _currentProvider = widget.draft.provider;
-    _hours = widget.draft.hours;
     _homeType = widget.draft.homeType;
-    _workers = widget.draft.workers;
     _preferredDate = _findFirstAvailableDate(
       widget.draft.preferredDate,
       _currentProvider.blockedDates,
     );
     _preferredTime = widget.draft.preferredTimeSlot;
     _selectedService = widget.draft.serviceName;
-    _applyGeneralDetailDefaultsForService();
+    _allAvailableServices = _servicesFromProvider(_currentProvider);
     _validateService();
     _refreshProviderData();
   }
@@ -60,30 +56,24 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
     setState(() => _refreshingProvider = true);
     try {
       final latest = await ProviderPostState.findLatestByUid(uid);
-      if (latest != null && mounted) {
+      final allServices = await ProviderPostState.aggregateServicesByUid(uid);
+      
+      if (mounted) {
         setState(() {
-          _currentProvider = ProviderItem(
-            uid: latest.providerUid,
-            name: latest.providerName,
-            role: latest.category,
-            rating: latest.rating,
-            imagePath: latest.avatarPath,
-            accentColor: accentForCategory(latest.category),
-            services: latest.serviceList,
-            providerType: latest.providerType,
-            companyName: latest.providerCompanyName,
-            maxWorkers: latest.providerMaxWorkers,
-            blockedDates: latest.blockedDates,
-          );
-          // Re-validate preferred date against fresh blocked dates
-          _preferredDate = _findFirstAvailableDate(
-            _preferredDate,
-            _currentProvider.blockedDates,
-          );
+          if (latest != null) {
+            _currentProvider = ProviderItem.fromPost(latest);
+            _preferredDate = _findFirstAvailableDate(
+              _preferredDate,
+              _currentProvider.blockedDates,
+            );
+          }
+          if (allServices.isNotEmpty) {
+            _allAvailableServices = allServices;
+          }
+          _validateService();
         });
       }
     } catch (_) {
-      // Keep existing data on failure
     } finally {
       if (mounted) {
         setState(() => _refreshingProvider = false);
@@ -102,7 +92,6 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
       candidate = today;
     }
 
-    // Try up to 60 days to find an open slot
     for (int i = 0; i < 60; i++) {
       final check = candidate.add(Duration(days: i));
       final isBlocked = blocked.any((d) => 
@@ -118,9 +107,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final draft = widget.draft.copyWith(
       provider: _currentProvider,
-      hours: _hours,
       homeType: _homeType,
-      workers: _workers,
       preferredDate: _preferredDate,
       preferredTimeSlot: _preferredTime,
       serviceName: _selectedService,
@@ -128,7 +115,6 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
         _selectedService,
       ),
     );
-    final categoryServices = _servicesForProvider(provider: _currentProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -137,7 +123,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
             AppSpacing.lg,
             AppSpacing.lg,
             AppSpacing.lg,
-            128,
+            80,
           ),
           child: ListView(
             children: [
@@ -148,20 +134,21 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
               _ProviderCard(draft: draft, loading: _refreshingProvider),
               const SizedBox(height: 16),
               Text(
-                'Service',
+                'Select Service',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               _PickerField(
                 label: _selectedService.isEmpty
                     ? 'No available services'
                     : _selectedService,
                 icon: Icons.build_circle_outlined,
-                onTap: categoryServices.isEmpty
+                onTap: _allAvailableServices.isEmpty
                     ? () {}
-                    : () => _pickService(categoryServices),
+                    : () => _pickService(_allAvailableServices),
               ),
               if (_serviceError != null) ...[
                 const SizedBox(height: 8),
@@ -200,25 +187,6 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
               _SectionHeader(title: 'General Details'),
               const SizedBox(height: 8),
               Text(
-                _hoursQuestionLabel,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
-              ),
-              const SizedBox(height: 8),
-              _PickerField(
-                label: '$_hours hour${_hours > 1 ? 's' : ''}',
-                onTap: _pickHours,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _hoursHelpLabel,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColors.primary),
-              ),
-              const SizedBox(height: 16),
-              Text(
                 _homeTypeQuestionLabel,
                 style: Theme.of(
                   context,
@@ -229,20 +197,6 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                 label: _homeTypeLabel(_homeType),
                 onTap: _pickHomeType,
               ),
-              if (_allowWorkersInput) ...[
-                const SizedBox(height: 16),
-                Text(
-                  'How many workers do you need?*',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
-                ),
-                const SizedBox(height: 8),
-                _PickerField(
-                  label: '$_workers worker${_workers > 1 ? 's' : ''}',
-                  onTap: _pickWorkers,
-                ),
-              ],
             ],
           ),
         ),
@@ -258,29 +212,11 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
           child: Row(
             children: [
               Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total fee',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Text(
-                      '\$${draft.total.toStringAsFixed(0)}',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
                 child: PrimaryButton(
                   label: 'Continue',
                   icon: Icons.arrow_forward_rounded,
                   iconTrailing: true,
-                  onPressed: _serviceError == null
+                  onPressed: (_serviceError == null && _selectedService.isNotEmpty)
                       ? () => Navigator.push(
                           context,
                           slideFadeRoute(BookingServiceFieldsPage(draft: draft)),
@@ -296,23 +232,23 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
   }
 
   void _validateService() {
-    final supportedServices = _servicesForProvider(
-      provider: widget.draft.provider,
-    );
-    if (supportedServices.isEmpty) {
+    if (_allAvailableServices.isEmpty) {
       _serviceError =
-          '${widget.draft.provider.name} has no active service posts yet.';
+          '${_currentProvider.name} has no active service posts yet.';
       return;
     }
-    if (supportedServices.contains(_selectedService)) {
+    if (_selectedService.isEmpty) {
+      _selectedService = _allAvailableServices.first;
+    }
+    if (_allAvailableServices.contains(_selectedService)) {
       _serviceError = null;
       return;
     }
     _serviceError =
-        '${widget.draft.provider.name} does not offer this service. Please choose another.';
+        '${_currentProvider.name} does not offer this service. Please choose another.';
   }
 
-  List<String> _servicesForProvider({required ProviderItem provider}) {
+  List<String> _servicesFromProvider(ProviderItem provider) {
     final direct = provider.services
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
@@ -331,40 +267,10 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
     return cleaningServices.contains(_selectedService);
   }
 
-  bool get _allowWorkersInput => widget.draft.provider.isCompany;
-
-  int get _maxWorkerSelectable {
-    final maxWorkers = widget.draft.provider.safeMaxWorkers;
-    return maxWorkers < 1 ? 1 : maxWorkers;
-  }
-
-  String get _hoursQuestionLabel {
-    return _isCleaningService
-        ? 'How many hours do you need worker to stay?*'
-        : 'Estimated service duration*';
-  }
-
-  String get _hoursHelpLabel {
-    return _isCleaningService
-        ? 'Unsure about the hours to choose? Click here.'
-        : 'For most repair jobs, 1-2 hours is usually enough.';
-  }
-
   String get _homeTypeQuestionLabel {
     return _isCleaningService
         ? 'What is the type of your home?*'
         : 'What is the property type?*';
-  }
-
-  void _applyGeneralDetailDefaultsForService() {
-    if (_allowWorkersInput) {
-      if (_workers < 1) _workers = 1;
-      if (_workers > _maxWorkerSelectable) _workers = _maxWorkerSelectable;
-    } else {
-      _workers = 1;
-    }
-    if (_isCleaningService) return;
-    if (_hours > 4) _hours = 2;
   }
 
   Future<void> _pickDate() async {
@@ -418,27 +324,8 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
     if (picked == null) return;
     setState(() {
       _selectedService = picked;
-      _applyGeneralDetailDefaultsForService();
       _validateService();
     });
-  }
-
-  Future<void> _pickHours() async {
-    final picked = await _showOptionSheet<int>(
-      title: 'How many hours?',
-      options: _isCleaningService
-          ? BookingCatalogState.bookingHourOptions
-          : const [1, 2, 3, 4],
-      selected: _hours,
-      labelBuilder: (item) => '$item hour${item > 1 ? 's' : ''}',
-      iconBuilder: (item) => const Icon(
-        Icons.timelapse_rounded,
-        size: 17,
-        color: AppColors.primary,
-      ),
-    );
-    if (picked == null) return;
-    setState(() => _hours = picked);
   }
 
   Future<void> _pickHomeType() async {
@@ -460,25 +347,6 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
     );
     if (picked == null) return;
     setState(() => _homeType = picked);
-  }
-
-  Future<void> _pickWorkers() async {
-    if (!_allowWorkersInput) return;
-    final options = List<int>.generate(
-      _maxWorkerSelectable,
-      (index) => index + 1,
-    );
-    final selected = _workers.clamp(1, _maxWorkerSelectable);
-    final picked = await _showOptionSheet<int>(
-      title: 'How many workers?',
-      options: options,
-      selected: selected,
-      labelBuilder: (item) => '$item worker${item > 1 ? 's' : ''}',
-      iconBuilder: (item) =>
-          const Icon(Icons.groups_outlined, size: 17, color: AppColors.primary),
-    );
-    if (picked == null) return;
-    setState(() => _workers = picked);
   }
 
   Future<T?> _showOptionSheet<T>({

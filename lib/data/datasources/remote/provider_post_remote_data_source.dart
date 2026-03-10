@@ -90,7 +90,6 @@ class ProviderPostRemoteDataSource {
   ProviderPostItem _mapToProviderPost(Map<dynamic, dynamic> row) {
     final id = (row['id'] ?? '').toString();
     final createdAt = _parseDate(row['createdAt']);
-    final updatedAt = _parseDate(row['updatedAt']);
     final services = _parseServices(row['services']);
     final primaryService = (row['service'] ?? '').toString().trim();
     final avatarUrl = (row['providerAvatarUrl'] ?? '').toString().trim();
@@ -104,12 +103,6 @@ class ProviderPostRemoteDataSource {
       id: id.isEmpty ? DateTime.now().millisecondsSinceEpoch.toString() : id,
       providerUid: (row['providerUid'] ?? '').toString(),
       providerName: (row['providerName'] ?? 'Service Provider').toString(),
-      providerType: _providerType(row['providerType']),
-      providerCompanyName: (row['providerCompanyName'] ?? '').toString(),
-      providerMaxWorkers: _providerMaxWorkers(
-        row['providerMaxWorkers'],
-        _providerType(row['providerType']),
-      ),
       category: (row['category'] ?? '').toString(),
       service: primaryService.isNotEmpty
           ? primaryService
@@ -120,10 +113,8 @@ class ProviderPostRemoteDataSource {
       ratePerHour: _toRate(row['ratePerHour']),
       availableNow: row['availableNow'] == true,
       timeLabel: _timeLabel(createdAt),
-      avatarPath: avatarUrl.isNotEmpty ? avatarUrl : 'assets/images/profile.jpg',
+      avatarPath: avatarUrl.isNotEmpty ? avatarUrl : '',
       rating: _toDouble(row['rating'], fallback: 0),
-      createdAt: createdAt,
-      updatedAt: updatedAt,
       blockedDates: blockedDates,
     );
   }
@@ -147,12 +138,6 @@ class ProviderPostRemoteDataSource {
     return double.tryParse((value ?? '').toString()) ?? fallback;
   }
 
-  String _providerType(dynamic value) {
-    final normalized = (value ?? '').toString().trim().toLowerCase();
-    if (normalized == 'company') return 'company';
-    return 'individual';
-  }
-
   List<String> _parseServices(dynamic value) {
     if (value is! List) return const <String>[];
     final parsed = value
@@ -162,14 +147,6 @@ class ProviderPostRemoteDataSource {
         .toList(growable: false);
     parsed.sort();
     return parsed;
-  }
-
-  int _providerMaxWorkers(dynamic value, String providerType) {
-    if (providerType != 'company') return 1;
-    if (value is num && value > 0) return value.toInt();
-    final parsed = int.tryParse((value ?? '').toString().trim());
-    if (parsed != null && parsed > 0) return parsed;
-    return 1;
   }
 
   DateTime? _parseDate(dynamic value) {

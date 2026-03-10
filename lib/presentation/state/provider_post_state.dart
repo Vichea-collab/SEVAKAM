@@ -221,6 +221,27 @@ class ProviderPostState {
     }
   }
 
+  static Future<List<String>> aggregateServicesByUid(String uid) async {
+    final targetUid = uid.trim().toLowerCase();
+    if (targetUid.isEmpty) return const [];
+
+    try {
+      await refreshAllForLookup(maxPages: 5);
+    } catch (_) {}
+
+    final results = <String>{};
+    for (final post in allPosts.value) {
+      if (post.providerUid.trim().toLowerCase() == targetUid) {
+        for (final service in post.serviceList) {
+          final normalized = service.trim();
+          if (normalized.isNotEmpty) results.add(normalized);
+        }
+      }
+    }
+    final sorted = results.toList(growable: false)..sort();
+    return sorted;
+  }
+
   static Future<void> deleteProviderPost({required String postId}) async {
     await _repository.deleteProviderPost(postId: postId);
     final beforeCurrentCount = posts.value.length;

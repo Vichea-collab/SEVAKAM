@@ -42,6 +42,7 @@ class ProviderProfile {
   final String about;
   final List<ProviderReview> reviews;
   final List<DateTime> blockedDates;
+  final String? heroTag;
 
   const ProviderProfile({
     required this.provider,
@@ -51,6 +52,7 @@ class ProviderProfile {
     required this.about,
     required this.reviews,
     this.blockedDates = const [],
+    this.heroTag,
   });
 
   double get averageRating {

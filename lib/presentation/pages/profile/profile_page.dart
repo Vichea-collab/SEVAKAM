@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/app_toast.dart';
@@ -11,216 +13,194 @@ import '../../widgets/app_dialog.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/pressable_scale.dart';
 import '../auth/customer_auth_page.dart';
-import '../provider_portal/provider_home_page.dart';
+import '../main_shell_page.dart';
+import '../../widgets/app_bottom_nav.dart';
 import 'edit_profile_page.dart';
 import 'help_support_page.dart';
 import 'notification_page.dart';
-import 'payment_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   static const String routeName = '/profile';
 
   const ProfilePage({super.key});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: AppTopBar(
-                title: 'Profile',
-                showBack: true,
-                onBack: () => Navigator.pushReplacementNamed(context, '/home'),
+            AppTopBar(
+              title: 'My Profile',
+              showBack: true,
+              onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
+            ),
+            const SizedBox(height: 10),
+            const _ProfileHero(),
+            const SizedBox(height: 16),
+            Text(
+              'Account information',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+            ),
+            const SizedBox(height: 10),
+            _ActionTile(
+              icon: Icons.edit_outlined,
+              label: 'Edit Profile',
+              onTap: () => Navigator.push(
+                context,
+                slideFadeRoute(const EditProfilePage()),
               ),
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const _ProfileHero(),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Account',
-                      style: Theme.of(context).textTheme.titleMedium,
+            const SizedBox(height: 10),
+            _ActionTile(
+              icon: Icons.notifications_none_rounded,
+              label: 'Notification',
+              onTap: () => Navigator.push(
+                context,
+                slideFadeRoute(const ProfileNotificationPage()),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'General preferences',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+            ),
+            const SizedBox(height: 10),
+            _ActionTile(
+              icon: Icons.support_agent_outlined,
+              label: 'Help & support',
+              onTap: () => Navigator.push(
+                context,
+                slideFadeRoute(const HelpSupportPage()),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    height: 34,
+                    width: 34,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(height: 10),
-                    _ActionTile(
-                      icon: Icons.edit_outlined,
-                      label: 'Edit Profile',
-                      onTap: () => Navigator.push(
-                        context,
-                        slideFadeRoute(const EditProfilePage()),
-                      ),
+                    child: Icon(
+                      Icons.dark_mode_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 18,
                     ),
-                    const SizedBox(height: 10),
-                    _ActionTile(
-                      icon: Icons.notifications_none_rounded,
-                      label: 'Notification',
-                      onTap: () => Navigator.push(
-                        context,
-                        slideFadeRoute(const ProfileNotificationPage()),
-                      ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Dark Mode',
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
-                    const SizedBox(height: 10),
-                    _ActionTile(
-                      icon: Icons.credit_card_outlined,
-                      label: 'Payment method',
-                      onTap: () => Navigator.push(
-                        context,
-                        slideFadeRoute(const PaymentPage()),
-                      ),
+                  ),
+                  ValueListenableBuilder<ThemeMode>(
+                    valueListenable: AppState.themeMode,
+                    builder: (context, themeMode, _) {
+                      return Switch(
+                        value: themeMode == ThemeMode.dark,
+                        onChanged: (value) => AppState.toggleTheme(),
+                        activeTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                        activeThumbColor: Theme.of(context).colorScheme.primary,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.swap_horiz_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Switch to provider mode',
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
-                    const SizedBox(height: 10),
-                    _ActionTile(
-                      icon: Icons.support_agent_outlined,
-                      label: 'Help & support',
-                      onTap: () => Navigator.push(
-                        context,
-                        slideFadeRoute(const HelpSupportPage()),
-                      ),
+                  ),
+                  ValueListenableBuilder<AppRole>(
+                    valueListenable: AppRoleState.role,
+                    builder: (context, role, _) {
+                      return Switch(
+                        value: role == AppRole.provider,
+                        onChanged: (value) async {
+                          if (!value) return;
+                          final error = await AuthState.switchRole(
+                            toProvider: true,
+                          );
+                          if (!context.mounted) return;
+                          if (error != null) {
+                            AppToast.warning(context, error);
+                            return;
+                          }
+                          Navigator.of(context).pushAndRemoveUntil(
+                            slideFadeRoute(const MainShellPage()),
+                            (route) => false,
+                          );
+                        },
+                        activeTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                        activeThumbColor: Theme.of(context).colorScheme.primary,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            PressableScale(
+              onTap: () => _showLogoutDialog(context),
+              child: InkWell(
+                onTap: () => _showLogoutDialog(context),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.danger.withValues(alpha: 0.3),
                     ),
-                    const SizedBox(height: 18),
-                    Text(
-                      'Preferences',
-                      style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Logout',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppColors.danger,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Theme.of(context).dividerColor),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 34,
-                            width: 34,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              Icons.dark_mode_outlined,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Dark Mode',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ),
-                          ValueListenableBuilder<ThemeMode>(
-                            valueListenable: AppState.themeMode,
-                            builder: (context, themeMode, _) {
-                              return Switch(
-                                value: themeMode == ThemeMode.dark,
-                                onChanged: (value) => AppState.toggleTheme(),
-                                activeTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-                                activeThumbColor: Theme.of(context).colorScheme.primary,
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Theme.of(context).dividerColor),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 34,
-                            width: 34,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              Icons.swap_horiz_rounded,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Switch profile to provider mode',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ),
-                          Switch(
-                            value: false,
-                            onChanged: (enabled) async {
-                              if (!enabled) return;
-                              final error = await AuthState.switchRole(
-                                toProvider: true,
-                              );
-                              if (!context.mounted) return;
-                              if (error != null) {
-                                AppToast.warning(context, error);
-                                return;
-                              }
-                              Navigator.of(context).pushAndRemoveUntil(
-                                slideFadeRoute(const ProviderPortalHomePage()),
-                                (route) => false,
-                              );
-                            },
-                            activeTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-                            activeThumbColor: Theme.of(context).colorScheme.primary,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    PressableScale(
-                      onTap: () => _showLogoutDialog(context),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: () => _showLogoutDialog(context),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppColors.danger.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Logout',
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: AppColors.danger,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -259,7 +239,6 @@ class _ProfileHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -271,15 +250,16 @@ class _ProfileHero extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
@@ -290,11 +270,11 @@ class _ProfileHero extends StatelessWidget {
                 final image = ProfileImageState.avatarProvider();
                 return CircleAvatar(
                   radius: 34,
-                  backgroundColor: AppColors.background,
+                  backgroundColor: const Color(0xFFEAF1FF),
                   backgroundImage: image,
                   child: image == null
                       ? const Icon(
-                          Icons.person_rounded,
+                          Icons.person,
                           color: AppColors.primary,
                           size: 34,
                         )
@@ -303,21 +283,39 @@ class _ProfileHero extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: ValueListenableBuilder(
               valueListenable: ProfileSettingsState.finderProfile,
               builder: (context, profile, _) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       profile.name.trim().isEmpty
-                          ? 'Finder'
+                          ? 'Customer'
                           : profile.name.trim(),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
+                        shadows: const [
+                          Shadow(
+                            color: Color(0x66000000),
+                            blurRadius: 6,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      profile.phoneNumber.trim().isEmpty
+                          ? profile.email
+                          : profile.phoneNumber,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -348,41 +346,27 @@ class _ActionTile extends StatelessWidget {
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Theme.of(context).dividerColor),
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(context).shadowColor.withValues(alpha: 0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: Row(
             children: [
               Container(
-                height: 36,
-                width: 36,
+                height: 34,
+                width: 34,
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 19),
               ),
               const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+              Expanded(child: Text(label)),
               Icon(
                 Icons.chevron_right_rounded,
                 color: Theme.of(context).hintColor,

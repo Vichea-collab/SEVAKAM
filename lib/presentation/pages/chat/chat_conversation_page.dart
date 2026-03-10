@@ -5,21 +5,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/utils/app_toast.dart';
-import '../../../core/utils/page_transition.dart';
-import '../../../core/utils/safe_image_provider.dart';
-import '../../../core/utils/category_utils.dart';
-import '../../../data/network/backend_api_client.dart';
-import '../../../domain/entities/chat.dart';
-import '../../../domain/entities/pagination.dart';
-import '../../../domain/entities/provider.dart';
-import '../../state/chat_state.dart';
-import '../../state/app_role_state.dart';
-import '../../state/provider_post_state.dart';
-import '../../widgets/app_state_panel.dart';
-import '../../widgets/pressable_scale.dart';
-import '../providers/provider_detail_page.dart';
+import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/utils/app_toast.dart';
+import 'package:servicefinder/core/utils/page_transition.dart';
+import 'package:servicefinder/core/utils/safe_image_provider.dart';
+import 'package:servicefinder/core/utils/category_utils.dart';
+import 'package:servicefinder/data/network/backend_api_client.dart';
+import 'package:servicefinder/domain/entities/chat.dart';
+import 'package:servicefinder/domain/entities/pagination.dart';
+import 'package:servicefinder/domain/entities/provider.dart';
+import 'package:servicefinder/presentation/state/chat_state.dart';
+import 'package:servicefinder/presentation/state/app_role_state.dart';
+import 'package:servicefinder/presentation/state/provider_post_state.dart';
+import 'package:servicefinder/presentation/widgets/app_state_panel.dart';
+import 'package:servicefinder/presentation/widgets/pressable_scale.dart';
+import 'package:servicefinder/presentation/pages/providers/provider_detail_page.dart';
 
 class ChatConversationPage extends StatefulWidget {
   final ChatThread thread;
@@ -88,6 +88,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -97,8 +98,13 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             ),
             Expanded(
               child: Container(
-                color: const Color(0xFFEAF1FF),
-                child: _buildMessageList(context),
+                color: const Color(0xFFF8FAFF),
+                child: RefreshIndicator(
+                  onRefresh: _refreshLatest,
+                  color: AppColors.primary,
+                  backgroundColor: Colors.white,
+                  child: _buildMessageList(context),
+                ),
               ),
             ),
             _Composer(
@@ -125,22 +131,24 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     final hasOlder = _loadedPages < _pagination.totalPages;
     
     if (messages.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: AppStatePanel.empty(
-          title: 'No messages yet',
-          message: 'Start your conversation.',
-        ),
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const [
+          SizedBox(height: 100),
+          AppStatePanel.empty(
+            title: 'No messages yet',
+            message: 'Start your conversation.',
+          ),
+        ],
       );
     }
 
-    // PROFESSIONAL CHAT UI: Use reverse list for sticky bottom behavior
-    // and to prevent scroll jumping when new messages arrive.
     final reversedMessages = messages.reversed.toList();
 
     return ListView.builder(
       controller: _scrollController,
       reverse: true,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
       itemCount: reversedMessages.length + (hasOlder ? 1 : 0),
       itemBuilder: (context, index) {
@@ -154,10 +162,13 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                     ? const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                       )
-                    : const Icon(Icons.expand_less_rounded),
-                label: Text(_loadingOlder ? 'Loading...' : 'Load older messages'),
+                    : const Icon(Icons.expand_less_rounded, color: AppColors.primary),
+                label: Text(
+                  _loadingOlder ? 'Loading...' : 'Load older messages',
+                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           );
@@ -213,7 +224,6 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   }
 
   Future<void> _refreshLatest() async {
-    if (_realtimeActive) return;
     if (!mounted) return;
     try {
       final result = await ChatState.fetchMessagesPage(
@@ -323,7 +333,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
 
   void _startFallbackRefreshTimer() {
     _fallbackRefreshTimer?.cancel();
-    _fallbackRefreshTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+    _fallbackRefreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (!mounted || _realtimeActive || _loading || _sending) return;
       unawaited(_refreshLatest());
     });
@@ -772,13 +782,13 @@ class _ChatHeader extends StatelessWidget {
     final status = _activityStatus(thread.lastActiveAt);
     final isProvider = AppRoleState.isProvider;
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: const Color(0x0A0F172A),
+            color: Color(0x0A0F172A),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -793,7 +803,17 @@ class _ChatHeader extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: safeImageProvider(thread.avatarPath),
+                backgroundColor: AppColors.background,
+                backgroundImage: thread.avatarPath.trim().isNotEmpty
+                    ? safeImageProvider(thread.avatarPath)
+                    : null,
+                child: thread.avatarPath.trim().isEmpty
+                    ? const Icon(
+                        Icons.person_rounded,
+                        size: 24,
+                        color: AppColors.primary,
+                      )
+                    : null,
               ),
               Positioned(
                 right: 0,
@@ -938,6 +958,8 @@ class _MessageBubble extends StatelessWidget {
     final providerUid =
         isProfileLink ? message.text.split(':').last.trim() : null;
 
+    final isLocalDataUrl = message.imageUrl.startsWith('data:');
+
     return Align(
       alignment: fromMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
@@ -990,11 +1012,13 @@ class _MessageBubble extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(14),
-                      child: SafeImage(
-                        source: message.imageUrl,
-                        width: 240,
-                        fit: BoxFit.cover,
-                      ),
+                      child: isLocalDataUrl 
+                        ? _buildLocalImage(message.imageUrl)
+                        : SafeImage(
+                            source: message.imageUrl,
+                            width: 240,
+                            fit: BoxFit.cover,
+                          ),
                     ),
                   ),
                 if (isProfileLink && providerUid != null)
@@ -1039,6 +1063,24 @@ class _MessageBubble extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildLocalImage(String dataUrl) {
+    try {
+      final base64String = dataUrl.split(',').last;
+      final bytes = base64Decode(base64String);
+      return Image.memory(
+        bytes,
+        width: 240,
+        fit: BoxFit.cover,
+      );
+    } catch (_) {
+      return const SizedBox(
+        width: 240,
+        height: 160,
+        child: Icon(Icons.broken_image_rounded, color: Colors.grey),
+      );
+    }
   }
 
   Widget _buildStatusIcon(Color accentColor) {
@@ -1126,10 +1168,6 @@ class _ProfileLinkCardState extends State<_ProfileLinkCard> {
             imagePath: post.avatarPath,
             accentColor: accentForCategory(role),
             services: post.serviceList,
-            providerType: post.providerType,
-            companyName: post.providerCompanyName.trim(),
-            maxWorkers:
-                post.providerMaxWorkers < 1 ? 1 : post.providerMaxWorkers,
             blockedDates: post.blockedDates,
             latitude: post.latitude,
             longitude: post.longitude,
@@ -1153,7 +1191,7 @@ class _ProfileLinkCardState extends State<_ProfileLinkCard> {
         child: const SizedBox(
           width: 20,
           height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
         ),
       );
     }
@@ -1166,103 +1204,104 @@ class _ProfileLinkCardState extends State<_ProfileLinkCard> {
       );
     }
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    return PressableScale(
       onTap: () {
         Navigator.push(
           context,
           slideFadeRoute(ProviderDetailPage(provider: p)),
         );
       },
-      child: PressableScale(
-        onTap: () {
-          Navigator.push(
-            context,
-            slideFadeRoute(ProviderDetailPage(provider: p)),
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: widget.accentColor.withValues(alpha: 0.3)),
-            boxShadow: [
-              BoxShadow(
-                color: widget.accentColor.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundImage: safeImageProvider(p.imagePath),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'Professional ${p.role}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (p.isVerified)
-                    const Icon(
-                      Icons.verified_rounded,
-                      color: AppColors.primary,
-                      size: 18,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: widget.accentColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: widget.accentColor.withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: widget.accentColor.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.background,
+                  backgroundImage: p.imagePath.trim().isNotEmpty
+                      ? safeImageProvider(p.imagePath)
+                      : null,
+                  child: p.imagePath.trim().isEmpty
+                      ? const Icon(
+                          Icons.person_rounded,
+                          size: 24,
+                          color: AppColors.primary,
+                        )
+                      : null,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Check Information',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: widget.accentColor,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        p.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 12,
+                      Text(
+                        'Professional ${p.role}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (p.isVerified)
+                  const Icon(
+                    Icons.verified_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: widget.accentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Check Information',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                       color: widget.accentColor,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 12,
+                    color: widget.accentColor,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

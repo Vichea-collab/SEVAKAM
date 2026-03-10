@@ -2,17 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/utils/app_calendar_picker.dart';
-import '../../../core/utils/app_toast.dart';
-import '../../../domain/entities/provider_portal.dart';
-import '../../state/auth_state.dart';
-import '../../state/catalog_state.dart';
-import '../../state/finder_post_state.dart';
-import '../../state/profile_settings_state.dart';
-import '../../widgets/app_top_bar.dart';
-import '../../widgets/primary_button.dart';
+import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/utils/app_toast.dart';
+import 'package:servicefinder/domain/entities/provider_portal.dart';
+import 'package:servicefinder/presentation/state/auth_state.dart';
+import 'package:servicefinder/presentation/state/catalog_state.dart';
+import 'package:servicefinder/presentation/state/finder_post_state.dart';
+import 'package:servicefinder/presentation/widgets/app_top_bar.dart';
+import 'package:servicefinder/presentation/widgets/primary_button.dart';
+import 'package:servicefinder/presentation/pages/main_shell_page.dart';
+import 'package:servicefinder/presentation/widgets/app_bottom_nav.dart';
 
 class ClientPostPage extends StatefulWidget {
   static const String routeName = '/post';
@@ -24,22 +24,19 @@ class ClientPostPage extends StatefulWidget {
 }
 
 class _ClientPostPageState extends State<ClientPostPage> {
-  static const String _fallbackLocation = 'Phnom Penh, Cambodia';
-
   late String _selectedCategory;
-  final Set<String> _selectedServices = <String>{};
-  final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _detailsController = TextEditingController();
-  DateTime _preferredDate = DateTime.now().add(const Duration(days: 1));
+  late String _selectedService;
+  final _messageController = TextEditingController();
+  final _locationController = TextEditingController(text: 'Phnom Penh');
+  DateTime? _preferredDate;
   String? _editingPostId;
-  bool _submitting = false;
+  bool _posting = false;
 
-  InputDecoration _fieldDecoration({required String hintText}) {
+  InputDecoration _fieldDecoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
       filled: true,
       fillColor: const Color(0xFFF8FAFF),
-      alignLabelWithHint: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       enabledBorder: OutlineInputBorder(
@@ -57,10 +54,9 @@ class _ClientPostPageState extends State<ClientPostPage> {
   void initState() {
     super.initState();
     _selectedCategory = 'Cleaner';
-    _locationController.text = _preferredFinderLocation();
+    _selectedService = 'House Cleaning';
     CatalogState.categories.addListener(_syncSelectionFromCatalog);
     CatalogState.services.addListener(_syncSelectionFromCatalog);
-    ProfileSettingsState.finderProfile.addListener(_syncLocationFromProfile);
     _syncSelectionFromCatalog();
     unawaited(FinderPostState.refreshAllForLookup(maxPages: 5));
   }
@@ -69,27 +65,9 @@ class _ClientPostPageState extends State<ClientPostPage> {
   void dispose() {
     CatalogState.categories.removeListener(_syncSelectionFromCatalog);
     CatalogState.services.removeListener(_syncSelectionFromCatalog);
-    ProfileSettingsState.finderProfile.removeListener(_syncLocationFromProfile);
+    _messageController.dispose();
     _locationController.dispose();
-    _detailsController.dispose();
     super.dispose();
-  }
-
-  void _syncLocationFromProfile() {
-    final current = _locationController.text.trim();
-    if (current.isNotEmpty && current != _fallbackLocation) return;
-    final next = _preferredFinderLocation();
-    if (next == current) return;
-    _locationController.text = next;
-    _locationController.selection = TextSelection.collapsed(
-      offset: next.length,
-    );
-  }
-
-  String _preferredFinderLocation() {
-    final city = ProfileSettingsState.finderProfile.value.city.trim();
-    if (city.isNotEmpty) return city;
-    return _fallbackLocation;
   }
 
   void _syncSelectionFromCatalog() {
@@ -106,30 +84,21 @@ class _ClientPostPageState extends State<ClientPostPage> {
         ? _selectedCategory
         : categories.first.name;
     final services = CatalogState.servicesForCategory(nextCategory);
-    final nextSelection = _selectedServices
-        .where((item) => services.contains(item))
-        .toSet();
-    if (nextSelection.isEmpty && services.isNotEmpty) {
-      nextSelection.add(services.first);
-    }
+    final nextService =
+        services.contains(_selectedService)
+            ? _selectedService
+            : (services.isNotEmpty ? services.first : '');
     if (!mounted) {
       _selectedCategory = nextCategory;
-      _selectedServices
-        ..clear()
-        ..addAll(nextSelection);
+      _selectedService = nextService;
       return;
     }
-    final sameSelection =
-        _selectedServices.length == nextSelection.length &&
-        _selectedServices.containsAll(nextSelection);
-    if (_selectedCategory == nextCategory && sameSelection) {
+    if (_selectedCategory == nextCategory && _selectedService == nextService) {
       return;
     }
     _safeSetState(() {
       _selectedCategory = nextCategory;
-      _selectedServices
-        ..clear()
-        ..addAll(nextSelection);
+      _selectedService = nextService;
     });
   }
 
@@ -152,18 +121,13 @@ class _ClientPostPageState extends State<ClientPostPage> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.lg,
-          ),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             children: [
               AppTopBar(
-                title: 'Post',
+                title: 'Post Service',
                 showBack: true,
-                onBack: () => Navigator.pushReplacementNamed(context, '/home'),
+                onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
                 actions: [
                   TextButton.icon(
                     onPressed: _openManageSheet,
@@ -195,7 +159,7 @@ class _ClientPostPageState extends State<ClientPostPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'What service do you need?',
+                                'What do you need help with?',
                                 style: Theme.of(context).textTheme.bodyLarge
                                     ?.copyWith(
                                       color: AppColors.textPrimary,
@@ -204,7 +168,7 @@ class _ClientPostPageState extends State<ClientPostPage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Share details so providers can contact you with the right offer.',
+                                'Describe your needs so providers can reach out to you.',
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                               const SizedBox(height: 12),
@@ -216,34 +180,35 @@ class _ClientPostPageState extends State<ClientPostPage> {
                               const SizedBox(height: 8),
                               _FieldLabel(label: 'Service*'),
                               _PickerField(
-                                label: _selectedServiceLabel,
+                                label: _selectedService,
                                 onTap: _pickService,
                               ),
                               const SizedBox(height: 8),
-                              _FieldLabel(label: 'Location*'),
+                              _FieldLabel(label: 'Preferred Date (Optional)'),
+                              _PickerField(
+                                label:
+                                    _preferredDate == null
+                                        ? 'Select date'
+                                        : '${_preferredDate!.day}/${_preferredDate!.month}/${_preferredDate!.year}',
+                                onTap: _pickDate,
+                              ),
+                              const SizedBox(height: 8),
+                              _FieldLabel(label: 'Your Location*'),
                               TextField(
                                 controller: _locationController,
-                                minLines: 1,
-                                maxLines: 2,
                                 decoration: _fieldDecoration(
-                                  hintText: 'Enter your area',
+                                  hintText: 'Example: Toul Kork, Phnom Penh',
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              _FieldLabel(label: 'Preferred date*'),
-                              _PreferredDateField(
-                                value: _preferredDate,
-                                onTap: _pickPreferredDate,
-                              ),
-                              const SizedBox(height: 8),
-                              _FieldLabel(label: 'Describe your problem*'),
+                              _FieldLabel(label: 'Description*'),
                               TextField(
-                                controller: _detailsController,
+                                controller: _messageController,
                                 minLines: 4,
                                 maxLines: 6,
                                 decoration: _fieldDecoration(
                                   hintText:
-                                      'Example: Pipe leaking under kitchen sink.',
+                                      'Example: I need 2 people to clean my house tomorrow morning. Total 3 bedrooms.',
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -251,19 +216,19 @@ class _ClientPostPageState extends State<ClientPostPage> {
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
-                                    onPressed: _submitting ? null : _cancelEdit,
+                                    onPressed: _posting ? null : _cancelEdit,
                                     child: const Text('Cancel edit'),
                                   ),
                                 ),
                               PrimaryButton(
-                                label: _submitting
+                                label: _posting
                                     ? (_editingPostId == null
                                           ? 'Posting...'
                                           : 'Updating...')
                                     : (_editingPostId == null
-                                          ? 'Post'
-                                          : 'Update post'),
-                                onPressed: _submitting ? null : _submitPost,
+                                          ? 'Post Now'
+                                          : 'Update Post'),
+                                onPressed: _posting ? null : _submit,
                               ),
                             ],
                           ),
@@ -280,90 +245,52 @@ class _ClientPostPageState extends State<ClientPostPage> {
     );
   }
 
-  Future<void> _submitPost() async {
-    final details = _detailsController.text.trim();
-    final typedLocation = _locationController.text.trim();
-    final location = typedLocation.isEmpty
-        ? _preferredFinderLocation()
-        : typedLocation;
+  Future<void> _submit() async {
     if (_selectedCategory.isEmpty ||
-        _selectedServices.isEmpty ||
-        location.isEmpty ||
-        details.isEmpty) {
+        _selectedService.isEmpty ||
+        _messageController.text.trim().isEmpty ||
+        _locationController.text.trim().isEmpty) {
       AppToast.error(context, 'Please complete all fields.');
       return;
     }
-    setState(() => _submitting = true);
+    setState(() => _posting = true);
     try {
-      final services = _selectedServices.toList(growable: false)..sort();
-      final editingPostId = _editingPostId;
-      if (editingPostId == null) {
+      final preferredDate = _preferredDate ?? DateTime.now().add(const Duration(days: 1));
+      if (_editingPostId == null) {
         await FinderPostState.createFinderRequest(
           category: _selectedCategory,
-          services: services,
-          location: location,
-          message: details,
-          preferredDate: _preferredDate,
+          services: [_selectedService],
+          message: _messageController.text.trim(),
+          location: _locationController.text.trim(),
+          preferredDate: preferredDate,
         );
       } else {
         await FinderPostState.updateFinderRequest(
-          postId: editingPostId,
+          postId: _editingPostId!,
           category: _selectedCategory,
-          services: services,
-          location: location,
-          message: details,
-          preferredDate: _preferredDate,
+          services: [_selectedService],
+          message: _messageController.text.trim(),
+          location: _locationController.text.trim(),
+          preferredDate: preferredDate,
         );
       }
       if (!mounted) return;
       _editingPostId = null;
-      _detailsController.clear();
-      final successMessage = editingPostId == null
-          ? (services.length == 1
-                ? 'Your request for ${services.first} is now live in $location.'
-                : 'Your request for ${services.length} services is now live in $location.')
-          : 'Your post was updated successfully.';
-      await _showPostSubmitResultSheet(
-        success: true,
-        title: editingPostId == null ? 'Post Published' : 'Post Updated',
-        message: successMessage,
-        actionLabel: 'Go to Home',
+      _messageController.clear();
+      _preferredDate = null;
+      AppToast.success(
+        context,
+        'Your request is now live for providers to see.',
       );
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home');
+      MainShellPage.activeTab.value = AppBottomTab.home;
     } catch (error) {
       if (!mounted) return;
-      await _showPostSubmitResultSheet(
-        success: false,
-        title: 'Post Failed',
-        message: error.toString(),
-        actionLabel: 'Try Again',
-      );
+      AppToast.error(context, error.toString());
     } finally {
       if (mounted) {
-        setState(() => _submitting = false);
+        setState(() => _posting = false);
       }
     }
-  }
-
-  Future<void> _showPostSubmitResultSheet({
-    required bool success,
-    required String title,
-    required String message,
-    required String actionLabel,
-  }) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isDismissible: true,
-      enableDrag: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _PostSubmitResultSheet(
-        success: success,
-        title: title,
-        message: message,
-        actionLabel: actionLabel,
-      ),
-    );
   }
 
   Future<void> _openManageSheet() async {
@@ -461,17 +388,13 @@ class _ClientPostPageState extends State<ClientPostPage> {
   }
 
   void _beginEdit(FinderPostItem post) {
-    final selectedServices = post.serviceList.toSet();
     setState(() {
       _editingPostId = post.id;
       _selectedCategory = post.category;
-      _selectedServices
-        ..clear()
-        ..addAll(selectedServices);
+      _selectedService = post.service;
+      _messageController.text = post.message;
       _locationController.text = post.location;
-      _detailsController.text = post.message;
-      _preferredDate =
-          post.preferredDate ?? DateTime.now().add(const Duration(days: 1));
+      _preferredDate = post.preferredDate;
     });
   }
 
@@ -484,7 +407,7 @@ class _ClientPostPageState extends State<ClientPostPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete post'),
-        content: Text('Delete "${post.serviceLabel}" request?'),
+        content: Text('Delete "${post.serviceLabel}" post?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -528,47 +451,32 @@ class _ClientPostPageState extends State<ClientPostPage> {
       labelBuilder: (item) => item,
     );
     if (picked == null) return;
-    final services = CatalogState.servicesForCategory(picked);
     setState(() {
       _selectedCategory = picked;
-      _selectedServices
-        ..clear()
-        ..addAll(services.isNotEmpty ? <String>{services.first} : <String>{});
+      final services = CatalogState.servicesForCategory(picked);
+      _selectedService = services.isNotEmpty ? services.first : '';
     });
   }
 
   Future<void> _pickService() async {
     final services = CatalogState.servicesForCategory(_selectedCategory);
     if (services.isEmpty) return;
-    final picked = await _showMultiSelectServiceSheet(
+    final picked = await _showOptionSheet<String>(
       title: 'Choose service',
       options: services,
-      selected: _selectedServices,
+      selected: _selectedService,
+      labelBuilder: (item) => item,
     );
-    if (picked == null || picked.isEmpty) return;
-    setState(() {
-      _selectedServices
-        ..clear()
-        ..addAll(picked);
-    });
+    if (picked == null) return;
+    setState(() => _selectedService = picked);
   }
 
-  String get _selectedServiceLabel {
-    if (_selectedServices.isEmpty) return 'Select service(s)';
-    final values = _selectedServices.toList(growable: false)..sort();
-    if (values.length == 1) return values.first;
-    if (values.length == 2) return '${values[0]}, ${values[1]}';
-    return '${values.length} services selected';
-  }
-
-  Future<void> _pickPreferredDate() async {
-    final now = DateTime.now();
-    final picked = await showAppCalendarDatePicker(
-      context,
-      initialDate: _preferredDate,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: DateTime(now.year + 2, 12, 31),
-      helpText: 'Choose preferred date',
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _preferredDate ?? DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
     );
     if (picked == null) return;
     setState(() => _preferredDate = picked);
@@ -683,182 +591,6 @@ class _ClientPostPageState extends State<ClientPostPage> {
       },
     );
   }
-
-  Future<Set<String>?> _showMultiSelectServiceSheet({
-    required String title,
-    required List<String> options,
-    required Set<String> selected,
-  }) {
-    final temp = selected.toSet();
-    return showModalBottomSheet<Set<String>>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Flexible(
-                      child: ListView.separated(
-                        shrinkWrap: true,
-                        itemCount: options.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final option = options[index];
-                          final active = temp.contains(option);
-                          return InkWell(
-                            borderRadius: BorderRadius.circular(14),
-                            onTap: () => setModalState(() {
-                              if (active) {
-                                temp.remove(option);
-                              } else {
-                                temp.add(option);
-                              }
-                            }),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: active
-                                    ? const Color(0xFFEAF1FF)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: active
-                                      ? AppColors.primary
-                                      : AppColors.divider,
-                                  width: active ? 1.6 : 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.tune_rounded,
-                                    size: 17,
-                                    color: AppColors.primary,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      option,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.copyWith(
-                                            color: AppColors.textPrimary,
-                                          ),
-                                    ),
-                                  ),
-                                  AnimatedOpacity(
-                                    duration: const Duration(milliseconds: 150),
-                                    opacity: active ? 1 : 0,
-                                    child: const Icon(
-                                      Icons.check_circle,
-                                      size: 18,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    PrimaryButton(
-                      label: 'Apply',
-                      onPressed: temp.isEmpty
-                          ? null
-                          : () => Navigator.pop(context, temp),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _PreferredDateField extends StatelessWidget {
-  final DateTime value;
-  final VoidCallback onTap;
-
-  const _PreferredDateField({required this.value, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final text = MaterialLocalizations.of(context).formatMediumDate(value);
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_month_rounded,
-              size: 18,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    text,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Provider will prioritize this date',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: AppColors.textSecondary,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _FieldLabel extends StatelessWidget {
@@ -915,110 +647,6 @@ class _PickerField extends StatelessWidget {
               color: AppColors.textSecondary,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PostSubmitResultSheet extends StatelessWidget {
-  final bool success;
-  final String title;
-  final String message;
-  final String actionLabel;
-
-  const _PostSubmitResultSheet({
-    required this.success,
-    required this.title,
-    required this.message,
-    required this.actionLabel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final icon = success ? Icons.check_circle_rounded : Icons.error_rounded;
-    final accent = success ? AppColors.success : AppColors.danger;
-    final background = success
-        ? const Color(0xFFF0FFF4)
-        : const Color(0xFFFFF1F2);
-    final gradient = success
-        ? const [Color(0xFF059669), Color(0xFF10B981)]
-        : const [Color(0xFFDC2626), Color(0xFFEF4444)];
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x29000000),
-                blurRadius: 24,
-                offset: Offset(0, 14),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 62,
-                  height: 62,
-                  decoration: BoxDecoration(
-                    color: background,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: accent.withValues(alpha: 0.2)),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(icon, size: 34, color: accent),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: gradient),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(actionLabel),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

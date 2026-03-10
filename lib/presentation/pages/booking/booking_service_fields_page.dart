@@ -53,7 +53,7 @@ class _BookingServiceFieldsPageState extends State<BookingServiceFieldsPage> {
             AppSpacing.lg,
             AppSpacing.lg,
             AppSpacing.lg,
-            128,
+            80,
           ),
           child: ListView(
             children: [
@@ -72,8 +72,8 @@ class _BookingServiceFieldsPageState extends State<BookingServiceFieldsPage> {
               const SizedBox(height: 14),
               if (fieldDefs.isEmpty)
                 const AppStatePanel.empty(
-                  title: 'No additional fields',
-                  message: 'You can continue to payment.',
+                  title: 'No additional requirements',
+                  message: 'You can continue to confirm your booking.',
                 )
               else
                 ...fieldDefs.map((field) => _buildDynamicField(field)),
@@ -89,35 +89,11 @@ class _BookingServiceFieldsPageState extends State<BookingServiceFieldsPage> {
         child: SafeArea(
           top: false,
           minimum: EdgeInsets.fromLTRB(18, 10, 18, 14 + bottomInset),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total fee',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Text(
-                      '\$${draft.total.toStringAsFixed(0)}',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: PrimaryButton(
-                  label: 'Continue',
-                  icon: Icons.arrow_forward_rounded,
-                  iconTrailing: true,
-                  onPressed: () => _goNext(fieldDefs, draft),
-                ),
-              ),
-            ],
+          child: PrimaryButton(
+            label: 'Review Summary',
+            icon: Icons.arrow_forward_rounded,
+            iconTrailing: true,
+            onPressed: () => _goNext(fieldDefs, draft),
           ),
         ),
       ),

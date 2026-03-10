@@ -148,7 +148,7 @@ class _BookingConfirmationPageState extends State<BookingConfirmationPage> {
                                 children: const [
                                   TextSpan(
                                     text:
-                                        'Please check your email for receipt and booking details\nor visit ',
+                                        'Your service request has been sent to the provider.\nor visit ',
                                   ),
                                   TextSpan(
                                     text: 'Orders',
@@ -156,7 +156,7 @@ class _BookingConfirmationPageState extends State<BookingConfirmationPage> {
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  TextSpan(text: ' to review your booking.'),
+                                  TextSpan(text: ' to track the status.'),
                                 ],
                               ),
                               textAlign: TextAlign.center,
@@ -164,7 +164,7 @@ class _BookingConfirmationPageState extends State<BookingConfirmationPage> {
                           ),
                           const SizedBox(height: 28),
                           Text(
-                            'Order Details',
+                            'Booking Summary',
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   color: AppColors.primary,
@@ -179,31 +179,13 @@ class _BookingConfirmationPageState extends State<BookingConfirmationPage> {
                                 setState(() => _expanded = !_expanded),
                           ),
                           const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Text(
-                                'Booking Cost',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                '\$ ${order.total.toStringAsFixed(0)}',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
                           Text(
-                            "You won't be charged until the job is completed.",
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            "You can pay the provider by cash after the service is completed.",
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ],
                       ),
@@ -301,16 +283,9 @@ class _ServiceDetailCard extends StatelessWidget {
             const SizedBox(height: 10),
             const Divider(height: 1),
             const SizedBox(height: 10),
-            _InfoSingleRow(
-              label: 'Payment method',
-              value: _paymentLabel(order.paymentMethod),
-            ),
-            const SizedBox(height: 10),
-            const Divider(height: 1),
-            const SizedBox(height: 10),
             _InfoDoubleRow(
-              leftLabel: 'You selected',
-              leftValue: '${order.workers} workers | ${order.hours} hours',
+              leftLabel: 'Category',
+              leftValue: order.provider.role,
               rightLabel: 'Size of home',
               rightValue: _homeTypeLabel(order.homeType),
             ),
@@ -333,7 +308,7 @@ class _ServiceDetailCard extends StatelessWidget {
               const Divider(height: 1),
               const SizedBox(height: 10),
               _InfoSingleRow(
-                label: 'Additional Service',
+                label: 'Additional Info',
                 value: order.additionalService,
               ),
             ],
@@ -380,19 +355,6 @@ class _ServiceDetailCard extends StatelessWidget {
     if (direct.isNotEmpty) return direct;
     final query = Uri.encodeComponent('${address.street}, ${address.city}');
     return 'https://maps.google.com/?q=$query';
-  }
-
-  static String _paymentLabel(PaymentMethod method) {
-    switch (method) {
-      case PaymentMethod.creditCard:
-        return 'Credit Card';
-      case PaymentMethod.bankAccount:
-        return 'Credit Card';
-      case PaymentMethod.cash:
-        return 'Cash';
-      case PaymentMethod.khqr:
-        return 'Bakong KHQR';
-    }
   }
 }
 

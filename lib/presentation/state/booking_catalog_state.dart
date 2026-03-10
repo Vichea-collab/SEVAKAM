@@ -6,8 +6,6 @@ import '../../domain/entities/provider.dart';
 import 'catalog_state.dart';
 
 class BookingCatalogState {
-  static const List<int> bookingHourOptions = <int>[1, 2, 3, 4, 5, 6];
-  static const List<int> workerCountOptions = <int>[1, 2, 3, 4];
   static const List<String> scheduleTimeOptions = <String>[
     '08:00 AM - 10:00 AM',
     '09:00 AM - 11:00 AM',
@@ -79,13 +77,8 @@ class BookingCatalogState {
       address: null,
       preferredDate: DateTime.now().add(const Duration(days: 1)),
       preferredTimeSlot: scheduleTimeOptions[1],
-      hours: 2,
       homeType: HomeType.apartment,
-      workers: 1,
-      paymentMethod: PaymentMethod.creditCard,
       additionalService: '',
-      promoCode: '',
-      unitPricePerHour: 12,
       serviceFields: initialFieldValuesForService(resolvedService),
     );
   }

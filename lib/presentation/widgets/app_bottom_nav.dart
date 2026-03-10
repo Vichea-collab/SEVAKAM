@@ -30,6 +30,7 @@ class AppBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     const accentColor = AppColors.primary;
+    final isProvider = AppRoleState.isProvider;
 
     return SizedBox(
       height: 94 + bottomPadding,
@@ -65,7 +66,7 @@ class AppBottomNav extends StatelessWidget {
                 Expanded(
                   child: _NavItem(
                     icon: Icons.notifications_none_rounded,
-                    label: 'Inbox',
+                    label: isProvider ? 'Inbox' : 'Inbox',
                     selected: _isCurrent(AppBottomTab.notification),
                     onTap: () => _goTo(context, AppBottomTab.notification),
                     accentColor: accentColor,
@@ -116,7 +117,7 @@ class AppBottomNav extends StatelessWidget {
                           ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: Colors.white, 
+                            color: Colors.white,
                             width: 3,
                           ),
                           boxShadow: [
@@ -129,10 +130,10 @@ class AppBottomNav extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Icon(
-                      Icons.add_rounded,
+                    Icon(
+                      isProvider ? Icons.post_add_rounded : Icons.add_rounded,
                       color: Colors.white,
-                      size: 34,
+                      size: isProvider ? 30 : 34,
                     ),
                   ],
                 ),
@@ -172,23 +173,37 @@ class _ProfileNavItem extends StatelessWidget {
           children: [
             ValueListenableBuilder<int>(
               valueListenable: ProfileImageState.listenable,
-              builder: (context, _, __) {
+              builder: (context, _, child) {
                 final image = ProfileImageState.avatarProvider();
+                final hasImage = ProfileImageState.hasCustomAvatar;
+
                 return Container(
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: selected ? accentColor.withValues(alpha: 0.15) : Colors.transparent,
+                    color: selected
+                        ? accentColor.withValues(alpha: 0.15)
+                        : Colors.transparent,
                     shape: BoxShape.circle,
-                    border: selected ? Border.all(color: accentColor.withValues(alpha: 0.2), width: 1) : null,
+                    border: selected
+                        ? Border.all(
+                            color: accentColor.withValues(alpha: 0.2),
+                            width: 1,
+                          )
+                        : null,
                   ),
                   alignment: Alignment.center,
-                  child: image != null
+                  child: hasImage && image != null
                       ? CircleAvatar(
                           radius: 14,
+                          backgroundColor: AppColors.background,
                           backgroundImage: image,
                         )
-                      : Icon(Icons.person_rounded, size: 24, color: color),
+                      : Icon(
+                          Icons.person_rounded,
+                          size: 24,
+                          color: color,
+                        ),
                 );
               },
             ),
@@ -228,10 +243,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected 
-        ? accentColor 
-        : AppColors.textSecondary;
-    
+    final color = selected ? accentColor : AppColors.textSecondary;
+
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: onTap,

@@ -2,8 +2,6 @@ implement
   1. Trust & Safety (Crucial for Service Apps)
    * Provider Verification (KYC): Add a flow for providers to upload their National ID or Passport. Once verified by an admin, they
      receive a blue "Verified" badge on their profile. This drastically increases customer trust.
-   * Photo Reviews: Allow customers to attach photos to their reviews when a job is completed (e.g., a photo of a repaired AC unit
-     or a clean room).
 
 
   3. Enhancing the Finder (Customer) Experience
@@ -49,8 +47,16 @@ implement
 
 
 
-
+checking for me, is my whole app when refreashing need to have action for refresh for data up to date
 
 
 account:
-Demo password: Demo@123456 
+Demo password: Demo@123456
+
+
+
+for booking process
+- in step 2 detail of general detail remove how many hour worker to stay. and for service it display all services that the provider have post and let costomer select 1 service
+- in step 4 change name to Summary, remove the payment, promocode
+- remove everything that have cost for me, the booking just for comfirm booking
+

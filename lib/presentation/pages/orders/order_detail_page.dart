@@ -30,6 +30,7 @@ class OrderDetailPage extends StatefulWidget {
 
 class _OrderDetailPageState extends State<OrderDetailPage> {
   late OrderItem _order;
+  bool _updating = false;
 
   @override
   void initState() {
@@ -92,7 +93,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppTopBar(
-                title: 'Orders Information',
+                title: 'Order Information',
                 subtitle: '${_order.address.street}, ${_order.address.city}',
                 onBack: () => Navigator.pop(context, _order),
               ),
@@ -121,7 +122,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Your provider starts - ${_dateLabel(_order.scheduledAt)} @ ${_order.timeRange}',
+                      'Scheduled: ${_dateLabel(_order.scheduledAt)} @ ${_order.timeRange}',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
@@ -129,7 +130,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'One-Time ${_order.serviceName}',
+                      'Service: ${_order.serviceName}',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 10),
@@ -175,13 +176,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               const SizedBox(height: 14),
               Text(
                 _order.status == OrderStatus.completed
-                    ? 'Your order has been completed!'
+                    ? 'Your service has been completed!'
                     : (_order.status == OrderStatus.cancelled ||
                           _order.status == OrderStatus.declined)
                     ? (_order.status == OrderStatus.declined
                           ? 'This booking was declined by provider.'
                           : 'This booking has been cancelled.')
-                    : 'Your order has been booked!',
+                    : 'Your booking has been confirmed!',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w600,
@@ -194,6 +195,17 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               const SizedBox(height: 10),
               OrderStatusTimelineCard(entries: _timelineEntries(_order)),
               const SizedBox(height: 12),
+              
+              if (_order.status == OrderStatus.started) ...[
+                PrimaryButton(
+                  label: _updating ? 'Marking complete...' : 'Mark as Completed',
+                  icon: Icons.verified_rounded,
+                  tone: PrimaryButtonTone.success,
+                  onPressed: _updating ? null : () => _updateStatus(OrderStatus.completed),
+                ),
+                const SizedBox(height: 12),
+              ],
+
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -204,7 +216,17 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 child: Row(
                   children: [
                     CircleAvatar(
-                      backgroundImage: safeImageProvider(_order.provider.imagePath),
+                      backgroundColor: AppColors.background,
+                      backgroundImage: _order.provider.imagePath.trim().isNotEmpty
+                          ? safeImageProvider(_order.provider.imagePath)
+                          : null,
+                      child: _order.provider.imagePath.trim().isEmpty
+                          ? const Icon(
+                              Icons.person_rounded,
+                              size: 24,
+                              color: AppColors.primary,
+                            )
+                          : null,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -251,7 +273,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               ),
               const SizedBox(height: 14),
               Text(
-                'Service Details',
+                'Booking Details',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
@@ -274,14 +296,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       value: _dateLabel(_order.scheduledAt),
                     ),
                     _InfoRow(label: 'Time slot', value: _order.timeRange),
-                    _InfoRow(
-                      label: 'Duration',
-                      value: '${_order.hours} hour(s)',
-                    ),
-                    _InfoRow(label: 'Workers', value: '${_order.workers}'),
                     if (_order.additionalService.trim().isNotEmpty)
                       _InfoRow(
-                        label: 'Additional Service',
+                        label: 'Additional Info',
                         value: _order.additionalService,
                       ),
                     _InfoRow(
@@ -293,38 +310,19 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       value: '${_order.address.street}, ${_order.address.city}',
                     ),
                     _InfoRow(
-                      label: 'Payment method',
-                      value: _paymentLabel(_order.paymentMethod),
-                    ),
-                    _InfoRow(
                       label: 'Address Link',
                       value: _resolvedAddressLink(_order.address),
-                    ),
-                    const Divider(height: 24),
-                    _AmountRow(label: 'Sub Total', amount: _order.subtotal),
-                    _AmountRow(
-                      label: 'Processing fee',
-                      amount: _order.processingFee,
-                    ),
-                    _AmountRow(
-                      label: _order.discount > 0
-                          ? 'Promo discount'
-                          : 'Promo code',
-                      amount: -_order.discount,
-                    ),
-                    const SizedBox(height: 4),
-                    _AmountRow(
-                      label: 'Booking Cost',
-                      amount: _order.total,
-                      bold: true,
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 14),
               Text(
-                "You won't be charged until the job is completed.",
-                style: Theme.of(context).textTheme.bodyMedium,
+                "Payment is handled directly with the provider (cash preferred).",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
               ),
               if (_order.status == OrderStatus.cancelled ||
                   _order.status == OrderStatus.declined) ...[
@@ -339,6 +337,25 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _updateStatus(OrderStatus status) async {
+    setState(() => _updating = true);
+    try {
+      final synced = await OrderState.updateFinderOrderStatus(
+        orderId: _order.id,
+        status: status,
+      );
+      if (!mounted) return;
+      setState(() => _order = synced);
+      if (status == OrderStatus.completed) {
+        _openRating();
+      }
+    } catch (_) {
+      if (mounted) AppToast.error(context, 'Failed to update status.');
+    } finally {
+      if (mounted) setState(() => _updating = false);
+    }
   }
 
   Future<void> _openManage() async {
@@ -529,19 +546,6 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       );
     }
     return entries;
-  }
-
-  String _paymentLabel(PaymentMethod method) {
-    switch (method) {
-      case PaymentMethod.creditCard:
-        return 'Credit Card';
-      case PaymentMethod.bankAccount:
-        return 'Credit Card';
-      case PaymentMethod.cash:
-        return 'Cash';
-      case PaymentMethod.khqr:
-        return 'Bakong KHQR';
-    }
   }
 }
 
@@ -765,36 +769,6 @@ class _InfoRow extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AmountRow extends StatelessWidget {
-  final String label;
-  final double amount;
-  final bool bold;
-
-  const _AmountRow({
-    required this.label,
-    required this.amount,
-    this.bold = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodyLarge?.copyWith(
-      fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-      color: bold ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
-    );
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          const Spacer(),
-          Text('\$${amount.toStringAsFixed(0)}', style: style),
         ],
       ),
     );

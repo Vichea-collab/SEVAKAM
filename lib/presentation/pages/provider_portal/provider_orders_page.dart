@@ -1,18 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/utils/app_toast.dart';
-import '../../../data/network/backend_api_client.dart';
-import '../../../domain/entities/pagination.dart';
-import '../../../domain/entities/provider_portal.dart';
-import '../../state/order_state.dart';
-import '../../widgets/app_state_panel.dart';
-import '../../widgets/app_top_bar.dart';
-import '../../widgets/pagination_bar.dart';
-import '../../widgets/primary_button.dart';
-import 'provider_home_page.dart';
+import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/utils/app_toast.dart';
+import 'package:servicefinder/data/network/backend_api_client.dart';
+import 'package:servicefinder/domain/entities/pagination.dart';
+import 'package:servicefinder/domain/entities/provider_portal.dart';
+import 'package:servicefinder/presentation/state/order_state.dart';
+import 'package:servicefinder/presentation/widgets/app_state_panel.dart';
+import 'package:servicefinder/presentation/widgets/app_top_bar.dart';
+import 'package:servicefinder/presentation/widgets/pagination_bar.dart';
+import 'package:servicefinder/presentation/widgets/primary_button.dart';
+import 'package:servicefinder/presentation/pages/main_shell_page.dart';
+import 'package:servicefinder/presentation/widgets/app_bottom_nav.dart';
 import 'provider_order_detail_page.dart';
 
 enum ProviderOrderTab { incoming, active, completed }
@@ -75,7 +76,8 @@ class _ProviderOrdersPageState extends State<ProviderOrdersPage>
                     case ProviderOrderTab.incoming:
                       return item.state == ProviderOrderState.incoming;
                     case ProviderOrderTab.active:
-                      return item.state == ProviderOrderState.onTheWay ||
+                      return item.state == ProviderOrderState.booked ||
+                          item.state == ProviderOrderState.onTheWay ||
                           item.state == ProviderOrderState.started;
                     case ProviderOrderTab.completed:
                       return item.state == ProviderOrderState.completed ||
@@ -92,10 +94,7 @@ class _ProviderOrdersPageState extends State<ProviderOrdersPage>
                           AppTopBar(
                             title: 'Provider Orders',
                             showBack: true,
-                            onBack: () => Navigator.pushReplacementNamed(
-                              context,
-                              ProviderPortalHomePage.routeName,
-                            ),
+                            onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -177,7 +176,7 @@ class _ProviderOrdersPageState extends State<ProviderOrdersPage>
                                                       ? () => _move(
                                                           item,
                                                           ProviderOrderState
-                                                              .onTheWay,
+                                                              .booked,
                                                         )
                                                       : null,
                                                   onDecline:
@@ -251,7 +250,8 @@ class _ProviderOrdersPageState extends State<ProviderOrdersPage>
   Future<void> _move(ProviderOrderItem item, ProviderOrderState next) async {
     try {
       await OrderState.updateProviderOrderStatus(orderId: item.id, state: next);
-      if (next == ProviderOrderState.onTheWay ||
+      if (next == ProviderOrderState.booked ||
+          next == ProviderOrderState.onTheWay ||
           next == ProviderOrderState.started) {
         setState(() => _tab = ProviderOrderTab.active);
       }
@@ -453,26 +453,6 @@ class _ProviderOrderCard extends StatelessWidget {
             Text('Date: ${item.scheduleDate}'),
             Text('Time: ${item.scheduleTime}'),
             Text('Address: ${item.address}'),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  'Booking Cost',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '\$ ${item.total.toStringAsFixed(0)}',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 10),
             if (onAccept != null) ...[
               Row(
@@ -523,7 +503,8 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, bg) = switch (state) {
       ProviderOrderState.incoming => ('Incoming', const Color(0xFFD97706)),
-      ProviderOrderState.onTheWay => ('Booked', const Color(0xFFD97706)),
+      ProviderOrderState.booked => ('Booked', const Color(0xFFD97706)),
+      ProviderOrderState.onTheWay => ('On the way', AppColors.primary),
       ProviderOrderState.started => ('Started', const Color(0xFF7C6EF2)),
       ProviderOrderState.completed => ('Completed', AppColors.success),
       ProviderOrderState.declined => ('Declined', AppColors.danger),

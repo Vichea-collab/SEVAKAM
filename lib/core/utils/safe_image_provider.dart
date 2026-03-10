@@ -1,23 +1,28 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+final Uint8List _transparentPixel = base64Decode(
+  'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+);
+
 ImageProvider safeImageProvider(String? source) {
-  if (source == null) {
-    return const AssetImage('assets/images/profile.jpg');
+  if (source == null || source.trim().isEmpty) {
+    return MemoryImage(_transparentPixel);
   }
 
   String trimmed = source.trim();
-  if (trimmed.isEmpty) {
-    return const AssetImage('assets/images/profile.jpg');
-  }
-
   // Remove potential surrounding quotes from backend strings
   if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
     trimmed = trimmed.substring(1, trimmed.length - 1).trim();
   }
   if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
     trimmed = trimmed.substring(1, trimmed.length - 1).trim();
+  }
+
+  if (trimmed.isEmpty) {
+    return MemoryImage(_transparentPixel);
   }
 
   // Handle Data URI (base64)
@@ -31,7 +36,7 @@ ImageProvider safeImageProvider(String? source) {
     } catch (e) {
       debugPrint('Error decoding base64 image: $e');
     }
-    return const AssetImage('assets/images/profile.jpg');
+    return MemoryImage(_transparentPixel);
   }
 
   // Handle Network URL (more robust check)

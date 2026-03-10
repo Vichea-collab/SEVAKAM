@@ -44,6 +44,13 @@ class _ProviderHomePageState extends State<ProviderHomePage> {
     super.dispose();
   }
 
+  Future<void> _handleRefresh() async {
+    try {
+      await ProviderPostState.refresh(page: 1);
+      await ProviderPostState.refreshAllForLookup();
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
@@ -61,167 +68,175 @@ class _ProviderHomePageState extends State<ProviderHomePage> {
                 final hasQuery = _query.trim().isNotEmpty;
                 return Scaffold(
                   body: SafeArea(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  AppColors.splashStart,
-                                  AppColors.splashEnd,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      icon: const Icon(
-                                        Icons.arrow_back,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Service Providers',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(color: Colors.white),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.search,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: TextField(
-                                          controller: _searchController,
-                                          onChanged: _onSearchChanged,
-                                          decoration: const InputDecoration(
-                                            border: InputBorder.none,
-                                            enabledBorder: InputBorder.none,
-                                            focusedBorder: InputBorder.none,
-                                            isDense: true,
-                                            hintText:
-                                                'Live provider list from posted offers',
-                                            hintStyle: TextStyle(
-                                              color: AppColors.textSecondary,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      if (_query.trim().isNotEmpty)
-                                        GestureDetector(
-                                          onTap: () {
-                                            _searchDebounce?.cancel();
-                                            _searchController.clear();
-                                            setState(() => _query = '');
-                                          },
-                                          child: const Icon(
-                                            Icons.close_rounded,
-                                            size: 18,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          if (isLoading && sections.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.only(bottom: 18),
-                              child: Center(
-                                child: AppStatePanel.loading(
-                                  title: 'Loading providers',
-                                ),
-                              ),
-                            ),
-                          if (!isLoading && sections.isEmpty)
+                    child: RefreshIndicator(
+                      onRefresh: _handleRefresh,
+                      color: AppColors.primary,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: AppColors.divider),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    AppColors.splashStart,
+                                    AppColors.splashEnd,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
                               ),
-                              child: Text(
-                                hasQuery
-                                    ? 'No providers found for "${_query.trim()}".'
-                                    : 'No provider offers available yet.',
-                                style: Theme.of(context).textTheme.bodyMedium,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        icon: const Icon(
+                                          Icons.arrow_back,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Service Providers',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(color: Colors.white),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.search,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: TextField(
+                                            controller: _searchController,
+                                            onChanged: _onSearchChanged,
+                                            decoration: const InputDecoration(
+                                              border: InputBorder.none,
+                                              enabledBorder: InputBorder.none,
+                                              focusedBorder: InputBorder.none,
+                                              isDense: true,
+                                              hintText:
+                                                  'Live provider list from posted offers',
+                                              hintStyle: TextStyle(
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        if (_query.trim().isNotEmpty)
+                                          GestureDetector(
+                                            onTap: () {
+                                              _searchDebounce?.cancel();
+                                              _searchController.clear();
+                                              setState(() => _query = '');
+                                            },
+                                            child: const Icon(
+                                              Icons.close_rounded,
+                                              size: 18,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          for (final section in sections) ...[
-                            SectionTitle(
-                              title: section.title,
-                              actionLabel: 'View all',
-                              onAction: () => Navigator.push(
-                                context,
-                                slideFadeRoute(
-                                  ProviderCategoryPage(section: section),
+                            const SizedBox(height: 18),
+                            if (isLoading && sections.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 18),
+                                child: Center(
+                                  child: AppStatePanel.loading(
+                                    title: 'Loading providers',
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            SizedBox(
-                              height: 278,
-                              child: ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                itemBuilder: (context, index) {
-                                  final provider = section.providers[index];
-                                  return SizedBox(
-                                    width: 178,
-                                    child: ProviderCard(
-                                      provider: provider,
-                                      onDetails: () => Navigator.push(
-                                        context,
-                                        slideFadeRoute(
-                                          ProviderDetailPage(
-                                            provider: provider,
+                            if (!isLoading && sections.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppColors.divider),
+                                ),
+                                child: Text(
+                                  hasQuery
+                                      ? 'No providers found for "${_query.trim()}".'
+                                      : 'No provider offers available yet.',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                            for (final section in sections) ...[
+                              SectionTitle(
+                                title: section.title,
+                                actionLabel: 'View all',
+                                onAction: () => Navigator.push(
+                                  context,
+                                  slideFadeRoute(
+                                    ProviderCategoryPage(section: section),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              SizedBox(
+                                height: 278,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemBuilder: (context, index) {
+                                    final provider = section.providers[index];
+                                    final heroTag = 'provider-card-${section.category}-${provider.uid}';
+                                    return SizedBox(
+                                      width: 178,
+                                      child: ProviderCard(
+                                        provider: provider,
+                                        heroTag: heroTag,
+                                        onDetails: () => Navigator.push(
+                                          context,
+                                          slideFadeRoute(
+                                            ProviderDetailPage(
+                                              provider: provider,
+                                              heroTag: heroTag,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                },
-                                separatorBuilder: (_, _) =>
-                                    const SizedBox(width: AppSpacing.md),
-                                itemCount: section.providers.length,
+                                    );
+                                  },
+                                  separatorBuilder: (_, _) =>
+                                      const SizedBox(width: AppSpacing.md),
+                                  itemCount: section.providers.length,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: AppSpacing.lg),
+                              const SizedBox(height: AppSpacing.lg),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -353,9 +368,6 @@ class _ProviderHomePageState extends State<ProviderHomePage> {
       imagePath: item.avatarPath,
       accentColor: _accentFromCategory(role),
       services: item.services.toList(growable: false)..sort(),
-      providerType: item.providerType,
-      companyName: item.providerCompanyName,
-      maxWorkers: item.providerMaxWorkers,
       blockedDates: item.blockedDates,
     );
   }
@@ -375,9 +387,6 @@ class _ProviderAggregate {
   final String providerName;
   final String category;
   final String avatarPath;
-  String providerType;
-  String providerCompanyName;
-  int providerMaxWorkers;
   final Set<String> services;
   final List<DateTime> blockedDates;
   double rating;
@@ -387,9 +396,6 @@ class _ProviderAggregate {
     required this.providerName,
     required this.category,
     required this.avatarPath,
-    required this.providerType,
-    required this.providerCompanyName,
-    required this.providerMaxWorkers,
     required this.services,
     this.blockedDates = const [],
     this.rating = 0,
@@ -401,11 +407,6 @@ class _ProviderAggregate {
       providerName: post.providerName.trim(),
       category: post.category.trim(),
       avatarPath: post.avatarPath,
-      providerType: post.providerType,
-      providerCompanyName: post.providerCompanyName.trim(),
-      providerMaxWorkers: post.providerMaxWorkers < 1
-          ? 1
-          : post.providerMaxWorkers,
       services: post.serviceList
           .map((item) => item.trim())
           .where((item) => item.isNotEmpty)
@@ -424,18 +425,5 @@ class _ProviderAggregate {
     }
     // Update rating
     rating = post.rating;
-
-    if (post.providerType.trim().toLowerCase() == 'company') {
-      providerType = 'company';
-      if (post.providerCompanyName.trim().isNotEmpty) {
-        providerCompanyName = post.providerCompanyName.trim();
-      }
-      final maxWorkers = post.providerMaxWorkers < 1
-          ? 1
-          : post.providerMaxWorkers;
-      if (maxWorkers > providerMaxWorkers) {
-        providerMaxWorkers = maxWorkers;
-      }
-    }
   }
 }

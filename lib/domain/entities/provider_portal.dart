@@ -1,6 +1,6 @@
 import 'order.dart';
 
-enum ProviderOrderState { incoming, onTheWay, started, completed, declined }
+enum ProviderOrderState { incoming, booked, onTheWay, started, completed, declined }
 
 class FinderPostItem {
   final String id;
@@ -42,9 +42,6 @@ class ProviderPostItem {
   final String id;
   final String providerUid;
   final String providerName;
-  final String providerType;
-  final String providerCompanyName;
-  final int providerMaxWorkers;
   final String category;
   final String service;
   final List<String> services;
@@ -66,9 +63,6 @@ class ProviderPostItem {
     required this.id,
     required this.providerUid,
     required this.providerName,
-    this.providerType = 'individual',
-    this.providerCompanyName = '',
-    this.providerMaxWorkers = 1,
     required this.category,
     required this.service,
     required this.services,
@@ -77,7 +71,7 @@ class ProviderPostItem {
     required this.ratePerHour,
     required this.availableNow,
     required this.timeLabel,
-    required this.avatarPath,
+    this.avatarPath = '',
     this.rating = 0,
     this.isVerified = false,
     this.latitude,
@@ -90,6 +84,57 @@ class ProviderPostItem {
   List<String> get serviceList => _serviceList(service, services);
 
   String get serviceLabel => _serviceLabel(serviceList);
+
+  factory ProviderPostItem.fromMap(Map<String, dynamic> map) {
+    final ratingVal = map['rating'] ?? map['providerRating'] ?? 0;
+    return ProviderPostItem(
+      id: (map['id'] ?? '').toString(),
+      providerUid: (map['providerUid'] ?? '').toString(),
+      providerName: (map['providerName'] ?? 'Service Provider').toString(),
+      category: (map['category'] ?? '').toString(),
+      service: (map['service'] ?? '').toString(),
+      services: (map['services'] as List? ?? []).map((e) => e.toString()).toList(),
+      area: (map['area'] ?? '').toString(),
+      details: (map['details'] ?? '').toString(),
+      ratePerHour: double.tryParse((map['ratePerHour'] ?? '0').toString()) ?? 0,
+      availableNow: map['availableNow'] == true,
+      timeLabel: (map['timeLabel'] ?? '').toString(),
+      avatarPath: (map['avatarPath'] ?? map['providerAvatar'] ?? '').toString(),
+      rating: ratingVal is num ? ratingVal.toDouble() : 0,
+      isVerified: map['isVerified'] == true,
+      latitude: double.tryParse((map['latitude'] ?? '').toString()),
+      longitude: double.tryParse((map['longitude'] ?? '').toString()),
+      createdAt: map['createdAt'] != null ? DateTime.tryParse(map['createdAt'].toString()) : null,
+      updatedAt: map['updatedAt'] != null ? DateTime.tryParse(map['updatedAt'].toString()) : null,
+      blockedDates: (map['blockedDates'] as List? ?? [])
+          .map((e) => DateTime.parse(e.toString()))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'providerUid': providerUid,
+      'providerName': providerName,
+      'category': category,
+      'service': service,
+      'services': services,
+      'area': area,
+      'details': details,
+      'ratePerHour': ratePerHour,
+      'availableNow': availableNow,
+      'timeLabel': timeLabel,
+      'avatarPath': avatarPath,
+      'rating': rating,
+      'isVerified': isVerified,
+      'latitude': latitude,
+      'longitude': longitude,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'blockedDates': blockedDates.map((e) => e.toIso8601String()).toList(),
+    };
+  }
 }
 
 class ProviderOrderItem {

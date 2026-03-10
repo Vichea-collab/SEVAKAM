@@ -103,9 +103,6 @@ class ProviderProfessionData {
   final String availableTo;
   final String experienceYears;
   final String serviceArea;
-  final String providerType;
-  final String companyName;
-  final String maxWorkers;
   final List<DateTime> blockedDates;
 
   const ProviderProfessionData({
@@ -115,9 +112,6 @@ class ProviderProfessionData {
     required this.availableTo,
     required this.experienceYears,
     required this.serviceArea,
-    required this.providerType,
-    required this.companyName,
-    required this.maxWorkers,
     this.blockedDates = const [],
   });
 
@@ -129,9 +123,6 @@ class ProviderProfessionData {
       availableTo: '10:00 PM',
       experienceYears: '4',
       serviceArea: 'PP, Cambodia',
-      providerType: 'individual',
-      companyName: '',
-      maxWorkers: '1',
       blockedDates: [],
     );
   }
@@ -143,9 +134,6 @@ class ProviderProfessionData {
     String? availableTo,
     String? experienceYears,
     String? serviceArea,
-    String? providerType,
-    String? companyName,
-    String? maxWorkers,
     List<DateTime>? blockedDates,
   }) {
     return ProviderProfessionData(
@@ -155,9 +143,6 @@ class ProviderProfessionData {
       availableTo: availableTo ?? this.availableTo,
       experienceYears: experienceYears ?? this.experienceYears,
       serviceArea: serviceArea ?? this.serviceArea,
-      providerType: providerType ?? this.providerType,
-      companyName: companyName ?? this.companyName,
-      maxWorkers: maxWorkers ?? this.maxWorkers,
       blockedDates: blockedDates ?? this.blockedDates,
     );
   }
@@ -170,9 +155,6 @@ class ProviderProfessionData {
       availableTo: (map['availableTo'] ?? '').toString(),
       experienceYears: (map['experienceYears'] ?? '').toString(),
       serviceArea: (map['serviceArea'] ?? '').toString(),
-      providerType: (map['providerType'] ?? '').toString(),
-      companyName: (map['companyName'] ?? '').toString(),
-      maxWorkers: (map['maxWorkers'] ?? '').toString(),
       blockedDates: (map['blockedDates'] as List? ?? [])
           .map((e) => DateTime.parse(e.toString()))
           .toList(),
@@ -187,9 +169,6 @@ class ProviderProfessionData {
       'availableTo': availableTo,
       'experienceYears': experienceYears,
       'serviceArea': serviceArea,
-      'providerType': providerType,
-      'companyName': companyName,
-      'maxWorkers': maxWorkers,
       'blockedDates': blockedDates.map((e) => e.toIso8601String()).toList(),
     };
   }

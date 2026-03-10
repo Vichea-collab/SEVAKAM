@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../../core/utils/app_toast.dart';
 import '../../../domain/entities/order.dart';
+import '../../state/app_role_state.dart';
 import '../../state/profile_settings_state.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/primary_button.dart';
@@ -17,74 +17,88 @@ class PaymentPage extends StatefulWidget {
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-  late PaymentMethod _selected;
+  PaymentMethod _method = PaymentMethod.cash;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _selected = _sanitizeMethod(ProfileSettingsState.currentPaymentMethod);
+    _method = ProfileSettingsState.currentPaymentMethod;
   }
 
   @override
   Widget build(BuildContext context) {
+    final isProvider = AppRoleState.isProvider;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            10,
-            AppSpacing.lg,
-            AppSpacing.lg,
-          ),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const AppTopBar(title: 'Payment'),
-              const SizedBox(height: 18),
+              const AppTopBar(title: 'Payment Method'),
+              const SizedBox(height: 12),
+              if (!isProvider) ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF4FF),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline_rounded, color: AppColors.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'For finders, payments are handled directly with providers (Cash preferred). No online payment is required here.',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
               Text(
-                'Select Payment method',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
+                'Select preferred method',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
-              _PaymentTile(
-                label: 'Credit Card',
-                icon: Icons.credit_card,
-                selected: _selected == PaymentMethod.creditCard,
-                onTap: () =>
-                    setState(() => _selected = PaymentMethod.creditCard),
-              ),
-              _PaymentTile(
-                label: 'Cash Out',
-                icon: Icons.payments_outlined,
-                selected: _selected == PaymentMethod.cash,
-                onTap: () => setState(() => _selected = PaymentMethod.cash),
-              ),
-              _PaymentTile(
-                label: 'Bakong KHQR',
-                icon: Icons.qr_code_2_rounded,
-                selected: _selected == PaymentMethod.khqr,
-                onTap: () => setState(() => _selected = PaymentMethod.khqr),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    AppToast.info(
-                      context,
-                      'Card management screen can be added next.',
-                    );
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add new card'),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _MethodTile(
+                      icon: Icons.payments_outlined,
+                      label: 'Cash',
+                      selected: _method == PaymentMethod.cash,
+                      onTap: () => setState(() => _method = PaymentMethod.cash),
+                    ),
+                    const SizedBox(height: 10),
+                    _MethodTile(
+                      icon: Icons.qr_code_scanner_rounded,
+                      label: 'Bakong KHQR',
+                      selected: _method == PaymentMethod.khqr,
+                      onTap: () => setState(() => _method = PaymentMethod.khqr),
+                    ),
+                    const SizedBox(height: 10),
+                    _MethodTile(
+                      icon: Icons.credit_card_rounded,
+                      label: 'Credit Card',
+                      selected: _method == PaymentMethod.creditCard,
+                      onTap: () =>
+                          setState(() => _method = PaymentMethod.creditCard),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
               PrimaryButton(
-                label: _saving ? 'Saving...' : 'Save',
+                label: _saving ? 'Saving...' : 'Save Preferred Method',
                 onPressed: _saving ? null : _save,
               ),
             ],
@@ -96,29 +110,22 @@ class _PaymentPageState extends State<PaymentPage> {
 
   Future<void> _save() async {
     setState(() => _saving = true);
-    await ProfileSettingsState.saveCurrentPaymentMethod(
-      _sanitizeMethod(_selected),
-    );
+    await ProfileSettingsState.saveCurrentPaymentMethod(_method);
     if (!mounted) return;
     setState(() => _saving = false);
-    AppToast.success(context, 'Payment preference saved.');
-  }
-
-  PaymentMethod _sanitizeMethod(PaymentMethod method) {
-    if (method == PaymentMethod.bankAccount) return PaymentMethod.creditCard;
-    return method;
+    Navigator.pop(context);
   }
 }
 
-class _PaymentTile extends StatelessWidget {
-  final String label;
+class _MethodTile extends StatelessWidget {
   final IconData icon;
+  final String label;
   final bool selected;
   final VoidCallback onTap;
 
-  const _PaymentTile({
-    required this.label,
+  const _MethodTile({
     required this.icon,
+    required this.label,
     required this.selected,
     required this.onTap,
   });
@@ -127,33 +134,34 @@ class _PaymentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFDCEBFF) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: selected ? const Color(0xFFEAF1FF) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.divider,
+            width: selected ? 1.6 : 1,
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.primary),
-            const SizedBox(width: 10),
+            Icon(icon, color: selected ? AppColors.primary : AppColors.textSecondary),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? AppColors.primary : AppColors.textPrimary,
+                ),
               ),
             ),
-            Icon(
-              Icons.check,
-              color: selected ? AppColors.primary : AppColors.divider,
-            ),
+            if (selected)
+              const Icon(Icons.check_circle, color: AppColors.primary, size: 20)
+            else
+              const Icon(Icons.radio_button_off, color: AppColors.divider, size: 20),
           ],
         ),
       ),

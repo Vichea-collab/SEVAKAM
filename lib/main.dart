@@ -10,12 +10,14 @@ import 'presentation/state/provider_post_state.dart';
 import 'presentation/state/profile_settings_state.dart';
 import 'presentation/state/catalog_state.dart';
 import 'presentation/state/booking_catalog_state.dart';
+import 'presentation/state/favorite_state.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _runSafe('AppEnv.load', AppEnv.load);
   await _runSafe('AuthState.initialize', AuthState.initialize);
   await Future.wait<void>([
+    _runSafe('FavoriteState.init', FavoriteState.init),
     _runSafe(
       'ProfileSettingsState.initialize',
       ProfileSettingsState.initialize,

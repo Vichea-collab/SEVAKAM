@@ -2,24 +2,23 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/utils/app_toast.dart';
-import '../../../core/utils/page_transition.dart';
-import '../../../core/utils/safe_image_provider.dart';
-import '../../../domain/entities/pagination.dart';
-import '../../../domain/entities/profile_settings.dart';
-import '../../../domain/entities/provider_portal.dart';
-import '../../state/chat_state.dart';
-import '../../state/finder_post_state.dart';
-import '../../state/profile_image_state.dart';
-import '../../state/profile_settings_state.dart';
-import '../../widgets/app_state_panel.dart';
-import '../../widgets/pagination_bar.dart';
-import '../../widgets/pressable_scale.dart';
-import '../chat/chat_conversation_page.dart';
-import '../chat/chat_list_page.dart';
-import 'provider_finder_search_page.dart';
+import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/utils/app_toast.dart';
+import 'package:servicefinder/core/utils/page_transition.dart';
+import 'package:servicefinder/core/utils/safe_image_provider.dart';
+import 'package:servicefinder/domain/entities/pagination.dart';
+import 'package:servicefinder/domain/entities/profile_settings.dart';
+import 'package:servicefinder/domain/entities/provider_portal.dart';
+import 'package:servicefinder/presentation/state/chat_state.dart';
+import 'package:servicefinder/presentation/state/finder_post_state.dart';
+import 'package:servicefinder/presentation/state/profile_image_state.dart';
+import 'package:servicefinder/presentation/state/profile_settings_state.dart';
+import 'package:servicefinder/presentation/widgets/app_state_panel.dart';
+import 'package:servicefinder/presentation/widgets/pagination_bar.dart';
+import 'package:servicefinder/presentation/widgets/pressable_scale.dart';
+import 'package:servicefinder/presentation/pages/chat/chat_conversation_page.dart';
+import 'package:servicefinder/presentation/pages/chat/chat_list_page.dart';
 
 class ProviderPortalHomePage extends StatefulWidget {
   static const String routeName = '/provider/home';
@@ -35,14 +34,53 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
   DateTime? _lastPullAt;
   bool _refreshInProgress = false;
   bool _isPaging = false;
+  
+  late final TextEditingController _searchController;
+  String _searchQuery = '';
+  Timer? _searchDebounce;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(FinderPostState.refresh(page: 1));
     });
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _searchQuery = value.trim().toLowerCase();
+        });
+      }
+    });
+  }
+
+  List<FinderPostItem> _filterPosts(List<FinderPostItem> posts) {
+    if (_searchQuery.isEmpty) return posts;
+    return posts.where((post) {
+      final name = post.clientName.toLowerCase();
+      final msg = post.message.toLowerCase();
+      final cat = post.category.toLowerCase();
+      final loc = post.location.toLowerCase();
+      final srv = post.serviceLabel.toLowerCase();
+      return name.contains(_searchQuery) ||
+          msg.contains(_searchQuery) ||
+          cat.contains(_searchQuery) ||
+          loc.contains(_searchQuery) ||
+          srv.contains(_searchQuery);
+    }).toList();
   }
 
   @override
@@ -56,6 +94,7 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
             return ValueListenableBuilder<PaginationMeta>(
               valueListenable: FinderPostState.pagination,
               builder: (context, pagination, _) {
+                final filteredPosts = _filterPosts(posts);
                 final currentPage = _normalizedPage(pagination.page);
 
                 return Scaffold(
@@ -76,18 +115,18 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                             sliver: SliverList(
                               delegate: SliverChildListDelegate([
                                 _ProviderSearchBar(
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    slideFadeRoute(
-                                      const ProviderFinderSearchPage(),
-                                    ),
-                                  ),
+                                  controller: _searchController,
+                                  onChanged: _onSearchChanged,
+                                  onClear: () {
+                                    _searchController.clear();
+                                    _onSearchChanged('');
+                                  },
                                 ),
                                 const SizedBox(height: 18),
                                 Row(
                                   children: [
                                     Text(
-                                      'Finder Requests',
+                                      _searchQuery.isEmpty ? 'Finder Requests' : 'Search Results',
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleLarge
@@ -98,7 +137,7 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                                     ),
                                     const Spacer(),
                                     Text(
-                                      '${pagination.totalItems} results',
+                                      '${_searchQuery.isEmpty ? pagination.totalItems : filteredPosts.length} results',
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium
@@ -128,23 +167,27 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                                             ),
                                           ),
                                         )
-                                      : posts.isEmpty
-                                          ? const AppStatePanel.empty(
-                                              title: 'No finder requests yet',
-                                              message: 'New requests will appear here.',
+                                      : filteredPosts.isEmpty
+                                          ? AppStatePanel.empty(
+                                              title: _searchQuery.isEmpty 
+                                                ? 'No finder requests yet'
+                                                : 'No results found',
+                                              message: _searchQuery.isEmpty 
+                                                ? 'New requests will appear here.'
+                                                : 'Try searching for something else.',
                                             )
                                           : ListView.builder(
                                               key: ValueKey<String>(
-                                                'provider_home_posts_${posts.length}_${pagination.page}',
+                                                'provider_home_posts_${filteredPosts.length}_${pagination.page}_$_searchQuery',
                                               ),
                                               shrinkWrap: true,
                                               physics: const NeverScrollableScrollPhysics(),
-                                              itemCount: posts.length,
+                                              itemCount: filteredPosts.length,
                                               cacheExtent: 1000,
-                                              itemBuilder: (context, index) => _FinderPostTile(post: posts[index]),
+                                              itemBuilder: (context, index) => _FinderPostTile(post: filteredPosts[index]),
                                             ),
                                 ),
-                                if (pagination.totalPages > 1) ...[
+                                if (pagination.totalPages > 1 && _searchQuery.isEmpty) ...[
                                   const SizedBox(height: 12),
                                   PaginationBar(
                                     currentPage: currentPage,
@@ -486,46 +529,66 @@ class _ProviderTopHeaderState extends State<_ProviderTopHeader> {
 }
 
 class _ProviderSearchBar extends StatelessWidget {
-  final VoidCallback onTap;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
 
-  const _ProviderSearchBar({required this.onTap});
+  const _ProviderSearchBar({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.search, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Search name, service, location',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search, color: AppColors.textSecondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                isDense: true,
+                hintText: 'Search client name, service, location',
+                hintStyle: TextStyle(
                   color: AppColors.textSecondary,
+                  fontSize: 14,
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            Container(
-              height: 34,
-              width: 34,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(10),
+          ),
+          if (controller.text.isNotEmpty)
+            GestureDetector(
+              onTap: onClear,
+              child: const Icon(
+                Icons.close_rounded,
+                size: 20,
+                color: AppColors.textSecondary,
               ),
-              child: const Icon(Icons.tune, color: Colors.white, size: 18),
             ),
-          ],
-        ),
+          const SizedBox(width: 8),
+          Container(
+            height: 34,
+            width: 34,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.tune, color: Colors.white, size: 18),
+          ),
+        ],
       ),
     );
   }
@@ -538,115 +601,126 @@ class _FinderPostTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PressableScale(
-      onTap: () => _openChat(context),
-      child: InkWell(
-        onTap: () => _openChat(context),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          child: Column(
+        ],
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SafeImage(
-                        source: post.avatarPath,
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
+                  ],
+                ),
+                child: post.avatarPath.trim().isEmpty
+                    ? const Icon(
+                        Icons.person_rounded,
+                        size: 40,
+                        color: AppColors.primary,
+                      )
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: SafeImage(
+                          source: post.avatarPath,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                post.clientName,
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                              ),
-                            ),
-                            Text(
-                              post.timeLabel,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).hintColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                          ],
+                        Expanded(
+                          child: Text(
+                            post.clientName,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                          ),
                         ),
-                        const SizedBox(height: 6),
                         Text(
-                          post.message,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          post.timeLabel,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
-                                height: 1.3,
+                                color: Theme.of(context).hintColor,
+                                fontWeight: FontWeight.w600,
                               ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [
-                            _MetaPill(text: post.category),
-                            _MetaPill(text: post.serviceLabel),
-                            _MetaPill(text: post.location),
-                            if (post.preferredDate != null)
-                              _PreferredDatePill(
-                                preferredDate: post.preferredDate!,
-                              ),
-                          ],
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 6),
+                    Text(
+                      post.message,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            height: 1.3,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _MetaPill(text: post.category),
+                        _MetaPill(text: post.serviceLabel),
+                        _MetaPill(text: post.location),
+                        if (post.preferredDate != null)
+                          _PreferredDatePill(
+                            preferredDate: post.preferredDate!,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              const Divider(height: 1, thickness: 1.2, color: AppColors.divider),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1, thickness: 1.2, color: AppColors.divider),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Spacer(),
+              PressableScale(
+                onTap: () => _openChat(context),
+                child: InkWell(
+                  onTap: () => _openChat(context),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
@@ -671,11 +745,11 @@ class _FinderPostTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }

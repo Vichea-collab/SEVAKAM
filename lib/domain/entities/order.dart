@@ -104,14 +104,16 @@ class BookingDraft {
   final HomeAddress? address;
   final DateTime preferredDate;
   final String preferredTimeSlot;
-  final int hours;
   final HomeType homeType;
+  final String additionalService;
+  final Map<String, dynamic> serviceFields;
+  
+  // Legacy fields kept for compilation, but ignored in UI
+  final int hours;
   final int workers;
   final PaymentMethod paymentMethod;
-  final String additionalService;
   final String promoCode;
   final double unitPricePerHour;
-  final Map<String, dynamic> serviceFields;
 
   const BookingDraft({
     required this.provider,
@@ -120,14 +122,14 @@ class BookingDraft {
     this.address,
     required this.preferredDate,
     required this.preferredTimeSlot,
-    this.hours = 2,
     this.homeType = HomeType.apartment,
-    this.workers = 1,
-    this.paymentMethod = PaymentMethod.creditCard,
     this.additionalService = '',
-    this.promoCode = '',
-    this.unitPricePerHour = 11,
     this.serviceFields = const {},
+    this.hours = 1,
+    this.workers = 1,
+    this.paymentMethod = PaymentMethod.cash,
+    this.promoCode = '',
+    this.unitPricePerHour = 0,
   });
 
   BookingDraft copyWith({
@@ -137,14 +139,14 @@ class BookingDraft {
     HomeAddress? address,
     DateTime? preferredDate,
     String? preferredTimeSlot,
-    int? hours,
     HomeType? homeType,
+    String? additionalService,
+    Map<String, dynamic>? serviceFields,
+    int? hours,
     int? workers,
     PaymentMethod? paymentMethod,
-    String? additionalService,
     String? promoCode,
     double? unitPricePerHour,
-    Map<String, dynamic>? serviceFields,
   }) {
     return BookingDraft(
       provider: provider ?? this.provider,
@@ -153,21 +155,21 @@ class BookingDraft {
       address: address ?? this.address,
       preferredDate: preferredDate ?? this.preferredDate,
       preferredTimeSlot: preferredTimeSlot ?? this.preferredTimeSlot,
-      hours: hours ?? this.hours,
       homeType: homeType ?? this.homeType,
+      additionalService: additionalService ?? this.additionalService,
+      serviceFields: serviceFields ?? this.serviceFields,
+      hours: hours ?? this.hours,
       workers: workers ?? this.workers,
       paymentMethod: paymentMethod ?? this.paymentMethod,
-      additionalService: additionalService ?? this.additionalService,
       promoCode: promoCode ?? this.promoCode,
       unitPricePerHour: unitPricePerHour ?? this.unitPricePerHour,
-      serviceFields: serviceFields ?? this.serviceFields,
     );
   }
 
-  double get subtotal => unitPricePerHour * hours * workers;
+  double get subtotal => 0;
   double get processingFee => 0;
-  double get discount => promoCode.isEmpty ? 0 : 2;
-  double get total => subtotal + processingFee - discount;
+  double get discount => 0;
+  double get total => 0;
 }
 
 class BookingPriceQuote {
@@ -183,21 +185,14 @@ class BookingPriceQuote {
     this.promoCode = '',
     this.promoApplied = false,
     this.promoMessage = '',
-    required this.subtotal,
-    required this.processingFee,
-    required this.discount,
-    required this.total,
+    this.subtotal = 0,
+    this.processingFee = 0,
+    this.discount = 0,
+    this.total = 0,
   });
 
   factory BookingPriceQuote.fromDraft(BookingDraft draft) {
-    return BookingPriceQuote(
-      promoCode: draft.promoCode.trim(),
-      promoApplied: draft.promoCode.trim().isNotEmpty && draft.discount > 0,
-      subtotal: draft.subtotal,
-      processingFee: draft.processingFee,
-      discount: draft.discount,
-      total: draft.total,
-    );
+    return const BookingPriceQuote();
   }
 }
 
@@ -206,49 +201,51 @@ class OrderItem {
   final ProviderItem provider;
   final String serviceName;
   final HomeAddress address;
-  final int hours;
-  final int workers;
   final HomeType homeType;
   final String additionalService;
   final DateTime bookedAt;
   final DateTime scheduledAt;
   final String timeRange;
-  final PaymentMethod paymentMethod;
-  final double subtotal;
-  final double processingFee;
-  final double discount;
   final OrderStatus status;
   final double? rating;
   final String reviewComment;
   final List<String> photoUrls;
   final DateTime? reviewedAt;
   final OrderStatusTimeline timeline;
+  
+  // Legacy fields kept for compilation
+  final int hours;
+  final int workers;
+  final PaymentMethod paymentMethod;
+  final double subtotal;
+  final double processingFee;
+  final double discount;
 
   const OrderItem({
     required this.id,
     required this.provider,
     required this.serviceName,
     required this.address,
-    required this.hours,
-    required this.workers,
     required this.homeType,
     required this.additionalService,
     required this.bookedAt,
     required this.scheduledAt,
     required this.timeRange,
-    required this.paymentMethod,
-    required this.subtotal,
-    required this.processingFee,
-    required this.discount,
     required this.status,
     this.rating,
     this.reviewComment = '',
     this.photoUrls = const [],
     this.reviewedAt,
     this.timeline = const OrderStatusTimeline(),
+    this.hours = 1,
+    this.workers = 1,
+    this.paymentMethod = PaymentMethod.cash,
+    this.subtotal = 0,
+    this.processingFee = 0,
+    this.discount = 0,
   });
 
-  double get total => subtotal + processingFee - discount;
+  double get total => 0;
 
   OrderItem copyWith({
     OrderStatus? status,
@@ -263,23 +260,23 @@ class OrderItem {
       provider: provider,
       serviceName: serviceName,
       address: address,
-      hours: hours,
-      workers: workers,
       homeType: homeType,
       additionalService: additionalService,
       bookedAt: bookedAt,
       scheduledAt: scheduledAt,
       timeRange: timeRange,
-      paymentMethod: paymentMethod,
-      subtotal: subtotal,
-      processingFee: processingFee,
-      discount: discount,
       status: status ?? this.status,
       rating: rating ?? this.rating,
       reviewComment: reviewComment ?? this.reviewComment,
       photoUrls: photoUrls ?? this.photoUrls,
       reviewedAt: reviewedAt ?? this.reviewedAt,
       timeline: timeline ?? this.timeline,
+      hours: hours,
+      workers: workers,
+      paymentMethod: paymentMethod,
+      subtotal: subtotal,
+      processingFee: processingFee,
+      discount: discount,
     );
   }
 

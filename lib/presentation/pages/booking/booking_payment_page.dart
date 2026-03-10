@@ -1,12 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../core/utils/safe_image_provider.dart';
-import '../../../data/network/backend_api_client.dart';
 import '../../../domain/entities/order.dart';
 import '../../state/order_state.dart';
 import '../../widgets/app_top_bar.dart';
@@ -24,252 +21,225 @@ class BookingPaymentPage extends StatefulWidget {
 }
 
 class _BookingPaymentPageState extends State<BookingPaymentPage> {
-  late PaymentMethod _selectedMethod;
-  late TextEditingController _promoController;
-  BookingPriceQuote? _quote;
-  Timer? _quoteDebounce;
-  bool _quoting = false;
   bool _submitting = false;
 
   @override
-  void initState() {
-    super.initState();
-    _selectedMethod = _sanitizeMethod(widget.draft.paymentMethod);
-    _promoController = TextEditingController(text: widget.draft.promoCode);
-    unawaited(_refreshQuote());
-  }
-
-  @override
-  void dispose() {
-    _quoteDebounce?.cancel();
-    _promoController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final draft = widget.draft.copyWith(
-      paymentMethod: _selectedMethod,
-      promoCode: _promoController.text.trim(),
-    );
-    final quote = _quote ?? BookingPriceQuote.fromDraft(draft);
-    final promoText = quote.promoMessage.trim();
-    final promoMessageColor = quote.promoApplied
-        ? AppColors.success
-        : promoText.isNotEmpty
-        ? AppColors.danger
-        : AppColors.textSecondary;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFF),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: ListView(
-            children: [
-              const AppTopBar(title: 'Payment'),
-              const SizedBox(height: 10),
-              const BookingStepProgress(currentStep: BookingFlowStep.payment),
-              const SizedBox(height: 14),
-              Text(
-                'Select Payment method',
-                style: Theme.of(context).textTheme.bodyLarge,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+              child: Column(
+                children: [
+                  const AppTopBar(title: 'Booking Summary'),
+                  const SizedBox(height: 16),
+                  const BookingStepProgress(currentStep: BookingFlowStep.payment),
+                ],
               ),
-              const SizedBox(height: 10),
-              _PaymentTile(
-                label: 'Credit Card',
-                icon: Icons.credit_card,
-                subtitle: 'Visa / Mastercard',
-                selected: _selectedMethod == PaymentMethod.creditCard,
-                onTap: () =>
-                    setState(() => _selectedMethod = PaymentMethod.creditCard),
-              ),
-              _PaymentTile(
-                label: 'Cash',
-                icon: Icons.payments_outlined,
-                subtitle: 'Pay after service completion',
-                selected: _selectedMethod == PaymentMethod.cash,
-                onTap: () =>
-                    setState(() => _selectedMethod = PaymentMethod.cash),
-              ),
-              _PaymentTile(
-                label: 'Bakong KHQR',
-                icon: Icons.qr_code_2_rounded,
-                subtitle: 'Scan and pay before booking confirmation',
-                selected: _selectedMethod == PaymentMethod.khqr,
-                onTap: () =>
-                    setState(() => _selectedMethod = PaymentMethod.khqr),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _promoController,
-                decoration: const InputDecoration(
-                  hintText: 'Promo code',
-                  prefixIcon: Icon(Icons.local_offer_outlined),
-                ),
-                onChanged: (_) => _queueQuoteRefresh(),
-              ),
-              if (_quoting) ...[
-                const SizedBox(height: 8),
-                const LinearProgressIndicator(minHeight: 2),
-              ],
-              if (promoText.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  promoText,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: promoMessageColor,
-                    fontWeight: quote.promoApplied
-                        ? FontWeight.w600
-                        : FontWeight.w500,
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                children: [
+                  // Booking Detail Header Section
+                  _SectionHeader(title: 'Booking Details', icon: Icons.assignment_outlined),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                      border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        _SummaryDetailRow(
+                          icon: Icons.build_circle_rounded,
+                          label: 'Service',
+                          value: widget.draft.serviceName,
+                          valueColor: AppColors.primary,
+                        ),
+                        const _SummaryDivider(),
+                        _SummaryDetailRow(
+                          icon: Icons.calendar_today_rounded,
+                          label: 'Date',
+                          value: _dateLabel(widget.draft.preferredDate),
+                        ),
+                        const _SummaryDivider(),
+                        _SummaryDetailRow(
+                          icon: Icons.access_time_filled_rounded,
+                          label: 'Time Slot',
+                          value: widget.draft.preferredTimeSlot,
+                        ),
+                        const _SummaryDivider(),
+                        _SummaryDetailRow(
+                          icon: Icons.location_on_rounded,
+                          label: 'Location',
+                          value: widget.draft.address?.street ?? 'Not provided',
+                        ),
+                        const _SummaryDivider(),
+                        _SummaryDetailRow(
+                          icon: Icons.home_work_rounded,
+                          label: 'Home Type',
+                          value: _homeTypeLabel(widget.draft.homeType),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-              const SizedBox(height: 14),
-              Text(
-                'Order Summary',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _InfoRow(label: 'Service', value: draft.serviceName),
-                    _InfoRow(label: 'Provider', value: draft.provider.name),
-                    _InfoRow(
-                      label: 'Date',
-                      value: _dateLabel(draft.preferredDate),
-                    ),
-                    _InfoRow(
-                      label: 'Time slot',
-                      value: draft.preferredTimeSlot,
-                    ),
-                    _InfoRow(
-                      label: 'Duration',
-                      value: '${draft.hours} hour(s)',
-                    ),
-                    _InfoRow(label: 'Workers', value: '${draft.workers}'),
-                    _InfoRow(
-                      label: 'Home type',
-                      value: _homeTypeLabel(draft.homeType),
-                    ),
-                    _InfoRow(
-                      label: 'Address',
-                      value:
-                          '${draft.address?.street ?? ''}, ${draft.address?.city ?? ''}',
-                    ),
-                    if (draft.additionalService.trim().isNotEmpty)
-                      _InfoRow(
-                        label: 'Additional service',
-                        value: draft.additionalService,
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Provider Section
+                  _SectionHeader(title: 'Service Provider', icon: Icons.person_outline_rounded),
+                  const SizedBox(height: 12),
+                  _ProviderInfoCard(draft: widget.draft),
+
+                  const SizedBox(height: 24),
+
+                  // Service Requirements (Dynamic Fields)
+                  if (widget.draft.serviceFields.isNotEmpty) ...[
+                    _SectionHeader(title: 'Service Requirements', icon: Icons.fact_check_outlined),
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
                       ),
-                    _InfoRow(
-                      label: 'Payment method',
-                      value: _paymentLabel(_selectedMethod),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          ...widget.draft.serviceFields.entries.map((entry) {
+                            final isLast = entry.key == widget.draft.serviceFields.keys.last;
+                            return Column(
+                              children: [
+                                _SummaryDetailRow(
+                                  icon: Icons.arrow_right_rounded,
+                                  label: _formatKey(entry.key),
+                                  value: entry.value.toString(),
+                                  isSmall: true,
+                                ),
+                                if (!isLast) const _SummaryDivider(),
+                              ],
+                            );
+                          }),
+                        ],
+                      ),
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                ),
-                child: Column(
-                  children: [
-                    _AmountRow(label: 'Sub Total', amount: quote.subtotal),
-                    _AmountRow(
-                      label: 'Processing fee',
-                      amount: quote.processingFee,
-                    ),
-                    _AmountRow(
-                      label: draft.promoCode.trim().isEmpty
-                          ? 'Promo code'
-                          : 'Promo code (${draft.promoCode.trim()})',
-                      amount: -quote.discount,
-                    ),
-                    const Divider(height: 20),
-                    _AmountRow(
-                      label: 'Booking Cost',
-                      amount: quote.total,
-                      bold: true,
+
+                  if (widget.draft.additionalService.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(title: 'Additional Notes', icon: Icons.note_alt_outlined),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.divider),
+                      ),
+                      child: Text(
+                        widget.draft.additionalService,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
                     ),
                   ],
-                ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Bottom Info Note
+                  Center(
+                    child: Column(
+                      children: [
+                        const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 20),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Direct cash payment to provider",
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Pay the service fee after completion",
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
-              const SizedBox(height: 16),
-              PrimaryButton(
-                label: _submitting
-                    ? 'Processing...'
-                    : (_selectedMethod == PaymentMethod.khqr
-                          ? 'Create KHQR & Pay'
-                          : 'Confirm Booking'),
-                icon: Icons.check_circle_outline_rounded,
-                onPressed: _submitting || _quoting
-                    ? null
-                    : () => _placeBooking(draft),
-              ),
-            ],
-          ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + bottomInset),
+        child: PrimaryButton(
+          label: _submitting ? 'Confirming...' : 'Confirm Booking',
+          icon: Icons.check_circle_rounded,
+          onPressed: _submitting ? null : _confirmBooking,
         ),
       ),
     );
   }
 
-  Future<void> _placeBooking(BookingDraft draft) async {
-    final latestQuote = await _refreshQuote();
-    if (!mounted) return;
-    if (draft.promoCode.trim().isNotEmpty && latestQuote.promoApplied != true) {
-      AppToast.error(
-        context,
-        latestQuote.promoMessage.trim().isNotEmpty
-            ? latestQuote.promoMessage
-            : 'Promo code is invalid. Please update promo code.',
-      );
-      return;
-    }
+  String _formatKey(String key) {
+    if (key.isEmpty) return '';
+    final words = key.split(RegExp(r'(_|-)'));
+    return words.map((w) {
+      if (w.isEmpty) return '';
+      return w[0].toUpperCase() + w.substring(1).toLowerCase();
+    }).join(' ');
+  }
 
+  Future<void> _confirmBooking() async {
     setState(() => _submitting = true);
     try {
-      final createdOrder = await OrderState.createFinderOrder(draft);
-      OrderItem order = createdOrder;
-
-      if (_selectedMethod == PaymentMethod.khqr) {
-        final verified = await _openKhqrCheckout(order);
-        if (verified == null) {
-          if (mounted) {
-            AppToast.info(
-              context,
-              'Booking is waiting for KHQR payment confirmation.',
-            );
-          }
-          return;
-        }
-        order = verified;
-      }
-
+      final order = await OrderState.createFinderOrder(widget.draft);
       if (!mounted) return;
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
         slideFadeRoute(BookingConfirmationPage(order: order)),
+        (route) => route.isFirst,
       );
     } catch (error) {
       if (!mounted) return;
-      final reason = error is BackendApiException
-          ? error.message
-          : 'Please check backend connection and try again.';
-      AppToast.error(context, 'Failed to place booking. $reason');
+      AppToast.error(context, 'Failed to confirm booking. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _submitting = false);
@@ -277,418 +247,195 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
     }
   }
 
-  void _queueQuoteRefresh() {
-    setState(() {});
-    _quoteDebounce?.cancel();
-    _quoteDebounce = Timer(const Duration(milliseconds: 420), () {
-      if (!mounted) return;
-      unawaited(_refreshQuote());
-    });
-  }
-
-  Future<BookingPriceQuote> _refreshQuote() async {
-    final draft = widget.draft.copyWith(
-      paymentMethod: _selectedMethod,
-      promoCode: _promoController.text.trim(),
-    );
-    if (mounted) {
-      setState(() => _quoting = true);
-    }
-    try {
-      final quote = await OrderState.quoteFinderOrder(draft);
-      if (mounted) {
-        setState(() {
-          _quote = quote;
-          _quoting = false;
-        });
-      } else {
-        _quote = quote;
-      }
-      return quote;
-    } catch (_) {
-      final fallback = BookingPriceQuote.fromDraft(draft);
-      if (mounted) {
-        setState(() {
-          _quote = fallback;
-          _quoting = false;
-        });
-      } else {
-        _quote = fallback;
-      }
-      return fallback;
-    }
-  }
-
-  Future<OrderItem?> _openKhqrCheckout(OrderItem order) async {
-    final session = await OrderState.createKhqrPaymentSession(
-      orderId: order.id,
-    );
-    if (!mounted) return null;
-    return showModalBottomSheet<OrderItem>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => _KhqrCheckoutSheet(session: session, order: order),
-    );
-  }
-
-  String _paymentLabel(PaymentMethod method) {
-    switch (method) {
-      case PaymentMethod.creditCard:
-        return 'Credit Card';
-      case PaymentMethod.bankAccount:
-        return 'Credit Card';
-      case PaymentMethod.cash:
-        return 'Cash';
-      case PaymentMethod.khqr:
-        return 'Bakong KHQR';
-    }
-  }
-
-  PaymentMethod _sanitizeMethod(PaymentMethod method) {
-    if (method == PaymentMethod.bankAccount) return PaymentMethod.creditCard;
-    return method;
-  }
-
-  String _homeTypeLabel(HomeType value) {
-    switch (value) {
-      case HomeType.apartment:
-        return 'Apartment';
-      case HomeType.flat:
-        return 'Flat';
-      case HomeType.villa:
-        return 'Villa';
-      case HomeType.office:
-        return 'Office';
-    }
-  }
-
   String _dateLabel(DateTime date) {
-    return MaterialLocalizations.of(context).formatMediumDate(date);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  String _homeTypeLabel(HomeType type) {
+    switch (type) {
+      case HomeType.apartment: return 'Apartment';
+      case HomeType.flat: return 'Flat';
+      case HomeType.villa: return 'Villa';
+      case HomeType.office: return 'Office';
+    }
   }
 }
 
-class _AmountRow extends StatelessWidget {
-  final String label;
-  final double amount;
-  final bool bold;
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
 
-  const _AmountRow({
+  const _SectionHeader({required this.title, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryDetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final bool isSmall;
+
+  const _SummaryDetailRow({
+    required this.icon,
     required this.label,
-    required this.amount,
-    this.bold = false,
+    required this.value,
+    this.valueColor,
+    this.isSmall = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          const Spacer(),
-          Text(
-            '\$${amount.toStringAsFixed(0)}',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: bold ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
-              fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PaymentTile extends StatelessWidget {
-  final String label;
-  final String subtitle;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _PaymentTile({
-    required this.label,
-    required this.subtitle,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1) : Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
-            width: selected ? 1.6 : 1,
-          ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-                    blurRadius: 14,
-                    offset: const Offset(0, 5),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: Icon(
-                icon,
-                size: 19,
-                color: selected ? Colors.white : Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).hintColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              selected ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).hintColor,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _KhqrCheckoutSheet extends StatefulWidget {
-  final KhqrPaymentSession session;
-  final OrderItem order;
-
-  const _KhqrCheckoutSheet({required this.session, required this.order});
-
-  @override
-  State<_KhqrCheckoutSheet> createState() => _KhqrCheckoutSheetState();
-}
-
-class _KhqrCheckoutSheetState extends State<_KhqrCheckoutSheet> {
-  bool _verifying = false;
-  String _statusMessage = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final payload = widget.session.qrPayload.trim();
-    final imageUrl = widget.session.qrImageUrl.trim();
-    final amount = widget.session.amount.toStringAsFixed(2);
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        18,
-        8,
-        18,
-        18 + MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Pay with Bakong KHQR',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Order #${widget.order.id}',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          Text(
-            'Amount: \$$amount ${widget.session.currency}',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Theme.of(context).dividerColor),
+              color: AppColors.primary.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(icon, size: 16, color: AppColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (imageUrl.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SafeImage(
-                      source: imageUrl,
-                      height: 220,
-                      width: 220,
-                      fit: BoxFit.cover,
-                      errorBuilder: _KhqrPayloadBox(payload: payload),
-                    ),
-                  )
-                else
-                  _KhqrPayloadBox(payload: payload),
-                const SizedBox(height: 10),
                 Text(
-                  'Merchant ref: ${widget.session.merchantReference}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: isSmall ? 14 : 15,
+                    color: valueColor ?? AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
           ),
-          if (_statusMessage.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              _statusMessage,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).hintColor),
-            ),
-          ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: PrimaryButton(
-                  label: 'Not now',
-                  isOutlined: true,
-                  tone: PrimaryButtonTone.neutral,
-                  onPressed: _verifying ? null : () => Navigator.pop(context),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: PrimaryButton(
-                  label: _verifying ? 'Verifying...' : "I've Paid",
-                  icon: Icons.verified_rounded,
-                  onPressed: _verifying ? null : _verifyPayment,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
-
-  Future<void> _verifyPayment() async {
-    setState(() {
-      _verifying = true;
-      _statusMessage = '';
-    });
-    try {
-      final result = await OrderState.verifyKhqrPayment(
-        orderId: widget.order.id,
-        transactionId: widget.session.transactionId,
-      );
-      if (!mounted) return;
-      if (result.paid) {
-        Navigator.pop(context, result.order);
-        return;
-      }
-      setState(() {
-        _statusMessage =
-            'Payment is still pending. Please complete payment in your banking app and try again.';
-      });
-    } catch (error) {
-      if (!mounted) return;
-      final reason = error is BackendApiException
-          ? error.message
-          : 'Unable to verify payment.';
-      setState(() {
-        _statusMessage = reason;
-      });
-    } finally {
-      if (mounted) {
-        setState(() => _verifying = false);
-      }
-    }
-  }
 }
 
-class _KhqrPayloadBox extends StatelessWidget {
-  final String payload;
-
-  const _KhqrPayloadBox({required this.payload});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      child: SelectableText(
-        payload.isEmpty ? 'KHQR payload is unavailable.' : payload,
-        style: Theme.of(
-          context,
-        ).textTheme.bodySmall?.copyWith(color: Theme.of(context).hintColor),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoRow({required this.label, required this.value});
+class _SummaryDivider extends StatelessWidget {
+  const _SummaryDivider();
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(left: 44, top: 10, bottom: 10),
+      child: Divider(height: 1, thickness: 1, color: AppColors.divider.withValues(alpha: 0.5)),
+    );
+  }
+}
+
+class _ProviderInfoCard extends StatelessWidget {
+  final BookingDraft draft;
+
+  const _ProviderInfoCard({required this.draft});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w500,
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.1), width: 2),
+            ),
+            child: ClipOval(
+              child: SafeImage(
+                source: draft.provider.imagePath,
+                width: 52,
+                height: 52,
+                fit: BoxFit.cover,
               ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  draft.provider.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  draft.provider.role,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF9E6),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.star_rounded, size: 16, color: Color(0xFFF59E0B)),
+                const SizedBox(width: 4),
+                Text(
+                  draft.provider.rating.toStringAsFixed(1),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFB47800),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

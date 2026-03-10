@@ -9,6 +9,7 @@ import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/provider.dart';
 import '../../../domain/entities/provider_portal.dart';
 import '../../../domain/entities/provider_profile.dart';
+import '../../state/favorite_state.dart';
 import '../../state/chat_state.dart';
 import '../../state/booking_catalog_state.dart';
 import '../../state/order_state.dart';
@@ -24,8 +25,9 @@ enum _ProviderContentTab { companyInfo, reviews }
 
 class ProviderDetailPage extends StatefulWidget {
   final ProviderItem provider;
+  final String? heroTag;
 
-  const ProviderDetailPage({super.key, required this.provider});
+  const ProviderDetailPage({super.key, required this.provider, this.heroTag});
 
   @override
   State<ProviderDetailPage> createState() => _ProviderDetailPageState();
@@ -35,7 +37,9 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
   _ProviderContentTab _contentTab = _ProviderContentTab.companyInfo;
   ReviewRange _reviewRange = ReviewRange.last120;
   ProviderReviewSummary? _reviewSummary;
+  ProviderPostItem? _providerPost;
   bool _loadingReviews = false;
+  bool _loadingProfile = true;
 
   @override
   void initState() {
@@ -43,7 +47,30 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
     _reviewSummary = OrderState.peekProviderReviewSummary(
       providerUid: widget.provider.uid,
     );
-    unawaited(_loadProviderReviews());
+    unawaited(_loadData());
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _loadingProfile = true);
+    try {
+      await Future.wait([
+        _loadProviderReviews(),
+        _loadProviderPost(),
+      ]);
+    } finally {
+      if (mounted) setState(() => _loadingProfile = false);
+    }
+  }
+
+  Future<void> _handleRefresh() async {
+    await _loadData();
+  }
+
+  Future<void> _loadProviderPost() async {
+    final uid = widget.provider.uid.trim();
+    if (uid.isEmpty) return;
+    final matched = await ProviderPostState.findLatestByUid(uid);
+    if (mounted) setState(() => _providerPost = matched);
   }
 
   @override
@@ -53,13 +80,18 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
       _reviewSummary = OrderState.peekProviderReviewSummary(
         providerUid: widget.provider.uid,
       );
-      unawaited(_loadProviderReviews());
+      unawaited(_loadData());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final profile = _buildProfile(widget.provider, summary: _reviewSummary);
+    final profile = _buildProfile(
+      widget.provider,
+      summary: _reviewSummary,
+      matched: _providerPost,
+      heroTag: widget.heroTag,
+    );
     final reviews = _reviewsByRange(profile.reviews, _reviewRange);
 
     return Scaffold(
@@ -72,6 +104,19 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
               child: AppTopBar(
                 title: widget.provider.name,
                 actions: [
+                  ValueListenableBuilder<Set<String>>(
+                    valueListenable: FavoriteState.favoriteUids,
+                    builder: (context, favorites, _) {
+                      final isFav = favorites.contains(widget.provider.uid);
+                      return IconButton(
+                        onPressed: () => FavoriteState.toggleFavorite(widget.provider.uid),
+                        icon: Icon(
+                          isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          color: isFav ? AppColors.danger : AppColors.primary,
+                        ),
+                      );
+                    },
+                  ),
                   IconButton(
                     onPressed: () => Navigator.push(
                       context,
@@ -87,49 +132,56 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
             ),
             Container(height: 1, color: AppColors.divider),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-                children: [
-                  _ProviderSummaryCard(
-                    profile: profile,
-                    totalReviewCount: _reviewSummary?.totalReviews,
-                  ),
-                  const SizedBox(height: 12),
-                  _ContactSwitcher(
-                    onBookTap: () => Navigator.push(
-                      context,
-                      slideFadeRoute(
-                        BookingAddressPage(
-                          draft: BookingCatalogState.defaultBookingDraft(
-                            provider: profile.provider,
-                            serviceName: profile.provider.services.isNotEmpty
-                                ? profile.provider.services.first
-                                : null,
+              child: _loadingProfile && _providerPost == null
+                  ? const Center(child: AppStatePanel.loading(title: 'Loading profile'))
+                  : RefreshIndicator(
+                      onRefresh: _handleRefresh,
+                      color: AppColors.primary,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                        children: [
+                          _ProviderSummaryCard(
+                            profile: profile,
+                            totalReviewCount: _reviewSummary?.totalReviews,
                           ),
-                        ),
+                          const SizedBox(height: 12),
+                          _ContactSwitcher(
+                            onBookTap: () => Navigator.push(
+                              context,
+                              slideFadeRoute(
+                                BookingAddressPage(
+                                  draft: BookingCatalogState.defaultBookingDraft(
+                                    provider: profile.provider,
+                                    serviceName: profile.provider.services.isNotEmpty
+                                        ? profile.provider.services.first
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            onChatTap: () {
+                              _openProviderChat();
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _ContentTabs(
+                            activeTab: _contentTab,
+                            onChanged: (tab) => setState(() => _contentTab = tab),
+                          ),
+                          const SizedBox(height: 12),
+                          if (_contentTab == _ProviderContentTab.companyInfo)
+                            _CompanyInfoSection(profile: profile)
+                          else
+                            _ReviewsSection(
+                              reviews: reviews,
+                              selectedRange: _reviewRange,
+                              onRangeTap: _openReviewFilterSheet,
+                              loading: _loadingReviews,
+                            ),
+                        ],
                       ),
                     ),
-                    onChatTap: () {
-                      _openProviderChat();
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _ContentTabs(
-                    activeTab: _contentTab,
-                    onChanged: (tab) => setState(() => _contentTab = tab),
-                  ),
-                  const SizedBox(height: 12),
-                  if (_contentTab == _ProviderContentTab.companyInfo)
-                    _CompanyInfoSection(profile: profile)
-                  else
-                    _ReviewsSection(
-                      reviews: reviews,
-                      selectedRange: _reviewRange,
-                      onRangeTap: _openReviewFilterSheet,
-                      loading: _loadingReviews,
-                    ),
-                ],
-              ),
             ),
           ],
         ),
@@ -245,41 +297,47 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
   ProviderProfile _buildProfile(
     ProviderItem provider, {
     ProviderReviewSummary? summary,
+    ProviderPostItem? matched,
+    String? heroTag,
   }) {
-    final allPosts = ProviderPostState.allPosts.value;
-    final posts = allPosts.isNotEmpty
-        ? allPosts
-        : ProviderPostState.posts.value;
     final providerUid = provider.uid.trim().toLowerCase();
     final providerName = provider.name.trim().toLowerCase();
     final providerCategory = provider.role.trim().toLowerCase();
-    final matchedPosts = <ProviderPostItem>[];
-    for (final post in posts) {
-      final sameUid =
-          providerUid.isNotEmpty &&
-          providerUid == post.providerUid.trim().toLowerCase();
-      final sameName = providerName == post.providerName.trim().toLowerCase();
-      if (!sameUid && !sameName) continue;
-      if (providerCategory.isNotEmpty &&
-          post.category.trim().toLowerCase() != providerCategory) {
-        continue;
+
+    // If matched is null, try to find from cached state as fallback
+    var finalMatched = matched;
+    if (finalMatched == null) {
+      final allPosts = ProviderPostState.allPosts.value;
+      final posts = allPosts.isNotEmpty ? allPosts : ProviderPostState.posts.value;
+      for (final post in posts) {
+        final sameUid =
+            providerUid.isNotEmpty &&
+            providerUid == post.providerUid.trim().toLowerCase();
+        final sameName = providerName == post.providerName.trim().toLowerCase();
+        if (!sameUid && !sameName) continue;
+        if (providerCategory.isNotEmpty &&
+            post.category.trim().toLowerCase() != providerCategory) {
+          continue;
+        }
+        finalMatched = post;
+        break;
       }
-      matchedPosts.add(post);
     }
-    final matched = matchedPosts.isNotEmpty ? matchedPosts.first : null;
 
     final services = <String>{
       ...provider.services
           .map((item) => item.trim())
           .where((item) => item.isNotEmpty),
-      ...matchedPosts
-          .expand((item) => item.serviceList.map((service) => service.trim()))
-          .where((item) => item.isNotEmpty),
+      if (finalMatched != null)
+        ...finalMatched.serviceList.map((service) => service.trim())
+            .where((item) => item.isNotEmpty),
     }.toList(growable: false)..sort();
+
     final hasProviderUid = provider.uid.trim().isNotEmpty;
     final averageRating = (summary?.averageRating ?? 0) > 0
         ? summary!.averageRating
         : provider.rating;
+
     final mergedProvider = ProviderItem(
       uid: provider.uid,
       name: provider.name,
@@ -288,25 +346,23 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
       imagePath: provider.imagePath,
       accentColor: provider.accentColor,
       services: services,
-      providerType: provider.providerType,
-      companyName: provider.companyName,
-      maxWorkers: provider.maxWorkers,
       blockedDates: provider.blockedDates,
     );
 
     return ProviderProfile(
       provider: mergedProvider,
-      location: matched?.area.trim().isNotEmpty == true
-          ? matched!.area.trim()
+      location: finalMatched?.area.trim().isNotEmpty == true
+          ? finalMatched!.area.trim()
           : 'Phnom Penh, Cambodia',
-      available: matched?.availableNow ?? true,
+      available: finalMatched?.availableNow ?? true,
       completedJobs: summary?.completedJobs ?? (hasProviderUid ? 0 : 42),
-      about: matched?.details.trim().isNotEmpty == true
-          ? matched!.details.trim()
+      about: finalMatched?.details.trim().isNotEmpty == true
+          ? finalMatched!.details.trim()
           : 'Trusted service provider ready to help with fast and quality work.',
       reviews:
           summary?.reviews ??
           (hasProviderUid ? const [] : _seedReviews(provider)),
+      heroTag: heroTag,
     );
   }
 
@@ -369,7 +425,7 @@ class _ProviderSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final avatarProvider = _imageProviderFromPath(profile.provider.imagePath);
+    final imagePath = profile.provider.imagePath.trim();
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -383,14 +439,15 @@ class _ProviderSummaryCard extends StatelessWidget {
           Row(
             children: [
               Hero(
-                tag: 'provider-${profile.provider.uid}',
+                tag: profile.heroTag ?? 'provider-${profile.provider.uid}',
                 child: CircleAvatar(
                   radius: 18,
-                  backgroundImage: avatarProvider,
-                  child: avatarProvider == null
+                  backgroundColor: AppColors.background,
+                  backgroundImage: imagePath.isNotEmpty ? safeImageProvider(imagePath) : null,
+                  child: imagePath.isEmpty
                       ? const Icon(
-                          Icons.person,
-                          size: 16,
+                          Icons.person_rounded,
+                          size: 18,
                           color: AppColors.primary,
                         )
                       : null,
@@ -448,10 +505,6 @@ class _ProviderSummaryCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  ImageProvider<Object>? _imageProviderFromPath(String raw) {
-    return safeImageProvider(raw);
   }
 }
 

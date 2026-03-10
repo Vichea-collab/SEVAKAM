@@ -1,25 +1,25 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/utils/app_toast.dart';
-import '../../../core/utils/page_transition.dart';
-import '../../state/app_role_state.dart';
-import '../../state/app_state.dart';
-import '../../state/auth_state.dart';
-import '../../state/order_state.dart';
-import '../../state/profile_image_state.dart';
-import '../../state/profile_settings_state.dart';
-import '../../widgets/app_dialog.dart';
-import '../../widgets/app_top_bar.dart';
-import '../../widgets/pressable_scale.dart';
-import '../auth/provider_auth_page.dart';
-import '../home/home_page.dart';
-import '../profile/edit_profile_page.dart';
-import '../profile/help_support_page.dart';
-import '../profile/notification_page.dart';
-import '../profile/payment_page.dart';
-import 'provider_home_page.dart';
+import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/utils/app_toast.dart';
+import 'package:servicefinder/core/utils/page_transition.dart';
+import 'package:servicefinder/presentation/state/app_role_state.dart';
+import 'package:servicefinder/presentation/state/app_state.dart';
+import 'package:servicefinder/presentation/state/auth_state.dart';
+import 'package:servicefinder/presentation/state/order_state.dart';
+import 'package:servicefinder/presentation/state/profile_image_state.dart';
+import 'package:servicefinder/presentation/state/profile_settings_state.dart';
+import 'package:servicefinder/presentation/widgets/app_dialog.dart';
+import 'package:servicefinder/presentation/widgets/app_top_bar.dart';
+import 'package:servicefinder/presentation/widgets/pressable_scale.dart';
+import 'package:servicefinder/presentation/pages/auth/provider_auth_page.dart';
+import 'package:servicefinder/presentation/pages/main_shell_page.dart';
+import 'package:servicefinder/presentation/pages/profile/edit_profile_page.dart';
+import 'package:servicefinder/presentation/pages/profile/help_support_page.dart';
+import 'package:servicefinder/presentation/pages/profile/notification_page.dart';
+import 'package:servicefinder/presentation/pages/profile/payment_page.dart';
+import 'package:servicefinder/presentation/widgets/app_bottom_nav.dart';
 import 'provider_profession_page.dart';
 import 'provider_verification_page.dart';
 import 'provider_availability_page.dart';
@@ -90,10 +90,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
             AppTopBar(
               title: 'My Profile',
               showBack: true,
-              onBack: () => Navigator.pushReplacementNamed(
-                context,
-                ProviderPortalHomePage.routeName,
-              ),
+              onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
             ),
             const SizedBox(height: 10),
             _ProviderHero(rating: _providerRating),
@@ -150,7 +147,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
             const SizedBox(height: 10),
             _ActionTile(
               icon: Icons.credit_card_outlined,
-              label: 'Payment method',
+              label: 'Subscription method',
               onTap: () =>
                   Navigator.push(context, slideFadeRoute(const PaymentPage())),
             ),
@@ -260,7 +257,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                             return;
                           }
                           Navigator.of(context).pushAndRemoveUntil(
-                            slideFadeRoute(const HomePage()),
+                            slideFadeRoute(const MainShellPage()),
                             (route) => false,
                           );
                         },

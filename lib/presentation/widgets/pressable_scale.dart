@@ -43,11 +43,14 @@ class _PressableScaleState extends State<PressableScale> {
       onPointerDown: (_) => _onPressDown(),
       onPointerUp: (_) => _onPressEnd(),
       onPointerCancel: (_) => _onPressEnd(),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: widget.duration,
-        curve: Curves.easeOutQuart,
-        child: widget.child,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _scale,
+          duration: widget.duration,
+          curve: Curves.easeOutQuart,
+          child: widget.child,
+        ),
       ),
     );
   }

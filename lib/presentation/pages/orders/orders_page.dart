@@ -12,6 +12,8 @@ import '../../widgets/app_state_panel.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/pagination_bar.dart';
 import '../../widgets/primary_button.dart';
+import '../main_shell_page.dart';
+import '../../widgets/app_bottom_nav.dart';
 import 'order_detail_page.dart';
 
 class OrdersPage extends StatefulWidget {
@@ -73,12 +75,9 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                       child: Column(
                         children: [
                           AppTopBar(
-                            title: 'Orders',
+                            title: 'My Bookings',
                             showBack: true,
-                            onBack: () => Navigator.pushReplacementNamed(
-                              context,
-                              '/home',
-                            ),
+                            onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -115,7 +114,7 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                                         horizontal: AppSpacing.md,
                                       ),
                                       child: AppStatePanel.loading(
-                                        title: 'Loading your orders',
+                                        title: 'Loading bookings',
                                       ),
                                     ),
                                   )
@@ -166,13 +165,6 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                                                 order: order,
                                                 onTap: () =>
                                                     _openOrder(order),
-                                                onMarkCompleted:
-                                                    order.status ==
-                                                        OrderStatus.started
-                                                    ? () => _markCompleted(
-                                                        order,
-                                                      )
-                                                    : null,
                                               );
                                             },
                                           ),
@@ -238,19 +230,6 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
     );
     if (!mounted || updated == null) return;
     await _replaceOrder(updated);
-  }
-
-  Future<void> _markCompleted(OrderItem order) async {
-    try {
-      await OrderState.updateFinderOrderStatus(
-        orderId: order.id,
-        status: OrderStatus.completed,
-      );
-      setState(() => _activeTab = _FinderOrderTab.completed);
-    } catch (_) {
-      if (!mounted) return;
-      AppToast.error(context, 'Failed to update order status.');
-    }
   }
 
   Future<void> _goToPage(int page) async {
@@ -341,22 +320,22 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
   String _emptyTitleForTab(_FinderOrderTab tab) {
     switch (tab) {
       case _FinderOrderTab.pending:
-        return 'No incoming orders';
+        return 'No incoming bookings';
       case _FinderOrderTab.inProgress:
-        return 'No active orders';
+        return 'No active services';
       case _FinderOrderTab.completed:
-        return 'No order history yet';
+        return 'No history yet';
     }
   }
 
   String _emptyMessageForTab(_FinderOrderTab tab) {
     switch (tab) {
       case _FinderOrderTab.pending:
-        return 'New bookings will appear here.';
+        return 'Your new service requests will appear here.';
       case _FinderOrderTab.inProgress:
-        return 'Orders in progress will appear here.';
+        return 'Confirmed services in progress appear here.';
       case _FinderOrderTab.completed:
-        return 'Completed, cancelled, and declined orders appear here.';
+        return 'Completed and cancelled bookings appear here.';
     }
   }
 
@@ -409,12 +388,10 @@ class _TabChip extends StatelessWidget {
 class _OrderCard extends StatelessWidget {
   final OrderItem order;
   final VoidCallback onTap;
-  final VoidCallback? onMarkCompleted;
 
   const _OrderCard({
     required this.order,
     required this.onTap,
-    this.onMarkCompleted,
   });
 
   @override
@@ -463,32 +440,15 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: PrimaryButton(
-                    label: order.status == OrderStatus.completed
-                        ? 'Rate service'
-                        : 'View details',
-                    icon: order.status == OrderStatus.completed
-                        ? Icons.star_rate_rounded
-                        : Icons.receipt_long_rounded,
-                    isOutlined: true,
-                    onPressed: onTap,
-                  ),
-                ),
-                if (onMarkCompleted != null) ...[
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: PrimaryButton(
-                      label: 'Mark Complete',
-                      icon: Icons.task_alt_rounded,
-                      tone: PrimaryButtonTone.success,
-                      onPressed: onMarkCompleted,
-                    ),
-                  ),
-                ],
-              ],
+            PrimaryButton(
+              label: order.status == OrderStatus.completed
+                  ? 'Rate service'
+                  : 'View details',
+              icon: order.status == OrderStatus.completed
+                  ? Icons.star_rate_rounded
+                  : Icons.receipt_long_rounded,
+              isOutlined: true,
+              onPressed: onTap,
             ),
           ],
         ),

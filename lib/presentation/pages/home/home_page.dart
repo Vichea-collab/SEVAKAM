@@ -705,9 +705,12 @@ class _ProviderPostTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Hero(
-                tag: 'provider-${post.providerUid}',
+                tag: 'provider-post-${post.id}',
                 child: Container(
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -717,15 +720,21 @@ class _ProviderPostTile extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SafeImage(
-                      source: post.avatarPath,
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                  child: post.avatarPath.trim().isEmpty
+                      ? const Icon(
+                          Icons.person_rounded,
+                          size: 40,
+                          color: AppColors.primary,
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: SafeImage(
+                            source: post.avatarPath,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(width: 14),
@@ -828,7 +837,10 @@ class _ProviderPostTile extends StatelessWidget {
   void _openProfile(BuildContext context) {
     Navigator.push(
       context,
-      slideFadeRoute(ProviderDetailPage(provider: _providerFromPost(post))),
+      slideFadeRoute(ProviderDetailPage(
+        provider: _providerFromPost(post),
+        heroTag: 'provider-post-${post.id}',
+      )),
     );
   }
 
@@ -845,9 +857,6 @@ class _ProviderPostTile extends StatelessWidget {
       imagePath: seed.avatarPath,
       accentColor: accentForCategory(role),
       services: services,
-      providerType: seed.providerType,
-      companyName: seed.providerCompanyName.trim(),
-      maxWorkers: seed.providerMaxWorkers < 1 ? 1 : seed.providerMaxWorkers,
       blockedDates: seed.blockedDates,
     );
   }

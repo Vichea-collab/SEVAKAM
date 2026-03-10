@@ -31,6 +31,30 @@ class ManageOrderPage extends StatelessWidget {
                     ),
               ),
               const SizedBox(height: 12),
+              if (order.status == OrderStatus.started) ...[
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: ListTile(
+                    leading: const Icon(Icons.check_circle_rounded, color: AppColors.success),
+                    title: Text(
+                      'Mark as Completed',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pop(context, order.copyWith(status: OrderStatus.completed));
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -38,10 +62,11 @@ class ManageOrderPage extends StatelessWidget {
                   border: Border.all(color: AppColors.divider),
                 ),
                 child: ListTile(
+                  leading: const Icon(Icons.cancel_outlined, color: AppColors.danger),
                   title: Text(
                     'Cancel Booking',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.primary,
+                          color: AppColors.danger,
                         ),
                   ),
                   trailing: const Icon(Icons.chevron_right),
@@ -51,7 +76,9 @@ class ManageOrderPage extends StatelessWidget {
                       slideFadeRoute(CancelBookingPage(order: order)),
                     );
                     if (!context.mounted) return;
-                    Navigator.pop(context, result);
+                    if (result != null) {
+                      Navigator.pop(context, result);
+                    }
                   },
                 ),
               ),

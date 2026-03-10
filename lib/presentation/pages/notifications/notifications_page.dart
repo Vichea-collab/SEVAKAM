@@ -11,6 +11,8 @@ import '../../widgets/app_state_panel.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/pressable_scale.dart';
 import '../chat/chat_list_page.dart';
+import '../main_shell_page.dart';
+import '../../widgets/app_bottom_nav.dart';
 
 enum _NoticeFilter { all, orders, system, promos }
 
@@ -229,10 +231,7 @@ class _NotificationsPageState extends State<NotificationsPage>
                               AppTopBar(
                                 title: 'Notifications',
                                 showBack: true,
-                                onBack: () => Navigator.pushReplacementNamed(
-                                  context,
-                                  '/home',
-                                ),
+                                onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
                                 actions: [
                                   IconButton(
                                     onPressed: _openMessenger,

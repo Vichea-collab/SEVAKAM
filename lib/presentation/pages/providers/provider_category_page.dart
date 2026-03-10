@@ -3,13 +3,25 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../domain/entities/provider.dart';
+import '../../state/provider_post_state.dart';
 import '../../widgets/provider_card.dart';
 import 'provider_detail_page.dart';
 
-class ProviderCategoryPage extends StatelessWidget {
+class ProviderCategoryPage extends StatefulWidget {
   final ProviderSection section;
 
   const ProviderCategoryPage({super.key, required this.section});
+
+  @override
+  State<ProviderCategoryPage> createState() => _ProviderCategoryPageState();
+}
+
+class _ProviderCategoryPageState extends State<ProviderCategoryPage> {
+  Future<void> _handleRefresh() async {
+    try {
+      await ProviderPostState.refreshAllForLookup();
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,12 +56,12 @@ class ProviderCategoryPage extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        section.title,
+                        widget.section.title,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
                     Text(
-                      '${section.providers.length} providers',
+                      '${widget.section.providers.length} providers',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.primary,
                       ),
@@ -59,24 +71,34 @@ class ProviderCategoryPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: GridView.builder(
-                  itemCount: section.providers.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: AppSpacing.md,
-                    crossAxisSpacing: AppSpacing.md,
-                    childAspectRatio: 0.64,
+                child: RefreshIndicator(
+                  onRefresh: _handleRefresh,
+                  color: AppColors.primary,
+                  child: GridView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: widget.section.providers.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: AppSpacing.md,
+                      crossAxisSpacing: AppSpacing.md,
+                      childAspectRatio: 0.64,
+                    ),
+                    itemBuilder: (context, index) {
+                      final provider = widget.section.providers[index];
+                      final heroTag = 'provider-card-${widget.section.category}-${provider.uid}';
+                      return ProviderCard(
+                        provider: provider,
+                        heroTag: heroTag,
+                        onDetails: () => Navigator.push(
+                          context,
+                          slideFadeRoute(ProviderDetailPage(
+                            provider: provider,
+                            heroTag: heroTag,
+                          )),
+                        ),
+                      );
+                    },
                   ),
-                  itemBuilder: (context, index) {
-                    final provider = section.providers[index];
-                    return ProviderCard(
-                      provider: provider,
-                      onDetails: () => Navigator.push(
-                        context,
-                        slideFadeRoute(ProviderDetailPage(provider: provider)),
-                      ),
-                    );
-                  },
                 ),
               ),
             ],

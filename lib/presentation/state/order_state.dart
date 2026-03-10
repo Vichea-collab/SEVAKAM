@@ -918,12 +918,6 @@ class OrderState {
       rating: _toDouble(row['providerRating'], fallback: 4.0),
       imagePath: _safeAssetPath(row['providerImagePath']),
       accentColor: const Color(0xFFEAF1FF),
-      providerType: _providerType((row['providerType'] ?? '').toString()),
-      companyName: (row['providerCompanyName'] ?? '').toString(),
-      maxWorkers: _providerMaxWorkers(
-        row['providerMaxWorkers'],
-        _providerType((row['providerType'] ?? '').toString()),
-      ),
       blockedDates: (row['providerBlockedDates'] as List? ?? [])
           .map((e) => DateTime.tryParse(e.toString()))
           .where((e) => e != null)
@@ -969,7 +963,7 @@ class OrderState {
   static String _safeAssetPath(dynamic value) {
     final path = (value ?? '').toString().trim();
     if (path.startsWith('assets/')) return path;
-    return 'assets/images/profile.jpg';
+    return '';
   }
 
   static DateTime _toDateTime(dynamic value) {
@@ -1044,21 +1038,6 @@ class OrderState {
     final rating = _toDouble(value);
     if (rating <= 0) return null;
     return rating;
-  }
-
-  static String _providerType(String value) {
-    final normalized = value.trim().toLowerCase();
-    if (normalized == 'company') return 'company';
-    return 'individual';
-  }
-
-  static int _providerMaxWorkers(dynamic value, String providerType) {
-    if (providerType != 'company') return 1;
-    if (value is int && value > 0) return value;
-    if (value is num && value > 0) return value.toInt();
-    final parsed = int.tryParse((value ?? '').toString().trim());
-    if (parsed != null && parsed > 0) return parsed;
-    return 1;
   }
 
   static OrderStatus _orderStatusFromStorage(String status) {
