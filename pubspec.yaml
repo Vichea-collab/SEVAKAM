@@ -46,5 +46,10 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/cleaning/
+    - assets/images/electrician/
+    - assets/images/home_appliance_repair/
+    - assets/images/home_maintenance/
+    - assets/images/plumber/
     - assets/data/
     - .env

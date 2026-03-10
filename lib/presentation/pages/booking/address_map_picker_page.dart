@@ -552,7 +552,22 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       _startLiveTracking();
 
       final position = await _resolveBestCurrentPosition(forceRefresh: !silent);
-      if (position == null) {
+      LatLng? point;
+
+      if (position != null) {
+        point = LatLng(position.latitude, position.longitude);
+      } else {
+        // Fallback to network if GPS fails or times out
+        point = await _resolveApproxNetworkLocation();
+        if (point != null && !silent) {
+          _showMessage(
+            'GPS unavailable. Using network location fallback.',
+            type: AppToastType.info,
+          );
+        }
+      }
+
+      if (point == null) {
         if (!silent) {
           _showMessage(
             'Unable to get your current location. Please try moving the map manually.',
@@ -562,9 +577,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
         return;
       }
 
-      final point = LatLng(position.latitude, position.longitude);
-
-      if (!silent && kDebugMode && !kIsWeb) {
+      if (!silent && kDebugMode && !kIsWeb && position != null) {
         bool isSimulatorHq = false;
         if (defaultTargetPlatform == TargetPlatform.android) {
           final dist = Geolocator.distanceBetween(position.latitude, position.longitude, 37.422, -122.084);
@@ -584,18 +597,22 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
 
       final outsidePhnomPenh = !_isInsidePhnomPenh(point);
       if (outsidePhnomPenh) {
-        final networkPoint = await _resolveApproxNetworkLocation();
-        if (networkPoint != null) {
-          setState(() => _selectedPoint = networkPoint);
-          await _moveCamera(networkPoint, zoom: 15.0);
-          await _reverseGeocode(networkPoint);
-          if (!silent) {
-            _showMessage(
-              'Using network location fallback for Phnom Penh.',
-              type: AppToastType.info,
-            );
+        // Only try network fallback if the primary point (GPS) was outside PP.
+        // If the point already came from network, it was already checked for PP.
+        if (position != null) {
+          final networkPoint = await _resolveApproxNetworkLocation();
+          if (networkPoint != null) {
+            setState(() => _selectedPoint = networkPoint);
+            await _moveCamera(networkPoint, zoom: 15.0);
+            await _reverseGeocode(networkPoint);
+            if (!silent) {
+              _showMessage(
+                'Using network location fallback for Phnom Penh.',
+                type: AppToastType.info,
+              );
+            }
+            return;
           }
-          return;
         }
 
         if (!silent) {
@@ -609,7 +626,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       }
 
       setState(() {
-        _selectedPoint = point;
+        _selectedPoint = point!;
       });
       await _moveCamera(point, zoom: 15.0);
       await _reverseGeocode(point);
@@ -903,6 +920,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     final endpoints = <Uri>[
       Uri.https('ipapi.co', '/json'),
       Uri.https('ipwho.is', '/'),
+      Uri.https('ipinfo.io', '/json'),
     ];
 
     for (final endpoint in endpoints) {
@@ -915,13 +933,23 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                     'servicefinder/1.0 (contact: support@servicefinder.local)',
               },
             )
-            .timeout(const Duration(seconds: 6));
+            .timeout(const Duration(seconds: 5));
         if (response.statusCode != 200) continue;
         final body = jsonDecode(response.body);
         if (body is! Map<String, dynamic>) continue;
 
-        final lat = _extractDouble(body, const ['latitude', 'lat']);
-        final lng = _extractDouble(body, const ['longitude', 'lon', 'lng']);
+        double? lat, lng;
+        if (body.containsKey('loc')) {
+          final loc = body['loc'].toString().split(',');
+          if (loc.length == 2) {
+            lat = double.tryParse(loc[0]);
+            lng = double.tryParse(loc[1]);
+          }
+        }
+
+        lat ??= _extractDouble(body, const ['latitude', 'lat']);
+        lng ??= _extractDouble(body, const ['longitude', 'lon', 'lng', 'long']);
+
         if (lat == null || lng == null) continue;
 
         final point = LatLng(lat, lng);

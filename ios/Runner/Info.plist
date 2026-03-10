@@ -62,5 +62,11 @@
 	<string>We use your location to help you pick accurate service addresses.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We use your location to help you pick accurate service addresses.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to take photos for your profile or service requests.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library to choose photos for your profile or service requests.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need access to your microphone for video recording if required.</string>
 </dict>
 </plist>
