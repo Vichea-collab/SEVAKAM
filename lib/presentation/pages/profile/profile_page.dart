@@ -290,11 +290,11 @@ class _ProfileHero extends StatelessWidget {
                 final image = ProfileImageState.avatarProvider();
                 return CircleAvatar(
                   radius: 34,
-                  backgroundColor: const Color(0xFFEAF1FF),
+                  backgroundColor: AppColors.background,
                   backgroundImage: image,
                   child: image == null
                       ? const Icon(
-                          Icons.person,
+                          Icons.person_rounded,
                           color: AppColors.primary,
                           size: 34,
                         )

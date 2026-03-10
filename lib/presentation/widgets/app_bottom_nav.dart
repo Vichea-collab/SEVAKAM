@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../state/app_role_state.dart';
+import '../state/profile_image_state.dart';
 
 enum AppBottomTab { home, notification, post, order, profile }
 
@@ -80,8 +82,7 @@ class AppBottomNav extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: _NavItem(
-                    icon: Icons.person_rounded,
+                  child: _ProfileNavItem(
                     label: 'Profile',
                     selected: _isCurrent(AppBottomTab.profile),
                     onTap: () => _goTo(context, AppBottomTab.profile),
@@ -139,6 +140,72 @@ class AppBottomNav extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProfileNavItem extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final Color accentColor;
+
+  const _ProfileNavItem({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? accentColor : AppColors.textSecondary;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ValueListenableBuilder<int>(
+              valueListenable: ProfileImageState.listenable,
+              builder: (context, _, __) {
+                final image = ProfileImageState.avatarProvider();
+                return Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: selected ? accentColor.withValues(alpha: 0.15) : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: selected ? Border.all(color: accentColor.withValues(alpha: 0.2), width: 1) : null,
+                  ),
+                  alignment: Alignment.center,
+                  child: image != null
+                      ? CircleAvatar(
+                          radius: 14,
+                          backgroundImage: image,
+                        )
+                      : Icon(Icons.person_rounded, size: 24, color: color),
+                );
+              },
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                height: 1.05,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

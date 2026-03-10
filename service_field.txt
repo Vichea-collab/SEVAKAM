@@ -1,0 +1,95 @@
+Plumber
+-	Pipe leaks
+o	locationOfLeak (TextField)
+o	serverity (Dropdown: small/Medium/Burst)
+o	waterStillRunning (Switch: Yes/No)
+o	preferredDate (Datepicker)
+o	photo (Image upload)
+o	notes (TextField)
+-	Toilet Repair
+o	problemType (Dropdown: Not flushing / Leaking / Blocked)
+o	toiletType (Dropdown: Squat / Western)
+o	waterOverflowing (Switch)
+o	preferredDate
+o	phot
+o	notes
+-	Water Installation
+o	installationType (Dropdown: Sink / Shower / Pipe / Tank)
+o	numberOfInstallation
+o	preferredDate
+o	photo
+o	notes
+Electrician
+-	Wiring Repair
+o	problemDescription (TextField)
+o	preferredDate
+o	photo
+o	notes
+-	Light / Fan Installation
+o	deviceType (Dropdown: Light / Fan / Both)
+o	quantity (NumberField, if both put number of light and fans)
+o	preferredDate
+o	photo
+o	notes
+-	Power Outage Fixes
+o	outageScope (Dropdown: room / Whole house)
+o	roomquantity (put number of rooms)
+o	preferredDate
+o	photo
+o	notes
+
+
+Cleaner
+-	House Cleaning
+o	houseType (Dropdown: Apartment / Villa / Room)
+o	numberOfRooms (NumberField)
+o	preferredDate
+o	notes
+-	Office Cleaning
+o	officeSize (Dropdown: Small / Medium / Large)
+o	numberOfRooms
+o	preferredDate
+o	notes
+-	Move-in / Move-out Cleaning
+o	propertySize (Dropdown: Small / Medium / Large)
+o	furnished (Switch)
+o	heavyStains (Switch)
+o	preferredDate
+o	notes
+Home Appliance
+-	Air Conditioner Repair
+o	acType (Dropdown: Split / Window / Cassette)
+o	problemType (Dropdown: Not cooling / Leaking / No power)
+o	lastServiceDate (DatePicker)
+o	photo
+o	notes
+-	Washing Machine Repair
+o	machineType (Dropdown: Front load / Top load)
+o	problemType (Dropdown: Not spinning / Leaking / No power)
+o	brand (TextField)
+o	photo
+o	notes
+-	Refrigerator Repair
+o	problemType (Dropdown: Not cold / Freezer issue / Noise)
+o	brand (TextField)
+o	photo
+o	notes
+Home Maintenance
+-	Door & Window Repair
+o	materialType (Dropdown: Wood / Aluminum / Glass)
+o	problemType (Dropdown: Broken / Hard to open / Off hinge)
+o	quantity
+o	photo
+o	notes
+-	Furniture Fixing
+o	furnitureType (Dropdown: Bed / Table / Chair / Cabinet)
+o	problemType (Dropdown: Loose / Broken / Assembly)
+o	quantity
+o	photo
+o	notes
+-	Shelf / Curtain Installation
+o	installationType (Dropdown: Shelf / Curtain rod)
+o	quantity
+o	photo
+o	notes
+

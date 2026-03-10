@@ -21,44 +21,49 @@ class CategoryChip extends StatelessWidget {
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          width: 108,
-          height: 130,
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          width: 112,
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.divider),
-            boxShadow: const [
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x14000000),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 12,
-                offset: Offset(0, 6),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: accent,
+              Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
                 child: Icon(
                   iconForCategory(category.name),
-                  color: Colors.white,
-                  size: 28,
+                  color: accent,
+                  size: 30,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Text(
                 category.name,
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
+                  letterSpacing: 0.2,
                 ),
               ),
             ],

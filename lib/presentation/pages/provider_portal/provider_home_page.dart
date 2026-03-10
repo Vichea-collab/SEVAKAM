@@ -333,13 +333,13 @@ class _ProviderTopHeaderState extends State<_ProviderTopHeader> {
                         );
                         return CircleAvatar(
                           radius: 19,
-                          backgroundColor: const Color(0xFFEAF1FF),
+                          backgroundColor: AppColors.background,
                           backgroundImage: image,
                           child: image == null
                               ? const Icon(
-                                  Icons.person,
+                                  Icons.person_rounded,
                                   color: AppColors.primary,
-                                  size: 18,
+                                  size: 20,
                                 )
                               : null,
                         );
@@ -544,93 +544,134 @@ class _FinderPostTile extends StatelessWidget {
         onTap: () => _openChat(context),
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(13),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.divider),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x0C0F172A),
-                blurRadius: 12,
-                offset: Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
           ),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 23,
-                backgroundImage: safeImageProvider(post.avatarPath),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            post.clientName,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(99),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.access_time_rounded,
-                                size: 13,
-                                color: AppColors.textSecondary,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(post.timeLabel),
-                            ],
-                          ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      post.message,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textSecondary,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SafeImage(
+                        source: post.avatarPath,
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _MetaPill(text: post.category),
-                        _MetaPill(text: post.serviceLabel),
-                        _MetaPill(text: post.location),
-                        if (post.preferredDate != null)
-                          _PreferredDatePill(
-                            preferredDate: post.preferredDate!,
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                post.clientName,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                              ),
+                            ),
+                            Text(
+                              post.timeLabel,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).hintColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          post.message,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.textSecondary,
+                                height: 1.3,
+                              ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            _MetaPill(text: post.category),
+                            _MetaPill(text: post.serviceLabel),
+                            _MetaPill(text: post.location),
+                            if (post.preferredDate != null)
+                              _PreferredDatePill(
+                                preferredDate: post.preferredDate!,
+                              ),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1, thickness: 1.2, color: AppColors.divider),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          size: 14,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Chat Now',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.3,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

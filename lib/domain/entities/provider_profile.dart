@@ -40,7 +40,6 @@ class ProviderProfile {
   final bool available;
   final int completedJobs;
   final String about;
-  final List<String> projectImages;
   final List<ProviderReview> reviews;
   final List<DateTime> blockedDates;
 
@@ -50,7 +49,6 @@ class ProviderProfile {
     required this.available,
     required this.completedJobs,
     required this.about,
-    required this.projectImages,
     required this.reviews,
     this.blockedDates = const [],
   });

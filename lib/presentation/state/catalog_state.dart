@@ -55,16 +55,13 @@ class CatalogState {
         categories.value = await _loadCategoriesFromAssets();
       }
 
-      if (loadedServices.isNotEmpty) {
-        services.value = loadedServices;
-      } else {
-        services.value = await _loadServicesFromAssets();
-      }
+      // No fallback for services, only from API
+      services.value = loadedServices;
       
       _lastHydratedAt = DateTime.now();
     } catch (_) {
       categories.value = await _loadCategoriesFromAssets();
-      services.value = await _loadServicesFromAssets();
+      services.value = const <ServiceItem>[];
       _lastHydratedAt = DateTime.now();
     } finally {
       loading.value = false;
@@ -82,30 +79,6 @@ class CatalogState {
     } catch (e) {
       debugPrint('Error loading categories from assets: $e');
       return const <Category>[];
-    }
-  }
-
-  static Future<List<ServiceItem>> _loadServicesFromAssets() async {
-    try {
-      final String response = await rootBundle.loadString('assets/data/services.json');
-      final List<dynamic> data = json.decode(response);
-      return data.map((json) {
-        final rate = _toDouble(json['pricePerHour'], fallback: 12);
-        return ServiceItem(
-          title: json['title'].toString(),
-          subtitle: 'Starts in \$${rate.toStringAsFixed(0)}/hr',
-          badge: _toInt(json['completedCount']) >= 80 ? 'Popular' : 'Pro',
-          imagePath: _imageForCategory(json['category'].toString()),
-          rating: _toDouble(json['rating'], fallback: 4.6),
-          category: json['category'].toString(),
-          location: 'Phnom Penh, Cambodia',
-          available: true,
-          etaHours: _etaHoursFromCategory(json['category'].toString()),
-        );
-      }).toList();
-    } catch (e) {
-      debugPrint('Error loading services from assets: $e');
-      return const <ServiceItem>[];
     }
   }
 
@@ -207,11 +180,13 @@ class CatalogState {
                 ? 'Trusted'
                 : 'Pro';
 
+            final imageFromApi = (row['image'] ?? row['imageUrl'] ?? '').toString();
+
             return ServiceItem(
               title: title,
               subtitle: 'Starts in \$${rate.toStringAsFixed(0)}/hr',
               badge: badge,
-              imagePath: _imageForCategory(categoryName),
+              imagePath: imageFromApi.isNotEmpty ? imageFromApi : _imageForCategory(categoryName),
               rating: rating,
               category: categoryName,
               location: 'Phnom Penh, Cambodia',
@@ -287,6 +262,12 @@ class CatalogState {
   }
 
   static String _imageForCategory(String category) {
+    final value = category.trim().toLowerCase();
+    if (value.contains('plumb')) return 'assets/images/plumber/pipe-leak.jpg';
+    if (value.contains('electric')) return 'assets/images/electrician/wiring-repair.jpg';
+    if (value.contains('clean')) return 'assets/images/cleaning/house-cleaning.jpg';
+    if (value.contains('appliance')) return 'assets/images/home_appliance_repair/ac-repair.jpg';
+    if (value.contains('maintenance')) return 'assets/images/home_maintenance/furniture-repair.jpg';
     return 'assets/images/plumber_category.jpg';
   }
 

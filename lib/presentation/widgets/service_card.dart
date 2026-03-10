@@ -20,96 +20,116 @@ class ServiceCard extends StatelessWidget {
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          width: 180,
+          width: 200,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.divider),
-            boxShadow: const [
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x12000000),
-                blurRadius: 12,
-                offset: Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Stack(
                 children: [
                   Hero(
                     tag: 'service-${item.title}',
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: SafeImage(
-                        source: item.imagePath,
-                        height: 78,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: SafeImage(
+                          source: item.imagePath,
+                          height: 110,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
                   ),
                   Positioned(
-                    left: 8,
-                    top: 8,
+                    left: 10,
+                    top: 10,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
-                        vertical: 4,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Text(
                         item.badge,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 14),
               Text(
                 item.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                item.subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.star, size: 14, color: Color(0xFFF59E0B)),
+                  const Icon(Icons.star_rounded, size: 18, color: Color(0xFFF59E0B)),
                   const SizedBox(width: 4),
                   Text(
                     item.rating.toStringAsFixed(1),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFFF59E0B),
                     ),
                   ),
                   const Spacer(),
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: AppColors.primary,
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: const Icon(
-                      Icons.arrow_forward,
-                      size: 14,
-                      color: Colors.white,
+                      Icons.arrow_forward_rounded,
+                      size: 16,
+                      color: AppColors.primary,
                     ),
                   ),
                 ],

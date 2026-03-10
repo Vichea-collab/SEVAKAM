@@ -113,7 +113,7 @@ class _HomePageState extends State<HomePage> {
                             return const SizedBox.shrink();
                           }
                           return SizedBox(
-                            height: 150,
+                            height: 135,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               cacheExtent: 500,
@@ -166,7 +166,7 @@ class _HomePageState extends State<HomePage> {
                             return const SizedBox.shrink();
                           }
                           return SizedBox(
-                            height: 230,
+                            height: 240,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               cacheExtent: 500,
@@ -321,13 +321,13 @@ class _TopHeaderState extends State<_TopHeader> {
                             );
                             return CircleAvatar(
                               radius: 19,
-                              backgroundColor: const Color(0xFFEAF1FF),
+                              backgroundColor: AppColors.background,
                               backgroundImage: image,
                               child: image == null
                                   ? const Icon(
-                                      Icons.person,
+                                      Icons.person_rounded,
                                       color: AppColors.primary,
-                                      size: 18,
+                                      size: 20,
                                     )
                                   : null,
                             );
@@ -685,35 +685,63 @@ class _ProviderPostTile extends StatelessWidget {
       onTap: () => _openProfile(context),
       child: InkWell(
         onTap: () => _openProfile(context),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Theme.of(context).dividerColor),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
           ),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Hero(
-                    tag: 'provider-${post.providerUid}',
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundImage: safeImageProvider(post.avatarPath),
+              Hero(
+                tag: 'provider-${post.providerUid}',
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SafeImage(
+                      source: post.avatarPath,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Row(
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Text(
-                          post.providerName,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
+                        Expanded(
+                          child: Text(
+                            post.providerName,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
                           ),
                         ),
                         if (post.isVerified) ...[
@@ -726,40 +754,69 @@ class _ProviderPostTile extends StatelessWidget {
                         ],
                       ],
                     ),
-                  ),
-                  Text(
-                    '\$${post.ratePerHour.toStringAsFixed(0)}/hr',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded, size: 16, color: Color(0xFFF59E0B)),
+                        const SizedBox(width: 4),
+                        Text(
+                          post.rating.toStringAsFixed(1),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFFF59E0B),
+                              ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(width: 1, height: 12, color: Theme.of(context).dividerColor),
+                        const SizedBox(width: 8),
+                        Icon(
+                          post.availableNow ? Icons.circle : Icons.circle_outlined,
+                          size: 8,
+                          color: post.availableNow ? const Color(0xFF10B981) : Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          post.availableNow ? "Available now" : "Currently closed",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: post.availableNow ? const Color(0xFF10B981) : Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${post.serviceLabel} • ${post.timeLabel}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).hintColor,
+                    const SizedBox(height: 8),
+                    Text(
+                      post.details,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).hintColor,
+                            height: 1.3,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              _HomePostPill(text: post.category),
+                              _HomePostPill(text: post.area),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 12,
+                          color: Theme.of(context).dividerColor,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                post.details,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  _HomePostPill(text: post.category),
-                  _HomePostPill(text: post.area),
-                  if (post.availableNow)
-                    const _HomePostPill(text: 'Available now'),
-                ],
               ),
             ],
           ),

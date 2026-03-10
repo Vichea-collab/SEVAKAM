@@ -304,11 +304,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
       about: matched?.details.trim().isNotEmpty == true
           ? matched!.details.trim()
           : 'Trusted service provider ready to help with fast and quality work.',
-      projectImages: const <String>[
-        'assets/images/plumber_category.jpg',
-        'assets/images/plumber_category.jpg',
-        'assets/images/plumber_category.jpg',
-      ],
       reviews:
           summary?.reviews ??
           (hasProviderUid ? const [] : _seedReviews(provider)),
@@ -589,33 +584,6 @@ class _CompanyInfoSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(profile.about, style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: 18),
-        Row(
-          children: [
-            Text('Orders', style: Theme.of(context).textTheme.titleMedium),
-            const Spacer(),
-            TextButton(onPressed: () {}, child: const Text('View all')),
-          ],
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 92,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: profile.projectImages.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SafeImage(
-                  source: profile.projectImages[index],
-                  width: 120,
-                  fit: BoxFit.cover,
-                ),
-              );
-            },
-          ),
-        ),
       ],
     );
   }

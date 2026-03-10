@@ -18,13 +18,27 @@ class SectionTitle extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            color: AppColors.textPrimary,
+          ),
+        ),
         if (actionLabel != null)
-          TextButton(
-            onPressed: onAction,
-            child: Text(
-              actionLabel!,
-              style: const TextStyle(color: AppColors.primary),
+          InkWell(
+            onTap: onAction,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              child: Text(
+                actionLabel!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
       ],

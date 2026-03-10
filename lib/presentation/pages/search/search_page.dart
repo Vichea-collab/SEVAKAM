@@ -17,7 +17,6 @@ import '../../state/provider_post_state.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/category_chip.dart';
 import '../../widgets/pressable_scale.dart';
-import '../../widgets/star_rating.dart';
 import '../providers/provider_category_page.dart';
 import '../providers/provider_posts_page.dart';
 
@@ -32,7 +31,7 @@ class SearchPage extends StatefulWidget {
   State<SearchPage> createState() => _SearchPageState();
 }
 
-enum _SortOption { popular, rating, priceHigh, priceLow }
+enum _SortOption { popular, rating }
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _controller = TextEditingController();
@@ -148,18 +147,6 @@ class _SearchPageState extends State<SearchPage> {
     switch (_sortOption) {
       case _SortOption.rating:
         filteredPopular.sort((a, b) => b.rating.compareTo(a.rating));
-        break;
-      case _SortOption.priceHigh:
-        filteredPopular.sort(
-          (a, b) =>
-              _extractPrice(b.subtitle).compareTo(_extractPrice(a.subtitle)),
-        );
-        break;
-      case _SortOption.priceLow:
-        filteredPopular.sort(
-          (a, b) =>
-              _extractPrice(a.subtitle).compareTo(_extractPrice(b.subtitle)),
-        );
         break;
       case _SortOption.popular:
       case null:
@@ -388,18 +375,9 @@ class _SearchPageState extends State<SearchPage> {
     switch (value) {
       case _SortOption.rating:
         return 'Ratings';
-      case _SortOption.priceHigh:
-        return 'Price (High to Low)';
-      case _SortOption.priceLow:
-        return 'Price (Low to High)';
       case _SortOption.popular:
         return 'Most Popular';
     }
-  }
-
-  int _extractPrice(String text) {
-    final match = RegExp(r'(\d+)').firstMatch(text);
-    return int.tryParse(match?.group(1) ?? '') ?? 0;
   }
 
   void _openSortSheet() {
@@ -436,22 +414,6 @@ class _SearchPageState extends State<SearchPage> {
                     selected: selectedSort == _SortOption.rating,
                     onTap: () =>
                         modalSetState(() => selectedSort = _SortOption.rating),
-                  ),
-                  _SortOptionTile(
-                    icon: Icons.payments_outlined,
-                    label: 'Price (High to Low)',
-                    selected: selectedSort == _SortOption.priceHigh,
-                    onTap: () => modalSetState(
-                      () => selectedSort = _SortOption.priceHigh,
-                    ),
-                  ),
-                  _SortOptionTile(
-                    icon: Icons.payments_outlined,
-                    label: 'Price (Low to High)',
-                    selected: selectedSort == _SortOption.priceLow,
-                    onTap: () => modalSetState(
-                      () => selectedSort = _SortOption.priceLow,
-                    ),
                   ),
                   const SizedBox(height: 14),
                   SizedBox(
@@ -865,26 +827,50 @@ class _ServiceListTile extends StatelessWidget {
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.35)),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Hero(
                 tag: 'service-${item.title}',
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundImage: safeImageProvider(item.imagePath),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SafeImage(
+                      source: item.imagePath,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -894,8 +880,10 @@ class _ServiceListTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             item.title,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(fontWeight: FontWeight.w600),
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
                         if (providerUid != null)
@@ -915,85 +903,91 @@ class _ServiceListTile extends StatelessWidget {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
-                        StarRating(rating: displayRating),
-                        const SizedBox(width: 6),
+                        const Icon(Icons.star_rounded, size: 16, color: Color(0xFFF59E0B)),
+                        const SizedBox(width: 4),
                         Text(
                           displayRating.toStringAsFixed(1),
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             color: const Color(0xFFF59E0B),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 1,
+                          height: 12,
+                          color: Theme.of(context).dividerColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          item.available ? Icons.circle : Icons.circle_outlined,
+                          size: 8,
+                          color: item.available ? const Color(0xFF10B981) : Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          item.available ? "Available Now" : "Currently Closed",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: item.available ? const Color(0xFF10B981) : Colors.grey,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
                     if (providerName != null) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(
-                            Icons.person_outline,
-                            size: 14,
-                            color: AppColors.primary,
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.person,
+                              size: 10,
+                              color: AppColors.primary,
+                            ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               providerName!,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: AppColors.primary),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ],
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(
-                          Icons.place_outlined,
-                          size: 14,
-                          color: AppColors.textSecondary,
+                        Icon(
+                          Icons.location_on_rounded,
+                          size: 12,
+                          color: Theme.of(context).hintColor,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            '${item.location} • ${item.available ? "Available" : "Closed"} • ${item.etaHours} hrs',
-                            style: const TextStyle(fontSize: 12),
+                            '${item.location} • ${item.etaHours}h arrival',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).hintColor,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Service Timing: ${item.serviceTime}',
-                          style: const TextStyle(fontSize: 12),
                         ),
                       ],
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.chevron_right,
-                color: AppColors.primary,
-                size: 20,
               ),
             ],
           ),
@@ -1022,13 +1016,25 @@ class _SortPill extends StatelessWidget {
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: active ? AppColors.primary : Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.primary),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: active ? AppColors.primary : Theme.of(context).dividerColor,
+              width: 1.5,
+            ),
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1036,22 +1042,23 @@ class _SortPill extends StatelessWidget {
               if (icon != null) ...[
                 Icon(
                   icon,
-                  size: 14,
+                  size: 16,
                   color: active ? Colors.white : AppColors.primary,
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
               ],
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: active ? Colors.white : AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
+                      color: active ? Colors.white : AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Icon(
-                Icons.expand_more,
-                size: 16,
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
                 color: active ? Colors.white : AppColors.primary,
               ),
             ],
@@ -1071,10 +1078,21 @@ class _ActiveSortPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.splashEnd],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1082,17 +1100,24 @@ class _ActiveSortPill extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           PressableScale(
             onTap: onClear,
             child: InkWell(
               onTap: onClear,
               borderRadius: BorderRadius.circular(30),
-              child: const Icon(Icons.close, color: Colors.white, size: 16),
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: Colors.white24,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 14),
+              ),
             ),
           ),
         ],
