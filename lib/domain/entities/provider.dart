@@ -12,6 +12,7 @@ class ProviderItem {
   final Color accentColor;
   final List<String> services;
   final bool isVerified;
+  final String subscriptionTier;
   final double? latitude;
   final double? longitude;
   final List<DateTime> blockedDates;
@@ -26,6 +27,7 @@ class ProviderItem {
     required this.accentColor,
     this.services = const <String>[],
     this.isVerified = false,
+    this.subscriptionTier = 'basic',
     this.latitude,
     this.longitude,
     this.blockedDates = const [],
@@ -42,6 +44,8 @@ class ProviderItem {
       imagePath: post.avatarPath,
       accentColor: accentForCategory(role),
       services: post.serviceList,
+      isVerified: post.isVerified,
+      subscriptionTier: post.subscriptionTier,
       blockedDates: post.blockedDates,
     );
   }

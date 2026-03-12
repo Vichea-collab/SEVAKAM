@@ -266,9 +266,17 @@ class ProviderPostState {
   ) {
     final sorted = List<ProviderPostItem>.from(source);
     sorted.sort((a, b) {
+      // 1. Subscription Tier (Elite > Professional > Basic)
+      final tierA = _tierPriority(a.subscriptionTier);
+      final tierB = _tierPriority(b.subscriptionTier);
+      if (tierA != tierB) return tierB.compareTo(tierA);
+
+      // 2. Availability
       if (a.availableNow != b.availableNow) {
         return a.availableNow ? -1 : 1;
       }
+
+      // 3. Recency
       final right =
           b.updatedAt ?? b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       final left =
@@ -278,6 +286,13 @@ class ProviderPostState {
       return a.id.compareTo(b.id);
     });
     return sorted;
+  }
+
+  static int _tierPriority(String? tier) {
+    final t = (tier ?? '').toLowerCase().trim();
+    if (t == 'elite') return 2;
+    if (t == 'professional') return 1;
+    return 0;
   }
 
   static PaginationMeta _withAdjustedTotalItems(

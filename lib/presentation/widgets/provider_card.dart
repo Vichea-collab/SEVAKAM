@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/utils/safe_image_provider.dart';
 import '../../domain/entities/provider.dart';
 import '../state/favorite_state.dart';
+import '../widgets/subscription_badge.dart';
 import 'pressable_scale.dart';
 
 class ProviderCard extends StatelessWidget {
@@ -22,21 +23,41 @@ class ProviderCard extends StatelessWidget {
     final serviceChips = _serviceChips(context);
     final effectiveHeroTag = heroTag ?? 'provider-card-${provider.uid}';
 
+    final tierStr = provider.subscriptionTier.toLowerCase().trim();
+    final isElite = tierStr == 'elite';
+    final isProfessional = tierStr == 'professional';
+    final tierColor = isElite
+        ? const Color(0xFFF59E0B)
+        : (isProfessional ? const Color(0xFF3B82F6) : null);
+
     return PressableScale(
       onTap: onDetails,
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: tierColor != null
+              ? tierColor.withValues(alpha: 0.04)
+              : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
+              color: tierColor != null
+                  ? tierColor.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.04),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
+            if (isElite)
+              BoxShadow(
+                color: tierColor!.withValues(alpha: 0.1),
+                blurRadius: 30,
+                spreadRadius: -5,
+              ),
           ],
           border: Border.all(
-            color: Theme.of(context).dividerColor.withValues(alpha: 0.08),
+            color: tierColor != null
+                ? tierColor.withValues(alpha: 0.5)
+                : Theme.of(context).dividerColor.withValues(alpha: 0.08),
+            width: isElite ? 2.5 : (isProfessional ? 1.5 : 1),
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -116,20 +137,34 @@ class ProviderCard extends StatelessWidget {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Text(
-                                      provider.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                            color: AppColors.textPrimary,
-                                            fontSize: 18,
-                                            letterSpacing: -0.3,
+                                    child: Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            provider.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                                  fontWeight: FontWeight.w800,
+                                                  color: AppColors.textPrimary,
+                                                  fontSize: 18,
+                                                  letterSpacing: -0.3,
+                                                ),
                                           ),
+                                        ),
+                                        if (provider.isVerified) ...[
+                                          const SizedBox(width: 4),
+                                          const Icon(
+                                            Icons.verified_rounded,
+                                            color: AppColors.primary,
+                                            size: 18,
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.verified_rounded, size: 16, color: AppColors.primary),
+                                  SubscriptionBadge.fromString(provider.subscriptionTier),
                                 ],
                               ),
                               const SizedBox(height: 6),

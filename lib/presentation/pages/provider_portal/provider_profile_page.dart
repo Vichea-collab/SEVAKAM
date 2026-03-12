@@ -22,6 +22,10 @@ import 'package:servicefinder/presentation/widgets/app_bottom_nav.dart';
 import 'provider_profession_page.dart';
 import 'provider_verification_page.dart';
 import 'provider_availability_page.dart';
+import 'subscription_page.dart';
+import 'package:servicefinder/presentation/state/subscription_state.dart';
+import 'package:servicefinder/domain/entities/subscription.dart';
+import 'package:servicefinder/presentation/widgets/subscription_badge.dart';
 
 class ProviderProfilePage extends StatefulWidget {
   static const String routeName = '/provider/profile';
@@ -40,6 +44,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     super.initState();
     unawaited(_syncCompletedOrders());
     unawaited(_fetchRating());
+    unawaited(SubscriptionState.fetchStatus());
   }
 
   Future<void> _fetchRating() async {
@@ -134,6 +139,15 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
               onTap: () => Navigator.push(
                 context,
                 slideFadeRoute(const ProviderVerificationPage()),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _ActionTile(
+              icon: Icons.workspace_premium,
+              label: 'Subscription',
+              onTap: () => Navigator.push(
+                context,
+                slideFadeRoute(const SubscriptionPage()),
               ),
             ),
             const SizedBox(height: 16),
@@ -370,7 +384,10 @@ class _ProviderHero extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           profile.name.trim().isEmpty
@@ -388,7 +405,6 @@ class _ProviderHero extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 6),
                         ValueListenableBuilder<bool>(
                           valueListenable: ProfileSettingsState.providerVerified,
                           builder: (context, isVerified, _) {
@@ -397,6 +413,17 @@ class _ProviderHero extends StatelessWidget {
                               Icons.verified_rounded,
                               color: Colors.white,
                               size: 20,
+                            );
+                          },
+                        ),
+                        ValueListenableBuilder<SubscriptionStatus>(
+                          valueListenable: SubscriptionState.status,
+                          builder: (context, status, _) {
+                            if (status.tier == SubscriptionTier.basic) {
+                              return const SizedBox.shrink();
+                            }
+                            return SubscriptionBadge(
+                              tier: status.tier,
                             );
                           },
                         ),

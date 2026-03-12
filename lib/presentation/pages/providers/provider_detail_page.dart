@@ -17,6 +17,7 @@ import '../../state/provider_post_state.dart';
 import '../../widgets/app_state_panel.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/pressable_scale.dart';
+import '../../widgets/subscription_badge.dart';
 import '../booking/booking_address_page.dart';
 import '../chat/chat_conversation_page.dart';
 import '../chat/chat_list_page.dart';
@@ -467,7 +468,7 @@ class _ProviderSummaryCard extends StatelessWidget {
                   ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
                 ),
               ),
-              const Icon(Icons.verified, size: 16, color: AppColors.primary),
+              SubscriptionBadge.fromString(profile.provider.subscriptionTier),
             ],
           ),
           const SizedBox(height: 8),

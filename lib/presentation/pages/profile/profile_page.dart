@@ -18,6 +18,9 @@ import '../../widgets/app_bottom_nav.dart';
 import 'edit_profile_page.dart';
 import 'help_support_page.dart';
 import 'notification_page.dart';
+import 'package:servicefinder/domain/entities/subscription.dart';
+import 'package:servicefinder/presentation/state/subscription_state.dart';
+import 'package:servicefinder/presentation/widgets/subscription_badge.dart';
 
 class ProfilePage extends StatefulWidget {
   static const String routeName = '/profile';
@@ -307,6 +310,18 @@ class _ProfileHero extends StatelessWidget {
                           ),
                         ],
                       ),
+                    ),
+                    ValueListenableBuilder<SubscriptionStatus>(
+                      valueListenable: SubscriptionState.status,
+                      builder: (context, status, _) {
+                        if (status.tier == SubscriptionTier.basic) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: SubscriptionBadge(tier: status.tier, size: 14),
+                        );
+                      },
                     ),
                     const SizedBox(height: 4),
                     Text(

@@ -41,3 +41,5 @@ Business Model: Provider Subscription Tiers (Cambodia Market Optimized)
      - Quality gates: Paid tiers require KYC + minimum rating + minimum completed orders.
      - Monthly reset: Booking counts reset at each billing period start.
      - Cancellation: Takes effect at end of current billing period (no immediate cutoff).
+
+

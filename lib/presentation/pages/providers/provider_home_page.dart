@@ -368,6 +368,8 @@ class _ProviderHomePageState extends State<ProviderHomePage> {
       imagePath: item.avatarPath,
       accentColor: _accentFromCategory(role),
       services: item.services.toList(growable: false)..sort(),
+      isVerified: item.isVerified,
+      subscriptionTier: item.subscriptionTier,
       blockedDates: item.blockedDates,
     );
   }
@@ -389,7 +391,9 @@ class _ProviderAggregate {
   final String avatarPath;
   final Set<String> services;
   final List<DateTime> blockedDates;
+  String subscriptionTier;
   double rating;
+  bool isVerified;
 
   _ProviderAggregate({
     required this.providerUid,
@@ -397,8 +401,10 @@ class _ProviderAggregate {
     required this.category,
     required this.avatarPath,
     required this.services,
+    this.subscriptionTier = 'basic',
     this.blockedDates = const [],
     this.rating = 0,
+    this.isVerified = false,
   });
 
   factory _ProviderAggregate.fromPost(ProviderPostItem post) {
@@ -411,8 +417,10 @@ class _ProviderAggregate {
           .map((item) => item.trim())
           .where((item) => item.isNotEmpty)
           .toSet(),
+      subscriptionTier: post.subscriptionTier,
       blockedDates: post.blockedDates,
       rating: post.rating,
+      isVerified: post.isVerified,
     );
   }
 
@@ -423,7 +431,19 @@ class _ProviderAggregate {
         services.add(normalized);
       }
     }
+    // Update tier if post has a higher tier
+    if (_tierWeight(post.subscriptionTier) > _tierWeight(subscriptionTier)) {
+      subscriptionTier = post.subscriptionTier;
+    }
     // Update rating
     rating = post.rating;
+    if (post.isVerified) isVerified = true;
+  }
+
+  int _tierWeight(String tier) {
+    final t = tier.toLowerCase().trim();
+    if (t == 'elite') return 2;
+    if (t == 'professional') return 1;
+    return 0;
   }
 }

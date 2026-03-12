@@ -110,6 +110,8 @@ class ProviderPostRemoteDataSource {
       timeLabel: _timeLabel(createdAt),
       avatarPath: avatarUrl.isNotEmpty ? avatarUrl : '',
       rating: _toDouble(row['rating'], fallback: 0),
+      isVerified: row['isVerified'] == true,
+      subscriptionTier: (row['subscriptionTier'] ?? 'basic').toString(),
       blockedDates: blockedDates,
     );
   }

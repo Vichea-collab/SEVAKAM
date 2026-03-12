@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../core/utils/safe_image_provider.dart';
-import '../../../core/utils/category_utils.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../domain/entities/provider.dart';
@@ -14,6 +13,7 @@ import '../../state/chat_state.dart';
 import '../../state/profile_image_state.dart';
 import '../../state/profile_settings_state.dart';
 import '../../state/provider_post_state.dart';
+import '../../../domain/entities/subscription.dart';
 
 import '../../widgets/category_chip.dart';
 import '../../widgets/pressable_scale.dart';
@@ -26,6 +26,7 @@ import '../providers/provider_detail_page.dart';
 import '../providers/provider_posts_page.dart';
 import '../search/search_page.dart';
 import '../../widgets/shimmer_loading.dart';
+import '../../widgets/subscription_badge.dart';
 
 class HomePage extends StatefulWidget {
   static const String routeName = '/home';
@@ -194,6 +195,8 @@ class _HomePageState extends State<HomePage> {
                       );
                     },
                   ),
+                  const SizedBox(height: AppSpacing.lg),
+                  const _EliteProvidersSection(),
                   const SizedBox(height: AppSpacing.lg),
                   const _ProviderPostSection(),
                   Center(
@@ -644,8 +647,11 @@ class _ProviderPostSection extends StatelessWidget {
       valueListenable: ProviderPostState.loading,
       builder: (context, postLoading, _) {
         return ValueListenableBuilder<List<ProviderPostItem>>(
-          valueListenable: ProviderPostState.posts,
-          builder: (context, posts, _) {
+          valueListenable: ProviderPostState.allPosts,
+          builder: (context, allPosts, _) {
+            // Priority: use allPosts for better lookup if available
+            final posts = allPosts.isNotEmpty ? allPosts : ProviderPostState.posts.value;
+            
             if (posts.isEmpty && postLoading) {
               return const ProviderPostShimmerList();
             }
@@ -655,7 +661,7 @@ class _ProviderPostSection extends StatelessWidget {
             return Column(
               children: [
                 SectionTitle(
-                  title: 'Latest provider posts',
+                  title: 'Top Recommendations',
                   actionLabel: 'View all',
                   onAction: () => Navigator.push(
                     context,
@@ -663,7 +669,7 @@ class _ProviderPostSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                ...posts.take(3).map((item) => _ProviderPostTile(post: item)),
+                ...posts.take(6).map((item) => _ProviderPostTile(post: item)),
                 const SizedBox(height: AppSpacing.lg),
               ],
             );
@@ -681,6 +687,13 @@ class _ProviderPostTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tierStr = post.subscriptionTier.toLowerCase().trim();
+    final isElite = tierStr == 'elite';
+    final isProfessional = tierStr == 'professional';
+    final accentColor = isElite
+        ? const Color(0xFFF59E0B)
+        : (isProfessional ? const Color(0xFF3B82F6) : null);
+
     return PressableScale(
       onTap: () => _openProfile(context),
       child: InkWell(
@@ -690,16 +703,25 @@ class _ProviderPostTile extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
+            color: accentColor != null
+                ? accentColor.withValues(alpha: 0.04)
+                : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: accentColor != null
+                    ? accentColor.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.04),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
-            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+            border: Border.all(
+              color: accentColor != null
+                  ? accentColor.withValues(alpha: 0.5)
+                  : Theme.of(context).dividerColor.withValues(alpha: 0.5),
+              width: isElite ? 2.0 : (isProfessional ? 1.5 : 1),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -746,24 +768,49 @@ class _ProviderPostTile extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            post.providerName,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  post.providerName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textPrimary,
+                                      ),
                                 ),
+                              ),
+                              if (post.isVerified) ...[
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.verified_rounded,
+                                  color: AppColors.primary,
+                                  size: 16,
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        if (post.isVerified) ...[
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.verified_rounded,
-                            color: AppColors.primary,
-                            size: 16,
-                          ),
-                        ],
+                        SubscriptionBadge.fromString(
+                          post.subscriptionTier,
+                          size: 16,
+                        ),
                       ],
                     ),
+                    if (post.subscriptionTier.toLowerCase().trim() != 'basic') ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${post.subscriptionTier.toUpperCase()} PLAN',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: accentColor,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ],
+
                     const SizedBox(height: 6),
                     Row(
                       children: [
@@ -787,42 +834,19 @@ class _ProviderPostTile extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           post.availableNow ? "Available now" : "Currently closed",
-                          style: TextStyle(
-                            fontSize: 11,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: post.availableNow ? const Color(0xFF10B981) : AppColors.textSecondary,
                             fontWeight: FontWeight.w600,
-                            color: post.availableNow ? const Color(0xFF10B981) : Colors.grey,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      post.details,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).hintColor,
-                            height: 1.3,
-                          ),
-                    ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        Expanded(
-                          child: Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              _HomePostPill(text: post.category),
-                              _HomePostPill(text: post.area),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 12,
-                          color: Theme.of(context).dividerColor,
-                        ),
+                        _HomePostPill(text: post.category),
+                        const SizedBox(width: 8),
+                        _HomePostPill(text: post.area),
                       ],
                     ),
                   ],
@@ -836,59 +860,183 @@ class _ProviderPostTile extends StatelessWidget {
   }
 
   void _openProfile(BuildContext context) {
+    final provider = ProviderItem.fromPost(post);
     Navigator.push(
       context,
-      slideFadeRoute(ProviderDetailPage(
-        provider: _providerFromPost(post),
-        heroTag: 'provider-post-${post.id}',
-      )),
+      slideFadeRoute(ProviderDetailPage(provider: provider)),
     );
-  }
-
-  ProviderItem _providerFromPost(ProviderPostItem seed) {
-    final role = seed.category.trim().isEmpty ? 'Cleaner' : seed.category;
-    final services = _servicesForProvider(seed);
-    return ProviderItem(
-      uid: seed.providerUid.trim(),
-      name: seed.providerName.trim().isEmpty
-          ? 'Service Provider'
-          : seed.providerName.trim(),
-      role: role,
-      rating: seed.rating,
-      imagePath: seed.avatarPath,
-      accentColor: accentForCategory(role),
-      services: services,
-      blockedDates: seed.blockedDates,
-    );
-  }
-
-  List<String> _servicesForProvider(ProviderPostItem seed) {
-    final allPosts = ProviderPostState.allPosts.value;
-    final lookupPosts = allPosts.isNotEmpty
-        ? allPosts
-        : ProviderPostState.posts.value;
-    final seedUid = seed.providerUid.trim().toLowerCase();
-    final seedName = seed.providerName.trim().toLowerCase();
-
-    final values = <String>{};
-    for (final item in lookupPosts) {
-      final sameProvider = seedUid.isNotEmpty
-          ? item.providerUid.trim().toLowerCase() == seedUid
-          : item.providerName.trim().toLowerCase() == seedName;
-      if (!sameProvider) continue;
-      for (final service in item.serviceList) {
-        final normalized = service.trim();
-        if (normalized.isNotEmpty) values.add(normalized);
-      }
-    }
-
-    if (values.isEmpty) {
-      values.addAll(seed.serviceList);
-    }
-    final services = values.toList(growable: false)..sort();
-    return services;
   }
 }
+
+class _EliteProvidersSection extends StatelessWidget {
+  const _EliteProvidersSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: ProviderPostState.loading,
+      builder: (context, loading, _) {
+        return ValueListenableBuilder<List<ProviderPostItem>>(
+          valueListenable: ProviderPostState.allPosts,
+          builder: (context, allPosts, _) {
+            // Priority: use allPosts for better lookup if available
+            final posts = allPosts.isNotEmpty ? allPosts : ProviderPostState.posts.value;
+            final elitePosts = posts
+                .where((p) => p.subscriptionTier.toLowerCase().trim() == 'elite')
+                .toList();
+
+            if (elitePosts.isEmpty) return const SizedBox.shrink();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionTitle(
+                  title: 'Top Tier Providers',
+                  actionLabel: 'See all',
+                  onAction: () => Navigator.push(
+                    context,
+                    slideFadeRoute(const SearchPage()),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SizedBox(
+                  height: 180,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: elitePosts.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      return _EliteProviderCard(post: elitePosts[index]);
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _EliteProviderCard extends StatelessWidget {
+  final ProviderPostItem post;
+
+  const _EliteProviderCard({required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    const accentColor = Color(0xFFF59E0B); // Gold for Elite
+
+    return PressableScale(
+      onTap: () => _openProfile(context),
+      child: Container(
+        width: 200,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: accentColor.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accentColor.withValues(alpha: 0.6), width: 2.0),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withValues(alpha: 0.15),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.background,
+                  backgroundImage: post.avatarPath.isNotEmpty 
+                    ? safeImageProvider(post.avatarPath) 
+                    : null,
+                  child: post.avatarPath.isEmpty
+                    ? const Icon(Icons.person, color: accentColor)
+                    : null,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              post.providerName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (post.isVerified) ...[
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.verified_rounded,
+                              color: accentColor,
+                              size: 14,
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SubscriptionBadge(tier: SubscriptionTier.elite, size: 12),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              post.details,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                const Icon(Icons.star_rounded, size: 14, color: accentColor),
+                const SizedBox(width: 4),
+                Text(
+                  post.rating.toStringAsFixed(1),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: accentColor,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  post.availableNow ? "Online" : "Away",
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: post.availableNow ? Colors.green : Colors.grey,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openProfile(BuildContext context) {
+    final provider = ProviderItem.fromPost(post);
+    Navigator.push(
+      context,
+      slideFadeRoute(ProviderDetailPage(provider: provider)),
+    );
+  }
+}
+
 
 class _HomePostPill extends StatelessWidget {
   final String text;

@@ -53,6 +53,7 @@ class ProviderPostItem {
   final String avatarPath;
   final double rating;
   final bool isVerified;
+  final String subscriptionTier;
   final double? latitude;
   final double? longitude;
   final DateTime? createdAt;
@@ -74,6 +75,7 @@ class ProviderPostItem {
     this.avatarPath = '',
     this.rating = 0,
     this.isVerified = false,
+    this.subscriptionTier = 'basic',
     this.latitude,
     this.longitude,
     this.createdAt,
@@ -102,6 +104,7 @@ class ProviderPostItem {
       avatarPath: (map['avatarPath'] ?? map['providerAvatar'] ?? '').toString(),
       rating: ratingVal is num ? ratingVal.toDouble() : 0,
       isVerified: map['isVerified'] == true,
+      subscriptionTier: (map['subscriptionTier'] ?? 'basic').toString(),
       latitude: double.tryParse((map['latitude'] ?? '').toString()),
       longitude: double.tryParse((map['longitude'] ?? '').toString()),
       createdAt: map['createdAt'] != null ? DateTime.tryParse(map['createdAt'].toString()) : null,
