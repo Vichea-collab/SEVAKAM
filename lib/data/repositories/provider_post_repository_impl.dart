@@ -30,6 +30,7 @@ class ProviderPostRepositoryImpl implements ProviderPostRepository {
     required String area,
     required String details,
     required bool availableNow,
+    List<String> portfolioPhotos = const [],
   }) async {
     return _remoteDataSource.createProviderPost(
       category: category,
@@ -37,6 +38,7 @@ class ProviderPostRepositoryImpl implements ProviderPostRepository {
       area: area,
       details: details,
       availableNow: availableNow,
+      portfolioPhotos: portfolioPhotos,
     );
   }
 
@@ -48,6 +50,7 @@ class ProviderPostRepositoryImpl implements ProviderPostRepository {
     required String area,
     required String details,
     required bool availableNow,
+    List<String> portfolioPhotos = const [],
   }) async {
     return _remoteDataSource.updateProviderPost(
       postId: postId,
@@ -56,6 +59,7 @@ class ProviderPostRepositoryImpl implements ProviderPostRepository {
       area: area,
       details: details,
       availableNow: availableNow,
+      portfolioPhotos: portfolioPhotos,
     );
   }
 

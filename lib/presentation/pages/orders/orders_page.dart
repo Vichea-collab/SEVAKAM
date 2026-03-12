@@ -69,7 +69,13 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                 final sourceOrders = _ordersForTab(_activeTab, allOrders);
                 final visibleOrders = sourceOrders;
                 return Scaffold(
-                  body: SafeArea(
+                  body: PopScope(
+                    canPop: Navigator.canPop(context),
+                    onPopInvokedWithResult: (didPop, result) {
+                      if (didPop) return;
+                      MainShellPage.activeTab.value = AppBottomTab.home;
+                    },
+                    child: SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       child: Column(
@@ -196,7 +202,8 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
-                );
+                ),
+              );
               },
             );
           },

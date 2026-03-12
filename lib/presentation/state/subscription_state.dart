@@ -31,7 +31,7 @@ class SubscriptionState {
 
   static Future<void> fetchStatus() async {
     try {
-      loading.value = true;
+    Future.microtask(() => loading.value = true);
       await _ensureToken();
       final response = await _apiClient.getJson('/api/subscriptions/status');
       final data = response['data'];

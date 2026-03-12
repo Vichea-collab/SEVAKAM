@@ -16,12 +16,13 @@ class ProviderItem {
   final double? latitude;
   final double? longitude;
   final List<DateTime> blockedDates;
+  final List<String> portfolioPhotos;
 
   const ProviderItem({
-    this.uid = '',
+    required this.uid,
     required this.name,
-    this.bio = '',
     required this.role,
+    this.bio = '',
     required this.rating,
     required this.imagePath,
     required this.accentColor,
@@ -31,6 +32,7 @@ class ProviderItem {
     this.latitude,
     this.longitude,
     this.blockedDates = const [],
+    this.portfolioPhotos = const [],
   });
 
   factory ProviderItem.fromPost(ProviderPostItem post) {
@@ -47,6 +49,39 @@ class ProviderItem {
       isVerified: post.isVerified,
       subscriptionTier: post.subscriptionTier,
       blockedDates: post.blockedDates,
+      portfolioPhotos: post.portfolioPhotos,
+      latitude: post.latitude,
+      longitude: post.longitude,
+    );
+  }
+
+  ProviderItem copyWith({
+    String? uid,
+    String? name,
+    String? role,
+    String? bio,
+    double? rating,
+    String? imagePath,
+    Color? accentColor,
+    List<String>? services,
+    String? subscriptionTier,
+    bool? isVerified,
+    List<DateTime>? blockedDates,
+    List<String>? portfolioPhotos,
+  }) {
+    return ProviderItem(
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      bio: bio ?? this.bio,
+      rating: rating ?? this.rating,
+      imagePath: imagePath ?? this.imagePath,
+      accentColor: accentColor ?? this.accentColor,
+      services: services ?? this.services,
+      subscriptionTier: subscriptionTier ?? this.subscriptionTier,
+      isVerified: isVerified ?? this.isVerified,
+      blockedDates: blockedDates ?? this.blockedDates,
+      portfolioPhotos: portfolioPhotos ?? this.portfolioPhotos,
     );
   }
 }

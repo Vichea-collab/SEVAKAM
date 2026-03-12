@@ -141,6 +141,7 @@ class ProviderPostState {
     required String area,
     required String details,
     required bool availableNow,
+    List<String> portfolioPhotos = const [],
   }) async {
     final created = await _repository.createProviderPost(
       category: category,
@@ -148,6 +149,7 @@ class ProviderPostState {
       area: area,
       details: details,
       availableNow: availableNow,
+      portfolioPhotos: portfolioPhotos,
     );
     if (_normalizedPage(pagination.value.page) == 1) {
       posts.value = <ProviderPostItem>[
@@ -171,6 +173,7 @@ class ProviderPostState {
     required String area,
     required String details,
     required bool availableNow,
+    List<String> portfolioPhotos = const [],
   }) async {
     final updated = await _repository.updateProviderPost(
       postId: postId,
@@ -179,6 +182,7 @@ class ProviderPostState {
       area: area,
       details: details,
       availableNow: availableNow,
+      portfolioPhotos: portfolioPhotos,
     );
     final nextPosts = posts.value
         .map((item) => item.id == updated.id ? updated : item)

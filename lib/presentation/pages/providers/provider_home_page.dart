@@ -371,6 +371,7 @@ class _ProviderHomePageState extends State<ProviderHomePage> {
       isVerified: item.isVerified,
       subscriptionTier: item.subscriptionTier,
       blockedDates: item.blockedDates,
+      portfolioPhotos: item.portfolioPhotos,
     );
   }
 
@@ -391,6 +392,7 @@ class _ProviderAggregate {
   final String avatarPath;
   final Set<String> services;
   final List<DateTime> blockedDates;
+  final List<String> portfolioPhotos;
   String subscriptionTier;
   double rating;
   bool isVerified;
@@ -401,6 +403,7 @@ class _ProviderAggregate {
     required this.category,
     required this.avatarPath,
     required this.services,
+    this.portfolioPhotos = const [],
     this.subscriptionTier = 'basic',
     this.blockedDates = const [],
     this.rating = 0,
@@ -417,6 +420,7 @@ class _ProviderAggregate {
           .map((item) => item.trim())
           .where((item) => item.isNotEmpty)
           .toSet(),
+      portfolioPhotos: List<String>.from(post.portfolioPhotos),
       subscriptionTier: post.subscriptionTier,
       blockedDates: post.blockedDates,
       rating: post.rating,
@@ -438,6 +442,13 @@ class _ProviderAggregate {
     // Update rating
     rating = post.rating;
     if (post.isVerified) isVerified = true;
+    
+    // Add new portfolio photos if any
+    for (final photo in post.portfolioPhotos) {
+      if (!portfolioPhotos.contains(photo)) {
+        portfolioPhotos.add(photo);
+      }
+    }
   }
 
   int _tierWeight(String tier) {

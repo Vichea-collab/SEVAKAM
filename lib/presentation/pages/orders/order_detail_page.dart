@@ -394,6 +394,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       if (!mounted) return;
       setState(() => _order = synced);
       AppToast.success(context, 'Thanks for your feedback.');
+      if (mounted) Navigator.pop(context, synced);
     } catch (_) {
       if (!mounted) return;
       AppToast.error(context, 'Failed to submit review.');

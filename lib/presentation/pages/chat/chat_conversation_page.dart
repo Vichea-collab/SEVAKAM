@@ -46,6 +46,8 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   Timer? _fallbackRefreshTimer;
   Timer? _heartbeatTimer;
   bool _realtimeActive = false;
+  ChatThread? _currentThread;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _threadSubscription;
 
   @override
   void initState() {
@@ -58,6 +60,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       if (!mounted) return;
       unawaited(_loadInitial());
       unawaited(_bindRealtimeMessages());
+      unawaited(_bindRealtimeThread());
       _startFallbackRefreshTimer();
       _startHeartbeat();
     });
@@ -66,11 +69,8 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   @override
   void dispose() {
     _heartbeatTimer?.cancel();
-    final subscription = _messagesSubscription;
-    _messagesSubscription = null;
-    if (subscription != null) {
-      unawaited(subscription.cancel());
-    }
+    unawaited(_messagesSubscription?.cancel());
+    unawaited(_threadSubscription?.cancel());
     _fallbackRefreshTimer?.cancel();
     _scrollController.dispose();
     _inputController.dispose();
@@ -80,7 +80,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   void _startHeartbeat() {
     ChatState.updateHeartbeat();
     _heartbeatTimer?.cancel();
-    _heartbeatTimer = Timer.periodic(const Duration(minutes: 2), (_) {
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       ChatState.updateHeartbeat();
     });
   }
@@ -93,7 +93,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         child: Column(
           children: [
             _ChatHeader(
-              thread: widget.thread,
+              thread: _currentThread ?? widget.thread,
               onProfileLinkTap: AppRoleState.isProvider ? _sendProfileLink : null,
             ),
             Expanded(
@@ -400,19 +400,22 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   }
 
   DateTime _toRealtimeDateTime(dynamic value) {
-    if (value is Timestamp) return value.toDate();
-    if (value is DateTime) return value;
+    if (value == null) return DateTime.fromMillisecondsSinceEpoch(0);
+    if (value is DateTime) return value.toLocal();
+    if (value is Timestamp) return value.toDate().toLocal();
     if (value is String) {
       final parsed = DateTime.tryParse(value);
-      if (parsed != null) return parsed;
+      if (parsed != null) return parsed.toLocal();
     }
-    if (value is Map<String, dynamic>) {
-      final seconds = value['_seconds'];
-      if (seconds is int) {
-        return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
-      }
+    if (value is num) {
+      if (value == 0) return DateTime.fromMillisecondsSinceEpoch(0);
+      return DateTime.fromMillisecondsSinceEpoch(value.toInt()).toLocal();
     }
-    return DateTime.now();
+    if (value is Map && value['_seconds'] is num) {
+      final seconds = value['_seconds'] as num;
+      return DateTime.fromMillisecondsSinceEpoch((seconds * 1000).round()).toLocal();
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   Future<void> _loadOlder() async {
@@ -748,6 +751,60 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     });
   }
 
+  Future<void> _bindRealtimeThread() async {
+    final threadId = widget.thread.id.trim();
+    if (threadId.isEmpty) return;
+    final uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
+    if (uid.isEmpty) return;
+
+    final docRef = FirebaseFirestore.instance.collection('chats').doc(threadId);
+    await _threadSubscription?.cancel();
+    _threadSubscription = docRef.snapshots().listen(
+      (doc) {
+        if (!mounted || !doc.exists) return;
+        final data = doc.data() ?? {};
+        
+        DateTime? peerHeartbeat;
+        final participantMetaRaw = data['participantMeta'];
+        if (participantMetaRaw is Map) {
+          final participants = (data['participants'] is List)
+              ? (data['participants'] as List).map((e) => e.toString().trim()).toList()
+              : <String>[];
+          final peerUid = participants.firstWhere((id) => id.isNotEmpty && id != uid, orElse: () => '');
+          if (peerUid.isNotEmpty) {
+            final raw = participantMetaRaw[peerUid];
+            if (raw is Map && raw['lastActiveAt'] != null) {
+              peerHeartbeat = _toRealtimeDateTime(raw['lastActiveAt']);
+            }
+          }
+        }
+        final lastActiveAt = peerHeartbeat ?? _toRealtimeDateTime(data['peerActiveAt'] ?? 0);
+        
+        final title = (data['title'] ?? '').toString().trim();
+        final lastMessageText = (data['lastMessageText'] ?? '').toString().trim();
+        final lastSenderUid = (data['lastSenderUid'] ?? '').toString().trim();
+        final subtitle = (data['subtitle'] ?? '').toString().trim();
+        
+        final resolvedSubtitle = subtitle.isNotEmpty 
+            ? subtitle 
+            : (lastSenderUid == uid ? 'You: $lastMessageText' : lastMessageText);
+
+        setState(() {
+          _currentThread = ChatThread(
+            id: threadId,
+            title: title.isNotEmpty ? title : widget.thread.title,
+            subtitle: resolvedSubtitle.isNotEmpty ? resolvedSubtitle : widget.thread.subtitle,
+            avatarPath: widget.thread.avatarPath,
+            updatedAt: _toRealtimeDateTime(data['updatedAt'] ?? data['lastMessageAt'] ?? 0),
+            lastActiveAt: lastActiveAt,
+            unreadCount: (data['unreadCounts'] is Map) ? (data['unreadCounts'][uid] ?? 0) : 0,
+            messages: _latestMessages,
+          );
+        });
+      },
+    );
+  }
+
   bool _isNearLatest() {
     if (!_scrollController.hasClients) return true;
     final position = _scrollController.position;
@@ -769,6 +826,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       _scrollController.jumpTo(0.0);
     });
   }
+
 }
 
 class _ChatHeader extends StatelessWidget {
@@ -869,18 +927,39 @@ class _ChatHeader extends StatelessWidget {
   }
 
   ({String label, Color color}) _activityStatus(DateTime lastActiveAt) {
-    final delta = DateTime.now().difference(lastActiveAt.toLocal());
+    final local = lastActiveAt.toLocal();
+    final now = DateTime.now();
+    final delta = now.difference(local);
+    
+    // If date is uninitialized or extremely old (1970 epoch), show general Offline
+    if (local.year < 2010) {
+      return (label: 'Offline', color: const Color(0xFF94A3B8));
+    }
+
     if (delta.inMinutes < 5) {
       return (label: 'Active now', color: AppColors.success);
     }
+    
     const inactiveColor = Color(0xFF94A3B8);
-    if (delta.inHours < 1) {
-      return (label: 'Active ${delta.inMinutes}m ago', color: inactiveColor);
+    final timeStr = "${local.hour % 12 == 0 ? 12 : local.hour % 12}:${local.minute.toString().padLeft(2, '0')} ${local.hour >= 12 ? 'PM' : 'AM'}";
+    
+    if (delta.inHours < 24 && local.day == now.day && local.month == now.month) {
+      return (label: 'Active at $timeStr', color: inactiveColor);
     }
-    if (delta.inDays < 1) {
-      return (label: 'Active ${delta.inHours}h ago', color: inactiveColor);
+    
+    if (delta.inDays < 2) {
+      final yesterday = now.subtract(const Duration(days: 1));
+      if (local.day == yesterday.day && local.month == yesterday.month && local.year == yesterday.year) {
+        return (label: 'Active yesterday at $timeStr', color: inactiveColor);
+      }
     }
-    return (label: 'Active ${delta.inDays}d ago', color: inactiveColor);
+
+    if (delta.inDays < 7) {
+      return (label: 'Active ${delta.inDays}d ago', color: inactiveColor);
+    }
+    
+    final dateLabel = '${local.day}/${local.month}/${local.year}';
+    return (label: 'Active $dateLabel', color: inactiveColor);
   }
 }
 

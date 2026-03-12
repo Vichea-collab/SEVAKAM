@@ -59,6 +59,7 @@ class ProviderPostItem {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final List<DateTime> blockedDates;
+  final List<String> portfolioPhotos;
 
   const ProviderPostItem({
     required this.id,
@@ -81,6 +82,7 @@ class ProviderPostItem {
     this.createdAt,
     this.updatedAt,
     this.blockedDates = const [],
+    this.portfolioPhotos = const [],
   });
 
   List<String> get serviceList => _serviceList(service, services);
@@ -112,6 +114,9 @@ class ProviderPostItem {
       blockedDates: (map['blockedDates'] as List? ?? [])
           .map((e) => DateTime.parse(e.toString()))
           .toList(),
+      portfolioPhotos: (map['portfolioPhotos'] as List? ?? [])
+          .map((e) => e.toString())
+          .toList(),
     );
   }
 
@@ -136,6 +141,7 @@ class ProviderPostItem {
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'blockedDates': blockedDates.map((e) => e.toIso8601String()).toList(),
+      'portfolioPhotos': portfolioPhotos,
     };
   }
 }

@@ -15,6 +15,7 @@ abstract class ProviderPostRepository {
     required String area,
     required String details,
     required bool availableNow,
+    List<String> portfolioPhotos = const [],
   });
 
   Future<ProviderPostItem> updateProviderPost({
@@ -24,6 +25,7 @@ abstract class ProviderPostRepository {
     required String area,
     required String details,
     required bool availableNow,
+    List<String> portfolioPhotos = const [],
   });
 
   Future<void> deleteProviderPost({required String postId});

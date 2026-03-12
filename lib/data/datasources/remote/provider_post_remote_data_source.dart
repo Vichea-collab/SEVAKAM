@@ -39,6 +39,7 @@ class ProviderPostRemoteDataSource {
     required String area,
     required String details,
     required bool availableNow,
+    List<String> portfolioPhotos = const [],
   }) async {
     final safeServices = services
         .map((item) => item.trim())
@@ -51,6 +52,7 @@ class ProviderPostRemoteDataSource {
       'area': area,
       'details': details,
       'availableNow': availableNow,
+      'portfolioPhotos': portfolioPhotos,
     });
     return _mapToProviderPost(_safeMap(response['data']));
   }
@@ -62,6 +64,7 @@ class ProviderPostRemoteDataSource {
     required String area,
     required String details,
     required bool availableNow,
+    List<String> portfolioPhotos = const [],
   }) async {
     final safeServices = services
         .map((item) => item.trim())
@@ -75,6 +78,7 @@ class ProviderPostRemoteDataSource {
           'area': area,
           'details': details,
           'availableNow': availableNow,
+          'portfolioPhotos': portfolioPhotos,
         });
     return _mapToProviderPost(_safeMap(response['data']));
   }
@@ -113,6 +117,9 @@ class ProviderPostRemoteDataSource {
       isVerified: row['isVerified'] == true,
       subscriptionTier: (row['subscriptionTier'] ?? 'basic').toString(),
       blockedDates: blockedDates,
+      portfolioPhotos: (row['portfolioPhotos'] as List? ?? [])
+          .map((e) => e.toString())
+          .toList(),
     );
   }
 

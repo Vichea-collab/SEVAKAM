@@ -34,7 +34,7 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
   DateTime? _lastPullAt;
   bool _refreshInProgress = false;
   bool _isPaging = false;
-  
+
   late final TextEditingController _searchController;
   String _searchQuery = '';
   Timer? _searchDebounce;
@@ -126,7 +126,9 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                                 Row(
                                   children: [
                                     Text(
-                                      _searchQuery.isEmpty ? 'Finder Requests' : 'Search Results',
+                                      _searchQuery.isEmpty
+                                          ? 'Finder Requests'
+                                          : 'Search Results',
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleLarge
@@ -168,26 +170,31 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                                           ),
                                         )
                                       : filteredPosts.isEmpty
-                                          ? AppStatePanel.empty(
-                                              title: _searchQuery.isEmpty 
-                                                ? 'No finder requests yet'
-                                                : 'No results found',
-                                              message: _searchQuery.isEmpty 
-                                                ? 'New requests will appear here.'
-                                                : 'Try searching for something else.',
-                                            )
-                                          : ListView.builder(
-                                              key: ValueKey<String>(
-                                                'provider_home_posts_${filteredPosts.length}_${pagination.page}_$_searchQuery',
+                                      ? AppStatePanel.empty(
+                                          title: _searchQuery.isEmpty
+                                              ? 'No finder requests yet'
+                                              : 'No results found',
+                                          message: _searchQuery.isEmpty
+                                              ? 'New requests will appear here.'
+                                              : 'Try searching for something else.',
+                                        )
+                                      : ListView.builder(
+                                          key: ValueKey<String>(
+                                            'provider_home_posts_${filteredPosts.length}_${pagination.page}_$_searchQuery',
+                                          ),
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemCount: filteredPosts.length,
+                                          cacheExtent: 1000,
+                                          itemBuilder: (context, index) =>
+                                              _FinderPostTile(
+                                                post: filteredPosts[index],
                                               ),
-                                              shrinkWrap: true,
-                                              physics: const NeverScrollableScrollPhysics(),
-                                              itemCount: filteredPosts.length,
-                                              cacheExtent: 1000,
-                                              itemBuilder: (context, index) => _FinderPostTile(post: filteredPosts[index]),
-                                            ),
+                                        ),
                                 ),
-                                if (pagination.totalPages > 1 && _searchQuery.isEmpty) ...[
+                                if (pagination.totalPages > 1 &&
+                                    _searchQuery.isEmpty) ...[
                                   const SizedBox(height: 12),
                                   PaginationBar(
                                     currentPage: currentPage,
@@ -665,7 +672,8 @@ class _FinderPostTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             post.clientName,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textPrimary,
                                 ),
@@ -673,7 +681,8 @@ class _FinderPostTile extends StatelessWidget {
                         ),
                         Text(
                           post.timeLabel,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
                                 color: Theme.of(context).hintColor,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -686,9 +695,9 @@ class _FinderPostTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                            height: 1.3,
-                          ),
+                        color: AppColors.textSecondary,
+                        height: 1.3,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Wrap(
@@ -721,7 +730,10 @@ class _FinderPostTile extends StatelessWidget {
                   onTap: () => _openChat(context),
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
@@ -737,7 +749,8 @@ class _FinderPostTile extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'Chat Now',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.3,

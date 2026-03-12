@@ -134,6 +134,12 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
             ),
             const SizedBox(height: 10),
             _ActionTile(
+              icon: Icons.photo_library_outlined,
+              label: 'Portfolio Gallery',
+              onTap: () => Navigator.pushNamed(context, '/provider/portfolio'),
+            ),
+            const SizedBox(height: 12),
+            _ActionTile(
               icon: Icons.verified_user_outlined,
               label: 'Verification',
               onTap: () => Navigator.push(

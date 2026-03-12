@@ -37,6 +37,7 @@ import 'pages/provider_portal/provider_profile_page.dart';
 import 'pages/provider_portal/provider_profession_page.dart';
 import 'pages/provider_portal/provider_verification_page.dart';
 import 'pages/provider_portal/provider_availability_page.dart';
+import 'pages/provider_portal/provider_portfolio_page.dart';
 import 'pages/main_shell_page.dart';
 import 'state/booking_catalog_state.dart';
 import 'state/app_role_state.dart';
@@ -128,6 +129,7 @@ class _ServiceFinderAppState extends State<ServiceFinderApp> {
                 page = BookingAddressPage(
                   draft: BookingCatalogState.defaultBookingDraft(
                     provider: const ProviderItem(
+                      uid: 'default-provider',
                       name: 'Service Provider',
                       role: 'Cleaner',
                       rating: 0,
@@ -169,6 +171,9 @@ class _ServiceFinderAppState extends State<ServiceFinderApp> {
                 break;
               case ProviderVerificationPage.routeName:
                 page = const ProviderVerificationPage();
+                break;
+              case ProviderPortfolioPage.routeName:
+                page = const ProviderPortfolioPage();
                 break;
               case '/provider/availability':
                 page = const ProviderAvailabilityPage();

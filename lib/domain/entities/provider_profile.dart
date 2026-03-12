@@ -44,6 +44,8 @@ class ProviderProfile {
   final List<DateTime> blockedDates;
   final String? heroTag;
 
+  final List<String> portfolioPhotos;
+
   const ProviderProfile({
     required this.provider,
     required this.location,
@@ -52,6 +54,7 @@ class ProviderProfile {
     required this.about,
     required this.reviews,
     this.blockedDates = const [],
+    this.portfolioPhotos = const [],
     this.heroTag,
   });
 

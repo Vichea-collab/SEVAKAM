@@ -22,7 +22,7 @@ import '../booking/booking_address_page.dart';
 import '../chat/chat_conversation_page.dart';
 import '../chat/chat_list_page.dart';
 
-enum _ProviderContentTab { companyInfo, reviews }
+enum _ProviderContentTab { companyInfo, portfolio, reviews }
 
 class ProviderDetailPage extends StatefulWidget {
   final ProviderItem provider;
@@ -175,6 +175,10 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
                             _CompanyInfoSection(
                               title: 'Bio',
                               content: profile.about,
+                            )
+                          else if (_contentTab == _ProviderContentTab.portfolio)
+                            _PortfolioSection(
+                              photos: profile.provider.portfolioPhotos,
                             )
                           else
                             _ReviewsSection(
@@ -351,6 +355,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
       accentColor: provider.accentColor,
       services: services,
       blockedDates: provider.blockedDates,
+      portfolioPhotos: finalMatched?.portfolioPhotos ?? provider.portfolioPhotos,
     );
 
     return ProviderProfile(
@@ -590,27 +595,27 @@ class _ContentTabs extends StatelessWidget {
     Widget tab({required String label, required _ProviderContentTab tab}) {
       final selected = activeTab == tab;
       return Expanded(
-        child: PressableScale(
+        child: GestureDetector(
           onTap: () => onChanged(tab),
-          child: InkWell(
-            onTap: () => onChanged(tab),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: selected ? AppColors.primary : AppColors.divider,
-                    width: 2,
-                  ),
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: selected ? AppColors.primary : Colors.transparent,
+                  width: 2.5,
                 ),
               ),
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: selected ? AppColors.primary : AppColors.textSecondary,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                ),
+            ),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: selected ? AppColors.primary : const Color(0xFF64748B),
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 15,
+                letterSpacing: 0.2,
               ),
             ),
           ),
@@ -618,11 +623,69 @@ class _ContentTabs extends StatelessWidget {
       );
     }
 
-    return Row(
-      children: [
-        tab(label: 'Company info', tab: _ProviderContentTab.companyInfo),
-        tab(label: 'Reviews', tab: _ProviderContentTab.reviews),
-      ],
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          tab(label: 'Company', tab: _ProviderContentTab.companyInfo),
+          tab(label: 'Portfolio', tab: _ProviderContentTab.portfolio),
+          tab(label: 'Reviews', tab: _ProviderContentTab.reviews),
+        ],
+      ),
+    );
+  }
+}
+
+class _PortfolioSection extends StatelessWidget {
+  final List<String> photos;
+
+  const _PortfolioSection({required this.photos});
+
+  @override
+  Widget build(BuildContext context) {
+    if (photos.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xxl),
+          child: Column(
+            children: [
+              Icon(Icons.photo_library_outlined, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+              const SizedBox(height: 12),
+              Text(
+                'No portfolio photos yet',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1,
+      ),
+      itemCount: photos.length,
+      itemBuilder: (context, index) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: SafeImage(
+            source: photos[index],
+            fit: BoxFit.cover,
+          ),
+        );
+      },
     );
   }
 }
@@ -732,15 +795,23 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final photoProvider = _imageProviderFromPath(review.reviewerPhotoUrl);
-    final hasPhoto = photoProvider != null;
+    final photoUrl = review.reviewerPhotoUrl.trim();
+    final hasPhoto = photoUrl.isNotEmpty;
+    
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 38)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,56 +819,103 @@ class _ReviewCard extends StatelessWidget {
           Row(
             children: [
               if (hasPhoto)
-                CircleAvatar(radius: 14, backgroundImage: photoProvider)
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: AppColors.background,
+                  backgroundImage: safeImageProvider(photoUrl),
+                )
               else
                 Container(
-                  width: 28,
-                  height: 28,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.transparent,
-                    border: Border.all(color: AppColors.divider),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary.withValues(alpha: 0.1),
+                        AppColors.primary.withValues(alpha: 0.05),
+                      ],
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     review.reviewerInitials,
                     style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   review.reviewerName,
-                  style: Theme.of(context).textTheme.bodyLarge,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0F172A),
+                  ),
                 ),
               ),
-              const Icon(Icons.star, size: 14, color: Color(0xFFF59E0B)),
-              const SizedBox(width: 4),
-              Text(
-                review.rating.toStringAsFixed(1),
-                style: Theme.of(context).textTheme.bodyMedium,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.star_rounded, size: 18, color: Color(0xFFF59E0B)),
+                  const SizedBox(width: 4),
+                  Text(
+                    review.rating.toStringAsFixed(1),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 6),
           Text(
             _reviewTimestamp(review),
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          const SizedBox(height: 6),
-          Text(review.comment, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 10),
+          Text(
+            review.comment,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF334155),
+              height: 1.5,
+            ),
+          ),
+          if (review.photoUrls.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 80,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: review.photoUrls.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SafeImage(
+                      source: review.photoUrls[index],
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  ImageProvider<Object>? _imageProviderFromPath(String raw) {
-    return safeImageProvider(raw);
-  }
 
   String _reviewTimestamp(ProviderReview review) {
     final reviewedAt = review.reviewedAt;
