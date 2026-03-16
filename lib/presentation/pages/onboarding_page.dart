@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../domain/entities/onboarding_step.dart';
 import '../widgets/step_indicator.dart';
 import 'auth/customer_auth_page.dart';
@@ -70,21 +71,23 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              padding: rs.only(left: 24, top: 16, right: 24, bottom: 8),
               child: Row(
                 children: [
                   Container(
-                    height: 40,
-                    width: 40,
-                    padding: const EdgeInsets.all(8),
+                    height: rs.dimension(40),
+                    width: rs.dimension(40),
+                    padding: rs.all(8),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(rs.radius(12)),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x12000000),
@@ -111,19 +114,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 itemBuilder: (context, i) {
                   final step = _steps[i];
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: rs.symmetric(horizontal: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const Spacer(),
                         _IllustrationBadge(label: step.iconLabel),
-                        const SizedBox(height: 28),
+                        rs.gapH(28),
                         Text(
                           step.title,
                           style: Theme.of(context).textTheme.titleLarge,
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 12),
+                        rs.gapH(12),
                         Text(
                           step.description,
                           style: Theme.of(context).textTheme.bodyMedium,
@@ -137,13 +140,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+              padding: rs.only(left: 24, top: 8, right: 24, bottom: 24),
               child: Row(
                 children: [
                   StepIndicator(count: _steps.length, index: _index),
                   const Spacer(),
                   SizedBox(
-                    height: 44,
+                    height: rs.dimension(44),
                     child: ElevatedButton(
                       onPressed: _next,
                       child: Text(
@@ -181,16 +184,18 @@ class _IllustrationBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     return Container(
-      height: 200,
-      width: 200,
+      height: rs.dimension(200),
+      width: rs.dimension(200),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [AppColors.splashStart, AppColors.splashEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(rs.radius(28)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x22000000),
@@ -199,7 +204,9 @@ class _IllustrationBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: Center(child: Icon(_icon(), size: 92, color: Colors.white)),
+      child: Center(
+        child: Icon(_icon(), size: rs.icon(92), color: Colors.white),
+      ),
     );
   }
 }

@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 
 class AppTheme {
-  static ThemeData light() {
+  static ThemeData light({double scale = 1}) {
     final base = ThemeData.light();
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.background,
@@ -18,22 +18,22 @@ class AppTheme {
       ),
       textTheme: GoogleFonts.poppinsTextTheme(base.textTheme).copyWith(
         titleLarge: GoogleFonts.poppins(
-          fontSize: 24,
+          fontSize: _font(24, scale),
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
         titleMedium: GoogleFonts.poppins(
-          fontSize: 18,
+          fontSize: _font(18, scale),
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
         bodyLarge: GoogleFonts.poppins(
-          fontSize: 16,
+          fontSize: _font(16, scale),
           fontWeight: FontWeight.w500,
           color: AppColors.textPrimary,
         ),
         bodyMedium: GoogleFonts.poppins(
-          fontSize: 14,
+          fontSize: _font(14, scale),
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
         ),
@@ -42,19 +42,23 @@ class AppTheme {
         color: Colors.white,
         elevation: 4,
         shadowColor: const Color(0x12000000),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius(18, scale)),
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: Colors.white,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius(24, scale)),
+        ),
         titleTextStyle: GoogleFonts.poppins(
-          fontSize: 22,
+          fontSize: _font(22, scale),
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
         contentTextStyle: GoogleFonts.poppins(
-          fontSize: 14,
+          fontSize: _font(14, scale),
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
           height: 1.45,
@@ -69,13 +73,16 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          padding: EdgeInsets.symmetric(
+            vertical: _space(14, scale),
+            horizontal: _space(20, scale),
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(_radius(14, scale)),
           ),
           textStyle: GoogleFonts.poppins(
             fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: _font(14, scale),
           ),
         ),
       ),
@@ -84,7 +91,7 @@ class AppTheme {
           foregroundColor: AppColors.textPrimary,
           side: const BorderSide(color: AppColors.divider),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(_radius(14, scale)),
           ),
         ),
       ),
@@ -106,26 +113,26 @@ class AppTheme {
         filled: false,
         fillColor: Colors.transparent,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(_radius(14, scale)),
           borderSide: const BorderSide(color: AppColors.divider),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(_radius(14, scale)),
           borderSide: const BorderSide(color: AppColors.divider),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(_radius(14, scale)),
           borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: _space(16, scale),
+          vertical: _space(14, scale),
         ),
       ),
     );
   }
 
-  static ThemeData dark() {
+  static ThemeData dark({double scale = 1}) {
     final base = ThemeData.dark();
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.bgDark,
@@ -139,22 +146,22 @@ class AppTheme {
       ),
       textTheme: GoogleFonts.poppinsTextTheme(base.textTheme).copyWith(
         titleLarge: GoogleFonts.poppins(
-          fontSize: 24,
+          fontSize: _font(24, scale),
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimaryDark,
         ),
         titleMedium: GoogleFonts.poppins(
-          fontSize: 18,
+          fontSize: _font(18, scale),
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimaryDark,
         ),
         bodyLarge: GoogleFonts.poppins(
-          fontSize: 16,
+          fontSize: _font(16, scale),
           fontWeight: FontWeight.w500,
           color: AppColors.textPrimaryDark,
         ),
         bodyMedium: GoogleFonts.poppins(
-          fontSize: 14,
+          fontSize: _font(14, scale),
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondaryDark,
         ),
@@ -163,21 +170,23 @@ class AppTheme {
         color: AppColors.surfaceDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(_radius(18, scale)),
           side: const BorderSide(color: AppColors.dividerDark),
         ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surfaceDark,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius(24, scale)),
+        ),
         titleTextStyle: GoogleFonts.poppins(
-          fontSize: 22,
+          fontSize: _font(22, scale),
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimaryDark,
         ),
         contentTextStyle: GoogleFonts.poppins(
-          fontSize: 14,
+          fontSize: _font(14, scale),
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondaryDark,
           height: 1.45,
@@ -192,13 +201,16 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          padding: EdgeInsets.symmetric(
+            vertical: _space(14, scale),
+            horizontal: _space(20, scale),
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(_radius(14, scale)),
           ),
           textStyle: GoogleFonts.poppins(
             fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: _font(14, scale),
           ),
         ),
       ),
@@ -207,7 +219,7 @@ class AppTheme {
           foregroundColor: AppColors.textPrimaryDark,
           side: const BorderSide(color: AppColors.dividerDark),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(_radius(14, scale)),
           ),
         ),
       ),
@@ -229,22 +241,31 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.surfaceDark,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(_radius(14, scale)),
           borderSide: const BorderSide(color: AppColors.dividerDark),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(_radius(14, scale)),
           borderSide: const BorderSide(color: AppColors.dividerDark),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(_radius(14, scale)),
           borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: _space(16, scale),
+          vertical: _space(14, scale),
         ),
       ),
     );
   }
+
+  static double _font(double value, double scale) =>
+      (value * scale).clamp(value * 0.92, value * 1.12);
+
+  static double _space(double value, double scale) =>
+      (value * scale).clamp(value * 0.85, value * 1.2);
+
+  static double _radius(double value, double scale) =>
+      (value * scale).clamp(value * 0.9, value * 1.15);
 }

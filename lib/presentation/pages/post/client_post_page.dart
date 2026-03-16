@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/constants/location_options.dart';
 import 'package:servicefinder/core/constants/app_spacing.dart';
 import 'package:servicefinder/core/utils/app_toast.dart';
 import 'package:servicefinder/domain/entities/provider_portal.dart';
@@ -27,7 +28,11 @@ class _ClientPostPageState extends State<ClientPostPage> {
   late String _selectedCategory;
   late String _selectedService;
   final _messageController = TextEditingController();
-  final _locationController = TextEditingController(text: 'Phnom Penh');
+  final _cityController = TextEditingController(
+    text: LocationOptions.defaultCity,
+  );
+  final _districtController = TextEditingController();
+  final _locationController = TextEditingController();
   DateTime? _preferredDate;
   String? _editingPostId;
   bool _posting = false;
@@ -66,8 +71,14 @@ class _ClientPostPageState extends State<ClientPostPage> {
     CatalogState.categories.removeListener(_syncSelectionFromCatalog);
     CatalogState.services.removeListener(_syncSelectionFromCatalog);
     _messageController.dispose();
+    _cityController.dispose();
+    _districtController.dispose();
     _locationController.dispose();
     super.dispose();
+  }
+
+  List<String> get _districtsForSelectedCity {
+    return LocationOptions.districtsForCity(_cityController.text.trim());
   }
 
   void _syncSelectionFromCatalog() {
@@ -84,10 +95,9 @@ class _ClientPostPageState extends State<ClientPostPage> {
         ? _selectedCategory
         : categories.first.name;
     final services = CatalogState.servicesForCategory(nextCategory);
-    final nextService =
-        services.contains(_selectedService)
-            ? _selectedService
-            : (services.isNotEmpty ? services.first : '');
+    final nextService = services.contains(_selectedService)
+        ? _selectedService
+        : (services.isNotEmpty ? services.first : '');
     if (!mounted) {
       _selectedCategory = nextCategory;
       _selectedService = nextService;
@@ -186,19 +196,16 @@ class _ClientPostPageState extends State<ClientPostPage> {
                               const SizedBox(height: 8),
                               _FieldLabel(label: 'Preferred Date (Optional)'),
                               _PickerField(
-                                label:
-                                    _preferredDate == null
-                                        ? 'Select date'
-                                        : '${_preferredDate!.day}/${_preferredDate!.month}/${_preferredDate!.year}',
+                                label: _preferredDate == null
+                                    ? 'Select date'
+                                    : '${_preferredDate!.day}/${_preferredDate!.month}/${_preferredDate!.year}',
                                 onTap: _pickDate,
                               ),
                               const SizedBox(height: 8),
                               _FieldLabel(label: 'Your Location*'),
-                              TextField(
-                                controller: _locationController,
-                                decoration: _fieldDecoration(
-                                  hintText: 'Example: Toul Kork, Phnom Penh',
-                                ),
+                              _PickerField(
+                                label: _selectedDistrictLabel,
+                                onTap: _pickDistrict,
                               ),
                               const SizedBox(height: 8),
                               _FieldLabel(label: 'Description*'),
@@ -246,6 +253,7 @@ class _ClientPostPageState extends State<ClientPostPage> {
   }
 
   Future<void> _submit() async {
+    _syncLocationFromDistrict();
     if (_selectedCategory.isEmpty ||
         _selectedService.isEmpty ||
         _messageController.text.trim().isEmpty ||
@@ -255,7 +263,8 @@ class _ClientPostPageState extends State<ClientPostPage> {
     }
     setState(() => _posting = true);
     try {
-      final preferredDate = _preferredDate ?? DateTime.now().add(const Duration(days: 1));
+      final preferredDate =
+          _preferredDate ?? DateTime.now().add(const Duration(days: 1));
       if (_editingPostId == null) {
         await FinderPostState.createFinderRequest(
           category: _selectedCategory,
@@ -393,6 +402,10 @@ class _ClientPostPageState extends State<ClientPostPage> {
       _selectedCategory = post.category;
       _selectedService = post.service;
       _messageController.text = post.message;
+      _cityController.text = LocationOptions.defaultCity;
+      _districtController.text = LocationOptions.districtFromArea(
+        post.location,
+      );
       _locationController.text = post.location;
       _preferredDate = post.preferredDate;
     });
@@ -474,12 +487,52 @@ class _ClientPostPageState extends State<ClientPostPage> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _preferredDate ?? DateTime.now().add(const Duration(days: 1)),
+      initialDate:
+          _preferredDate ?? DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 90)),
     );
     if (picked == null) return;
     setState(() => _preferredDate = picked);
+  }
+
+  String get _selectedDistrictLabel {
+    final district = _districtController.text.trim();
+    return district.isEmpty ? 'Select district' : district;
+  }
+
+  void _syncLocationFromDistrict() {
+    final district = _districtController.text.trim();
+    _locationController.text = district.isEmpty
+        ? ''
+        : LocationOptions.areaFromDistrict(
+            district,
+            city: _cityController.text.trim(),
+          );
+  }
+
+  Future<void> _pickDistrict() async {
+    if (_cityController.text.trim().isEmpty) {
+      _cityController.text = LocationOptions.defaultCity;
+    }
+
+    final options = _districtsForSelectedCity;
+    if (options.isEmpty) {
+      AppToast.warning(context, 'No district options available for this city.');
+      return;
+    }
+
+    final picked = await _showOptionSheet<String>(
+      title: 'Select your district',
+      options: options,
+      selected: _districtController.text.trim(),
+      labelBuilder: (item) => item,
+    );
+    if (picked == null) return;
+    setState(() {
+      _districtController.text = picked;
+      _syncLocationFromDistrict();
+    });
   }
 
   Future<T?> _showOptionSheet<T>({

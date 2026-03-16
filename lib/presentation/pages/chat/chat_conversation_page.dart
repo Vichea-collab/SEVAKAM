@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
 import 'package:servicefinder/core/utils/app_toast.dart';
 import 'package:servicefinder/core/utils/page_transition.dart';
+import 'package:servicefinder/core/utils/responsive.dart';
 import 'package:servicefinder/core/utils/safe_image_provider.dart';
 import 'package:servicefinder/core/utils/category_utils.dart';
 import 'package:servicefinder/data/network/backend_api_client.dart';
@@ -881,6 +883,7 @@ class _ChatHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final status = _activityStatus(thread.lastActiveAt);
     final isProvider = AppRoleState.isProvider;
     return Container(
@@ -894,7 +897,12 @@ class _ChatHeader extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(4, 8, 8, 10),
+      padding: EdgeInsets.fromLTRB(
+        rs.space(4),
+        rs.space(8),
+        rs.space(8),
+        rs.space(10),
+      ),
       child: Row(
         children: [
           IconButton(
@@ -907,15 +915,15 @@ class _ChatHeader extends StatelessWidget {
           Stack(
             children: [
               CircleAvatar(
-                radius: 20,
+                radius: rs.dimension(20),
                 backgroundColor: AppColors.background,
                 backgroundImage: thread.avatarPath.trim().isNotEmpty
                     ? safeImageProvider(thread.avatarPath)
                     : null,
                 child: thread.avatarPath.trim().isEmpty
-                    ? const Icon(
+                    ? Icon(
                         Icons.person_rounded,
-                        size: 24,
+                        size: rs.icon(24),
                         color: AppColors.primary,
                       )
                     : null,
@@ -924,8 +932,8 @@ class _ChatHeader extends StatelessWidget {
                 right: 0,
                 bottom: 0,
                 child: Container(
-                  width: 10,
-                  height: 10,
+                  width: rs.dimension(10),
+                  height: rs.dimension(10),
                   decoration: BoxDecoration(
                     color: status.color,
                     shape: BoxShape.circle,
@@ -935,13 +943,15 @@ class _ChatHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(width: 12),
+          rs.gapW(12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   thread.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: const Color(0xFF0F172A),
                     fontWeight: FontWeight.w700,
@@ -1028,18 +1038,19 @@ class _HeaderAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(rs.radius(12)),
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: rs.all(8),
           decoration: BoxDecoration(
             color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(rs.radius(10)),
           ),
-          child: Icon(icon, color: const Color(0xFF64748B), size: 20),
+          child: Icon(icon, color: const Color(0xFF64748B), size: rs.icon(20)),
         ),
       ),
     );
@@ -1053,19 +1064,23 @@ class _ChatDateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      margin: EdgeInsets.symmetric(vertical: rs.space(16)),
+      padding: EdgeInsets.symmetric(
+        horizontal: rs.space(14),
+        vertical: rs.space(6),
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(rs.radius(20)),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: const Color(0xFF64748B),
           fontWeight: FontWeight.w700,
-          fontSize: 11,
+          fontSize: rs.text(11),
           letterSpacing: 0.5,
         ),
       ),
@@ -1080,6 +1095,7 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final fromMe = message.fromMe;
     const accentColor = AppColors.primary;
     final bubbleColor = fromMe ? accentColor : Colors.white;
@@ -1096,6 +1112,12 @@ class _MessageBubble extends StatelessWidget {
         : null;
 
     final isLocalDataUrl = message.imageUrl.startsWith('data:');
+    final maxBubbleWidth =
+        (MediaQuery.of(context).size.width * (rs.compact ? 0.8 : 0.72)).clamp(
+          220.0,
+          360.0,
+        );
+    final imageWidth = math.max(180.0, maxBubbleWidth - rs.space(40));
 
     return Align(
       alignment: fromMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -1105,11 +1127,11 @@ class _MessageBubble extends StatelessWidget {
             : CrossAxisAlignment.start,
         children: [
           Container(
-            margin: const EdgeInsets.only(bottom: 4),
-            constraints: const BoxConstraints(maxWidth: 280),
+            margin: EdgeInsets.only(bottom: rs.space(4)),
+            constraints: BoxConstraints(maxWidth: maxBubbleWidth),
             padding: EdgeInsets.symmetric(
-              horizontal: isProfileLink ? 0 : 14,
-              vertical: isProfileLink ? 0 : 11,
+              horizontal: isProfileLink ? 0 : rs.space(14),
+              vertical: isProfileLink ? 0 : rs.space(11),
             ),
             decoration: BoxDecoration(
               color: isProfileLink ? Colors.transparent : bubbleColor,
@@ -1121,10 +1143,10 @@ class _MessageBubble extends StatelessWidget {
                     )
                   : null,
               borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(20),
-                topRight: const Radius.circular(20),
-                bottomLeft: Radius.circular(fromMe ? 20 : 4),
-                bottomRight: Radius.circular(fromMe ? 4 : 20),
+                topLeft: Radius.circular(rs.radius(20)),
+                topRight: Radius.circular(rs.radius(20)),
+                bottomLeft: Radius.circular(rs.radius(fromMe ? 20 : 4)),
+                bottomRight: Radius.circular(rs.radius(fromMe ? 4 : 20)),
               ),
               boxShadow: [
                 if (!isProfileLink)
@@ -1142,14 +1164,18 @@ class _MessageBubble extends StatelessWidget {
               children: [
                 if (hasImage && !isProfileLink)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: EdgeInsets.only(bottom: rs.space(8)),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(rs.radius(14)),
                       child: isLocalDataUrl
-                          ? _buildLocalImage(message.imageUrl)
+                          ? _buildLocalImage(
+                              message.imageUrl,
+                              width: imageWidth,
+                              height: imageWidth * 0.66,
+                            )
                           : SafeImage(
                               source: message.imageUrl,
-                              width: 240,
+                              width: imageWidth,
                               fit: BoxFit.cover,
                             ),
                     ),
@@ -1165,7 +1191,7 @@ class _MessageBubble extends StatelessWidget {
                     message.text,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: textColor,
-                      fontSize: 15,
+                      fontSize: rs.text(15),
                       height: 1.4,
                     ),
                   ),
@@ -1173,7 +1199,7 @@ class _MessageBubble extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
+            padding: EdgeInsets.symmetric(horizontal: rs.space(6)),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1181,38 +1207,43 @@ class _MessageBubble extends StatelessWidget {
                   _timeLabel(message.sentAt),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: const Color(0xFF94A3B8),
-                    fontSize: 10,
+                    fontSize: rs.text(10),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 if (fromMe) ...[
-                  const SizedBox(width: 4),
-                  _buildStatusIcon(accentColor),
+                  rs.gapW(4),
+                  _buildStatusIcon(context, accentColor),
                 ],
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          rs.gapH(12),
         ],
       ),
     );
   }
 
-  Widget _buildLocalImage(String dataUrl) {
+  Widget _buildLocalImage(
+    String dataUrl, {
+    required double width,
+    required double height,
+  }) {
     try {
       final base64String = dataUrl.split(',').last;
       final bytes = base64Decode(base64String);
-      return Image.memory(bytes, width: 240, fit: BoxFit.cover);
+      return Image.memory(bytes, width: width, fit: BoxFit.cover);
     } catch (_) {
-      return const SizedBox(
-        width: 240,
-        height: 160,
+      return SizedBox(
+        width: width,
+        height: height,
         child: Icon(Icons.broken_image_rounded, color: Colors.grey),
       );
     }
   }
 
-  Widget _buildStatusIcon(Color accentColor) {
+  Widget _buildStatusIcon(BuildContext context, Color accentColor) {
+    final rs = context.rs;
     IconData icon;
     Color color = const Color(0xFF94A3B8);
     String label = '';
@@ -1235,14 +1266,14 @@ class _MessageBubble extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: rs.text(10),
               color: color,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(width: 4),
+          rs.gapW(4),
         ],
-        Icon(icon, size: 12, color: color),
+        Icon(icon, size: rs.icon(12), color: color),
       ],
     );
   }
@@ -1311,14 +1342,15 @@ class _ProfileLinkCardState extends State<_ProfileLinkCard> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     if (_loading) {
       return Container(
-        width: 200,
-        height: 80,
+        width: rs.dimension(200),
+        height: rs.dimension(80),
         alignment: Alignment.center,
-        child: const SizedBox(
-          width: 20,
-          height: 20,
+        child: SizedBox(
+          width: rs.dimension(20),
+          height: rs.dimension(20),
           child: CircularProgressIndicator(
             strokeWidth: 2,
             color: AppColors.primary,
@@ -1343,10 +1375,10 @@ class _ProfileLinkCardState extends State<_ProfileLinkCard> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: rs.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(rs.radius(16)),
           border: Border.all(color: widget.accentColor.withValues(alpha: 0.3)),
           boxShadow: [
             BoxShadow(
@@ -1361,20 +1393,20 @@ class _ProfileLinkCardState extends State<_ProfileLinkCard> {
             Row(
               children: [
                 CircleAvatar(
-                  radius: 20,
+                  radius: rs.dimension(20),
                   backgroundColor: AppColors.background,
                   backgroundImage: p.imagePath.trim().isNotEmpty
                       ? safeImageProvider(p.imagePath)
                       : null,
                   child: p.imagePath.trim().isEmpty
-                      ? const Icon(
+                      ? Icon(
                           Icons.person_rounded,
-                          size: 24,
+                          size: rs.icon(24),
                           color: AppColors.primary,
                         )
                       : null,
                 ),
-                const SizedBox(width: 12),
+                rs.gapW(12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1397,20 +1429,20 @@ class _ProfileLinkCardState extends State<_ProfileLinkCard> {
                   ),
                 ),
                 if (p.isVerified)
-                  const Icon(
+                  Icon(
                     Icons.verified_rounded,
                     color: AppColors.primary,
-                    size: 18,
+                    size: rs.icon(18),
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            rs.gapH(12),
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: rs.space(8)),
               width: double.infinity,
               decoration: BoxDecoration(
                 color: widget.accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(rs.radius(10)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1423,10 +1455,10 @@ class _ProfileLinkCardState extends State<_ProfileLinkCard> {
                       color: widget.accentColor,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  rs.gapW(4),
                   Icon(
                     Icons.arrow_forward_ios_rounded,
-                    size: 12,
+                    size: rs.icon(12),
                     color: widget.accentColor,
                   ),
                 ],
@@ -1452,6 +1484,7 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     const accentColor = AppColors.primary;
     return Container(
       decoration: BoxDecoration(
@@ -1460,7 +1493,12 @@ class _Composer extends StatelessWidget {
           top: BorderSide(color: AppColors.divider.withValues(alpha: 0.5)),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 14),
+      padding: EdgeInsets.fromLTRB(
+        rs.space(10),
+        rs.space(8),
+        rs.space(10),
+        rs.space(14),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -1468,38 +1506,38 @@ class _Composer extends StatelessWidget {
             icon: Icons.add_circle_outline_rounded,
             onTap: onPickImage,
           ),
-          const SizedBox(width: 8),
+          rs.gapW(8),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
                 color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(rs.radius(24)),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: rs.space(16)),
               child: TextField(
                 controller: controller,
                 maxLines: 4,
                 minLines: 1,
-                style: const TextStyle(fontSize: 15),
-                decoration: const InputDecoration(
+                style: TextStyle(fontSize: rs.text(15)),
+                decoration: InputDecoration(
                   hintText: 'Type a message...',
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                  contentPadding: EdgeInsets.symmetric(vertical: rs.space(10)),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          rs.gapW(8),
           PressableScale(
             onTap: onSend,
             child: InkWell(
               onTap: onSend,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(rs.radius(24)),
               child: Container(
-                width: 44,
-                height: 44,
+                width: rs.dimension(44),
+                height: rs.dimension(44),
                 decoration: BoxDecoration(
                   color: accentColor,
                   shape: BoxShape.circle,
@@ -1511,10 +1549,10 @@ class _Composer extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.send_rounded,
                   color: Colors.white,
-                  size: 20,
+                  size: rs.icon(20),
                 ),
               ),
             ),
@@ -1533,16 +1571,17 @@ class _ComposerAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(rs.radius(24)),
         child: Container(
-          width: 44,
-          height: 44,
+          width: rs.dimension(44),
+          height: rs.dimension(44),
           alignment: Alignment.center,
-          child: Icon(icon, color: const Color(0xFF64748B), size: 24),
+          child: Icon(icon, color: const Color(0xFF64748B), size: rs.icon(24)),
         ),
       ),
     );

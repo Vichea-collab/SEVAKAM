@@ -1,0 +1,397 @@
+Sevakam Project Report
+
+1. Project summary
+- Sevakam is a multi-role service marketplace app.
+- It has 3 main parts:
+  - Finder app
+  - Provider app
+  - Admin web panel
+- It also has a backend API built with Node.js and Firebase Admin.
+- Targets:
+  - Android
+  - iOS
+  - Web
+
+2. Main tools and technologies
+
+Frontend
+- Flutter
+  - Main UI framework for finder app, provider app, and admin web.
+- Dart
+  - Main programming language for frontend code.
+- Google Fonts
+  - Used for app typography.
+
+Backend
+- Node.js
+  - Runtime for backend services and scripts.
+- Express
+  - REST API server for auth, users, chat, orders, posts, subscriptions, and admin.
+
+Firebase
+- Firebase Auth
+  - Used for login and account identity.
+- Cloud Firestore
+  - Main database for app data.
+- Firebase Storage
+  - Used for image and document uploads.
+- Firebase Messaging
+  - Used for push notification support.
+- Firebase App Check
+  - Helps protect app access in production.
+- Firebase Admin SDK
+  - Used by backend to read/write Firebase data securely.
+
+Maps and location
+- Google Maps Flutter
+  - Used for booking map picker and location UI.
+- flutter_map
+  - Used in map-related UI flow support.
+- Geolocator
+  - Used for current location and tracking.
+
+Payments
+- Stripe
+  - Live subscription payment system for providers.
+- bakong-khqr
+  - Present in backend for KHQR-related support and future/payment-side work.
+
+Images and media
+- image_picker
+  - Used to pick local images from device/admin side.
+- cached_network_image
+  - Used to load and cache remote images.
+
+Local storage
+- shared_preferences
+  - Used for local settings, app state cache, and simple preferences.
+
+Networking and utility
+- http
+  - Used for API calls.
+- flutter_dotenv / dotenv
+  - Used for environment config.
+- url_launcher
+  - Used to open external links.
+
+UI support
+- shimmer
+  - Used for loading placeholders.
+- lottie
+  - Used for richer loading/empty/animation states.
+- table_calendar
+  - Used in calendar and availability-related flows.
+
+Backend support tools
+- cors
+  - Enables backend cross-origin requests.
+- helmet
+  - Adds security headers to backend responses.
+- morgan
+  - Logs backend HTTP requests.
+- swagger-jsdoc + swagger-ui-express
+  - API documentation support.
+- nodemon
+  - Local backend dev auto-reload.
+
+3. Firebase services and what they do in this project
+
+Firebase Auth
+- Login with email/password
+- Google Sign-In
+- Role-based access for finder, provider, and admin
+
+Cloud Firestore
+- Stores users
+- Stores finder profiles
+- Stores provider profiles
+- Stores categories and services
+- Stores finder request posts
+- Stores provider public posts
+- Stores orders
+- Stores chats and messages
+- Stores support tickets and support messages
+- Stores admin promotions
+- Stores admin broadcasts
+- Stores promo codes
+- Stores KYC and subscription-related provider data
+
+Firebase Storage
+- Stores profile avatars
+- Stores provider portfolio photos
+- Stores provider KYC front/back ID images
+- Stores admin promotion banner images
+
+Firebase Messaging
+- Supports notification delivery for app events
+- Used for chat, order, support, and admin broadcast notification flows
+
+Firebase App Check
+- Used to reduce abuse and protect access in production environments
+
+Firebase Admin SDK
+- Used by backend to manage Firebase from secure server-side code
+
+4. Main database and storage usage
+
+Main Firestore collections
+- users
+- finders
+- providers
+- categories
+- services
+- finderPosts
+- providerPosts
+- orders
+- adminPromotions
+- adminBroadcasts
+- promoCodes
+- adminUndoActions
+- adminUsage
+- admins
+
+Main subcollections
+- users/{uid}/app/settings
+- users/{uid}/chats/{chatId}
+- users/{uid}/chats/{chatId}/messages/{messageId}
+- users/{uid}/helpTickets/{ticketId}
+- users/{uid}/helpTickets/{ticketId}/messages/{messageId}
+- users/{uid}/addresses/{addressId}
+
+Main storage folders
+- avatars/
+- portfolio/
+- provider_kyc/
+- promotions/
+
+5. App features already implemented
+
+Core app flow
+- Splash page
+- Welcome page
+- Onboarding page
+- Separate auth flow for finder and provider
+- Forgot password flow
+- Role switch between finder and provider workspace
+
+Finder features
+- Finder home page
+- Search services/providers/categories
+- Recent search support
+- Browse all categories
+- Popular services section
+- Provider recommendations and top-tier provider sections
+- Home promotion carousel from admin-managed promotions
+- Provider list page
+- Provider category page
+- Provider detail page
+- Provider public post browsing
+- Favorites page
+- Booking flow with multiple steps
+  - address
+  - details
+  - service requirements
+  - summary
+  - confirmation
+- Booking map picker
+- Phnom Penh-only location restriction for booking map flow
+- Date and time slot selection
+- Service-specific step 3 requirement fields
+- Booking success/confirmation page
+- Orders list
+- Order detail page
+- Order status timeline
+- Cancel booking flow
+- Manage order flow
+- Order feedback/review flow
+- Chat list
+- Chat conversation with provider
+- Notifications page
+- Finder profile page
+- Edit profile page
+- Notification settings page
+- Help & support page
+- Help support chat page
+- Dark mode preference UI
+
+Provider features
+- Provider home page
+- Open request browsing
+- Search request/client/service/location
+- Provider profile page
+- Edit profile
+- Provider availability management
+- Blocked dates support
+- Provider portfolio gallery
+- Provider public post publishing
+- Provider post management
+- Provider verification (KYC) page
+- KYC upload for front/back ID card
+- Provider subscription page
+- Current plan display
+- Billing period display
+- Renewal/cancel-at-period-end handling
+- Provider notifications page
+- Provider orders list
+- Provider order detail page
+- Order progress/status update flow
+- Chat with finder
+- Role access switch UI
+
+Subscription features
+- Provider subscription tiers:
+  - Basic
+  - Professional
+  - Elite Business
+- Stripe-based provider subscriptions
+- Subscription period tracking
+- Cancel at period end support
+- Subscription tier sync to public provider data
+- Public plan badge display in finder-facing provider UI
+
+KYC / verification features
+- Provider submits ID images
+- Provider KYC status stored in provider profile
+- Admin reviews KYC
+- Approved KYC shows Verified badge
+- Verified badge is shown separately from subscription badge
+
+Provider public marketplace features
+- Provider cards
+- Verified badge
+- Subscription plan badge
+- Elite/Professional visual treatment
+- Provider portfolio/photo support in public UI
+- One newest provider post per provider on finder home where needed
+
+Chat and support features
+- Finder <-> provider direct chat
+- Chat unread counts
+- Chat activity / last active status
+- Support ticket system between admin and finder/provider
+- Support message notifications
+- Chat message notifications
+
+Notification features
+- Order status notifications
+- Chat notifications
+- Support notifications
+- Admin broadcast notifications
+- Read/unread notification state
+
+Order features
+- Booking creation from finder flow
+- Provider order acceptance/progress management
+- Order timeline:
+  - booked
+  - confirmed
+  - started
+  - completed
+  - cancelled / declined
+- Review/rating flow after completion
+- Provider rating and completed-order stats
+
+Admin features
+- Admin web login
+- Admin dashboard overview
+- Users section
+- Provider Verification section
+- Subscriptions section
+- Orders section
+- Posts section
+- Tickets section
+- Services section
+- Promotions section
+- Broadcasts section
+- Global search/filter/pagination support
+
+Admin KYC features
+- View KYC status
+- Open KYC documents
+- Approve KYC
+- Reject KYC
+- Set pending / reset KYC
+
+Admin subscription features
+- View provider plan
+- View billing state
+- View renewal mode
+- View current period end
+
+Admin promotion features
+- Create finder home promotions
+- Set badge, title, description, CTA
+- Link to provider/service/category/search/page/post target
+- Set active/inactive
+- Set start/end date
+- Set target roles
+- Local image picker upload for promotions
+
+Admin broadcast features
+- System broadcasts
+- Promotion broadcasts
+- Promo code support
+
+Service and catalog features
+- Category management
+- Service catalog
+- Seeded demo services and categories
+
+Profile and media features
+- Profile avatar upload
+- Portfolio upload
+- KYC upload
+- Promotion image upload
+- Safe image loading and fallback handling
+
+6. Backend modules in this project
+- auth.services.js
+  - auth/account-related backend logic
+- user.services.js
+  - user profile, notifications, addresses, support, promotions feed
+- provider.services.js
+  - provider profile, KYC, provider settings
+- finder.services.js
+  - finder-related backend logic
+- category.services.js
+  - category APIs
+- service.services.js
+  - service APIs
+- post.services.js
+  - finder/provider post creation and listing
+- order.services.js
+  - booking/order flow and review handling
+- chat.services.js
+  - chat thread and message logic
+- subscription.services.js
+  - plan/billing/subscription logic
+- payment.services.js
+  - payment-related backend support
+- admin.services.js
+  - admin dashboard, moderation, KYC, promotions, broadcasts, services, tickets
+
+7. Admin app architecture
+- Separate Flutter web entrypoint
+- Separate admin route tree
+- Separate admin data/state layer
+- Connected to backend admin APIs
+
+8. Seed and project support scripts
+- scripts_ensure_admin_account.mjs
+  - creates or ensures admin account
+- scripts_seed_demo_data.mjs
+  - seeds demo users, services, posts, reviews, and promotions
+
+9. Current project status
+- Finder app is implemented
+- Provider app is implemented
+- Admin panel is implemented
+- Backend API is implemented
+- Firebase integration is implemented
+- Stripe subscription flow is implemented
+- Admin-managed promotion flow is implemented
+- KYC review flow is implemented
+
+10. Notes
+- KHQR is present as backend dependency/support direction, but Stripe is the main live subscription payment path now.
+- Some product-rule text in subscription UI is informational and not fully enforced in backend checkout yet.

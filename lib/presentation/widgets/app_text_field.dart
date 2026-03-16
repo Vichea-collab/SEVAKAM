@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/utils/responsive.dart';
+
 class AppTextField extends StatelessWidget {
   final String hint;
   final TextEditingController? controller;
@@ -38,6 +40,8 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     return TextFormField(
       controller: controller,
       validator: validator,
@@ -55,6 +59,7 @@ class AppTextField extends StatelessWidget {
         hintText: hint,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
+        isDense: rs.compact,
       ),
     );
   }

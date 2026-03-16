@@ -10,6 +10,7 @@ import 'app_sync_state.dart';
 import 'app_role_state.dart';
 import 'chat_state.dart';
 import 'finder_post_state.dart';
+import 'home_promotion_state.dart';
 import 'order_state.dart';
 import 'profile_image_state.dart';
 import 'provider_post_state.dart';
@@ -519,6 +520,7 @@ class AuthState {
     ProfileSettingsState.setBackendToken(token);
     ChatState.setBackendToken(token);
     FinderPostState.setBackendToken(token);
+    HomePromotionState.setBackendToken(token);
     ProviderPostState.setBackendToken(token);
     OrderState.setBackendToken(token);
     UserNotificationState.setBackendToken(token);

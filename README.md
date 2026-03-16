@@ -17,6 +17,9 @@ Targets:
 1. Copy `.env.example` to `.env`.
 2. Set API URL:
    - Local dev: `API_BASE_URL=http://localhost:5050`
+   - iOS physical device: `API_BASE_URL_IOS=http://YOUR-MAC.local:5050`
+   - Android emulator: `API_BASE_URL_ANDROID=http://localhost:5050`
+   - Android emulator localhost is rewritten to `10.0.2.2` automatically.
 3. Set Google Maps keys:
    - `GOOGLE_MAPS_WEB_API_KEY`
    - `GOOGLE_MAPS_ANDROID_API_KEY`
@@ -80,12 +83,13 @@ Use separate keys by platform.
    - Restriction: iOS apps (bundle id)
    - Allowed APIs: Maps SDK for iOS, Geocoding API
 
-## 4) Phnom Penh-only map behavior
+## 4) Cambodia-only map behavior
 
-Booking map picker is restricted to Phnom Penh:
-- Tap outside Phnom Penh is blocked.
-- Current-location outside Phnom Penh is rejected and reset.
-- Search queries are constrained to Phnom Penh/Cambodia.
+Booking map picker is restricted to Cambodia and opens in Phnom Penh by default:
+- Tap outside Cambodia is blocked.
+- Current-location outside Cambodia is rejected and reset to Phnom Penh.
+- Search queries are constrained to Cambodia.
+- iOS Simulator uses the location configured in Simulator, not your Mac's real GPS.
 
 Main implementation:
 - `lib/presentation/pages/booking/address_map_picker_page.dart`

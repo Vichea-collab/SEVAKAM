@@ -684,6 +684,83 @@ class AdminServiceRow {
   }
 }
 
+class AdminPromotionRow {
+  final String id;
+  final String placement;
+  final String badgeLabel;
+  final String title;
+  final String description;
+  final String imageUrl;
+  final String ctaLabel;
+  final String targetType;
+  final String targetValue;
+  final String query;
+  final String category;
+  final String city;
+  final List<String> targetRoles;
+  final int sortOrder;
+  final bool active;
+  final String lifecycle;
+  final DateTime? startAt;
+  final DateTime? endAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final String createdByUid;
+  final String createdByName;
+
+  const AdminPromotionRow({
+    required this.id,
+    required this.placement,
+    required this.badgeLabel,
+    required this.title,
+    required this.description,
+    required this.imageUrl,
+    required this.ctaLabel,
+    required this.targetType,
+    required this.targetValue,
+    required this.query,
+    required this.category,
+    required this.city,
+    required this.targetRoles,
+    required this.sortOrder,
+    required this.active,
+    required this.lifecycle,
+    required this.startAt,
+    required this.endAt,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.createdByUid,
+    required this.createdByName,
+  });
+
+  factory AdminPromotionRow.fromMap(Map<String, dynamic> row) {
+    return AdminPromotionRow(
+      id: _AdminParser.text(row['id']),
+      placement: _AdminParser.text(row['placement'], fallback: 'finder_home'),
+      badgeLabel: _AdminParser.text(row['badgeLabel'], fallback: 'Featured'),
+      title: _AdminParser.text(row['title'], fallback: 'Promotion'),
+      description: _AdminParser.text(row['description']),
+      imageUrl: _AdminParser.text(row['imageUrl']),
+      ctaLabel: _AdminParser.text(row['ctaLabel'], fallback: 'Explore'),
+      targetType: _AdminParser.text(row['targetType'], fallback: 'search'),
+      targetValue: _AdminParser.text(row['targetValue']),
+      query: _AdminParser.text(row['query']),
+      category: _AdminParser.text(row['category']),
+      city: _AdminParser.text(row['city']),
+      targetRoles: _AdminParser.parseStringList(row['targetRoles']),
+      sortOrder: _AdminParser.parseInt(row['sortOrder'], 0),
+      active: _AdminParser.parseBool(row['active'], true),
+      lifecycle: _AdminParser.text(row['lifecycle'], fallback: 'active'),
+      startAt: _AdminParser.parseDate(row['startAt']),
+      endAt: _AdminParser.parseDate(row['endAt']),
+      createdAt: _AdminParser.parseDate(row['createdAt']),
+      updatedAt: _AdminParser.parseDate(row['updatedAt']),
+      createdByUid: _AdminParser.text(row['createdByUid']),
+      createdByName: _AdminParser.text(row['createdByName']),
+    );
+  }
+}
+
 class AdminBroadcastRow {
   final String id;
   final String type;

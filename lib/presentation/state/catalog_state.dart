@@ -47,7 +47,13 @@ class CatalogState {
     loading.value = true;
     try {
       final loadedCategories = await _loadCategories();
-      final loadedServices = await _loadServices(loadedCategories);
+      final categoryAverageRatings = await _loadCategoryAverageRatings(
+        loadedCategories,
+      );
+      final loadedServices = await _loadServices(
+        loadedCategories,
+        categoryAverageRatings,
+      );
 
       if (loadedCategories.isNotEmpty) {
         categories.value = loadedCategories;
@@ -153,6 +159,7 @@ class CatalogState {
 
   static Future<List<ServiceItem>> _loadServices(
     List<Category> loadedCategories,
+    Map<String, double> categoryAverageRatings,
   ) async {
     try {
       final rows = await _loadAllPagedRows('/api/services');
@@ -178,7 +185,9 @@ class CatalogState {
               fallback: 12,
             );
             final completedCount = _toInt(row['completedCount'], fallback: 0);
-            final rating = _toDouble(row['rating'], fallback: 4.6);
+            final rating =
+                categoryAverageRatings[_normalizedKey(categoryName)] ??
+                _toDouble(row['rating'], fallback: 4.6);
             final available = row['available'] != false;
             final badge = completedCount >= 80
                 ? 'Popular'
@@ -209,6 +218,55 @@ class CatalogState {
       return mapped;
     } catch (_) {
       return const <ServiceItem>[];
+    }
+  }
+
+  static Future<Map<String, double>> _loadCategoryAverageRatings(
+    List<Category> loadedCategories,
+  ) async {
+    try {
+      final rows = await _loadAllPagedRows('/api/posts/provider-offers');
+      if (rows.isEmpty) return const <String, double>{};
+
+      final categoriesById = <String, Category>{};
+      for (final category in loadedCategories) {
+        categoriesById[_idKey(category.name)] = category;
+      }
+
+      final categoryProviders = <String, Map<String, double>>{};
+      for (final raw in rows) {
+        final row = raw;
+        final categoryName = _resolveCategoryName(row, categoriesById);
+        final categoryKey = _normalizedKey(categoryName);
+        if (categoryKey.isEmpty) continue;
+
+        final providerKey = _providerKey(row);
+        if (providerKey.isEmpty) continue;
+
+        final providers = categoryProviders.putIfAbsent(
+          categoryKey,
+          () => <String, double>{},
+        );
+        providers.putIfAbsent(
+          providerKey,
+          () => _toDouble(row['rating'] ?? row['providerRating'], fallback: 0),
+        );
+      }
+
+      final averages = <String, double>{};
+      for (final entry in categoryProviders.entries) {
+        if (entry.value.isEmpty) continue;
+        final total = entry.value.values.fold<double>(
+          0,
+          (sum, rating) => sum + rating,
+        );
+        averages[entry.key] = double.parse(
+          (total / entry.value.length).toStringAsFixed(1),
+        );
+      }
+      return averages;
+    } catch (_) {
+      return const <String, double>{};
     }
   }
 
@@ -268,6 +326,18 @@ class CatalogState {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_|_$'), '');
+  }
+
+  static String _normalizedKey(String value) {
+    return value.trim().toLowerCase();
+  }
+
+  static String _providerKey(Map<String, dynamic> row) {
+    final providerUid = (row['providerUid'] ?? '').toString().trim();
+    if (providerUid.isNotEmpty) return providerUid.toLowerCase();
+
+    final providerName = (row['providerName'] ?? '').toString().trim();
+    return providerName.toLowerCase();
   }
 
   static String _imageForCategory(String category) {

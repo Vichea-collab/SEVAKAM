@@ -193,4 +193,61 @@ class FirebaseStorageService {
       return null;
     }
   }
+
+  static Future<String?> uploadPromotionImage(
+    Uint8List bytes, {
+    String extension = 'jpg',
+  }) async {
+    final configured = await FirebaseBootstrap.initializeIfConfigured();
+    if (!configured) {
+      debugPrint(
+        'FirebaseStorageService: Firebase not configured, cannot upload promotion image.',
+      );
+      return null;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      debugPrint(
+        'FirebaseStorageService: No authenticated user, cannot upload promotion image.',
+      );
+      return null;
+    }
+
+    try {
+      final storage = FirebaseStorage.instance;
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = '${user.uid}_promotion_$timestamp.$extension';
+      final storageRef = storage.ref().child('promotions/$fileName');
+
+      final String mimeType;
+      switch (extension.toLowerCase()) {
+        case 'png':
+          mimeType = 'image/png';
+          break;
+        case 'webp':
+          mimeType = 'image/webp';
+          break;
+        case 'gif':
+          mimeType = 'image/gif';
+          break;
+        case 'jpg':
+        case 'jpeg':
+        default:
+          mimeType = 'image/jpeg';
+      }
+
+      final metadata = SettableMetadata(contentType: mimeType);
+      final uploadTask = await storageRef.putData(bytes, metadata);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      debugPrint(
+        'FirebaseStorageService: Promotion image upload successful -> $downloadUrl',
+      );
+      return downloadUrl;
+    } catch (e, st) {
+      debugPrint('FirebaseStorageService.uploadPromotionImage error: $e');
+      debugPrint(st.toString());
+      return null;
+    }
+  }
 }

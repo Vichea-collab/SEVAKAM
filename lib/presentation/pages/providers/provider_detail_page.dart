@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/provider.dart';
 import '../../../domain/entities/provider_portal.dart';
@@ -85,6 +86,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final profile = _buildProfile(
       widget.provider,
       summary: _reviewSummary,
@@ -97,9 +99,11 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 6),
+            rs.gapH(6),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              padding: EdgeInsets.symmetric(
+                horizontal: rs.space(AppSpacing.md),
+              ),
               child: AppTopBar(
                 title: widget.provider.name,
                 actions: [
@@ -143,13 +147,18 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
                       color: AppColors.primary,
                       child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                        padding: EdgeInsets.fromLTRB(
+                          rs.space(16),
+                          rs.space(16),
+                          rs.space(16),
+                          rs.space(20),
+                        ),
                         children: [
                           _ProviderSummaryCard(
                             profile: profile,
                             totalReviewCount: _reviewSummary?.totalReviews,
                           ),
-                          const SizedBox(height: 12),
+                          rs.gapH(12),
                           _ContactSwitcher(
                             onBookTap: () => Navigator.push(
                               context,
@@ -170,13 +179,13 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
                               _openProviderChat();
                             },
                           ),
-                          const SizedBox(height: 12),
+                          rs.gapH(12),
                           _ContentTabs(
                             activeTab: _contentTab,
                             onChanged: (tab) =>
                                 setState(() => _contentTab = tab),
                           ),
-                          const SizedBox(height: 12),
+                          rs.gapH(12),
                           if (_contentTab == _ProviderContentTab.companyInfo)
                             _CompanyInfoSection(
                               title: 'Bio',
@@ -478,40 +487,46 @@ class _ProviderSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final imagePath = profile.provider.imagePath.trim();
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: rs.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(rs.radius(16)),
         border: Border.all(color: AppColors.primary.withValues(alpha: 51)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: rs.space(10),
+            runSpacing: rs.space(8),
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Hero(
                 tag: profile.heroTag ?? 'provider-${profile.provider.uid}',
                 child: CircleAvatar(
-                  radius: 18,
+                  radius: rs.dimension(18),
                   backgroundColor: AppColors.background,
                   backgroundImage: imagePath.isNotEmpty
                       ? safeImageProvider(imagePath)
                       : null,
                   child: imagePath.isEmpty
-                      ? const Icon(
+                      ? Icon(
                           Icons.person_rounded,
-                          size: 18,
+                          size: rs.icon(18),
                           color: AppColors.primary,
                         )
                       : null,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
+              SizedBox(
+                width: MediaQuery.of(context).size.width - rs.space(110),
                 child: Text(
                   profile.provider.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(
                     context,
                   ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
@@ -531,11 +546,15 @@ class _ProviderSummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          rs.gapH(8),
           Row(
             children: [
-              const Icon(Icons.star, size: 14, color: Color(0xFFF59E0B)),
-              const SizedBox(width: 4),
+              Icon(
+                Icons.star,
+                size: rs.icon(14),
+                color: const Color(0xFFF59E0B),
+              ),
+              rs.gapW(4),
               Text(
                 '${profile.averageRating.toStringAsFixed(1)} (${totalReviewCount ?? profile.reviews.length} Reviews)',
                 style: Theme.of(
@@ -544,13 +563,15 @@ class _ProviderSummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          rs.gapH(4),
           Text(
             '${profile.location} • ${profile.available ? "Available" : "Closed"}',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           if (profile.provider.services.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            rs.gapH(4),
             Text(
               'Services: ${profile.provider.services.join(' • ')}',
               maxLines: 2,
@@ -561,7 +582,7 @@ class _ProviderSummaryCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 4),
+          rs.gapH(4),
           Text(
             '${profile.completedJobs} similar jobs completed near you',
             style: Theme.of(
@@ -582,6 +603,7 @@ class _ContactSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Row(
       children: [
         Expanded(
@@ -589,12 +611,12 @@ class _ContactSwitcher extends StatelessWidget {
             onTap: onBookTap,
             child: InkWell(
               onTap: onBookTap,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(rs.radius(20)),
               child: Container(
-                height: 40,
+                height: rs.dimension(40),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(rs.radius(20)),
                 ),
                 alignment: Alignment.center,
                 child: const Text(
@@ -608,18 +630,18 @@ class _ContactSwitcher extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        rs.gapW(8),
         Expanded(
           child: PressableScale(
             onTap: onChatTap,
             child: InkWell(
               onTap: onChatTap,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(rs.radius(20)),
               child: Container(
-                height: 40,
+                height: rs.dimension(40),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(rs.radius(20)),
                   border: Border.all(color: AppColors.divider),
                 ),
                 alignment: Alignment.center,
@@ -647,6 +669,7 @@ class _ContentTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     Widget tab({required String label, required _ProviderContentTab tab}) {
       final selected = activeTab == tab;
       return Expanded(
@@ -654,7 +677,7 @@ class _ContentTabs extends StatelessWidget {
           onTap: () => onChanged(tab),
           behavior: HitTestBehavior.opaque,
           child: Container(
-            height: 48,
+            height: rs.dimension(48),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               border: Border(
@@ -669,7 +692,7 @@ class _ContentTabs extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: selected ? AppColors.primary : const Color(0xFF64748B),
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 15,
+                fontSize: rs.text(15),
                 letterSpacing: 0.2,
               ),
             ),
@@ -700,10 +723,11 @@ class _PortfolioSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     if (photos.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xxl),
+          padding: rs.all(AppSpacing.xxl),
           child: Column(
             children: [
               Icon(
@@ -711,7 +735,7 @@ class _PortfolioSection extends StatelessWidget {
                 size: 48,
                 color: AppColors.textSecondary.withValues(alpha: 0.3),
               ),
-              const SizedBox(height: 12),
+              rs.gapH(12),
               Text(
                 'No portfolio photos yet',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -724,13 +748,14 @@ class _PortfolioSection extends StatelessWidget {
       );
     }
 
+    final crossAxisCount = MediaQuery.of(context).size.width < 380 ? 2 : 3;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: rs.space(8),
+        mainAxisSpacing: rs.space(8),
         childAspectRatio: 1,
       ),
       itemCount: photos.length,
@@ -739,7 +764,7 @@ class _PortfolioSection extends StatelessWidget {
         return GestureDetector(
           onTap: () => _showFullscreenImage(context, photo),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(rs.radius(12)),
             child: SafeImage(source: photo, fit: BoxFit.cover),
           ),
         );
@@ -816,31 +841,35 @@ class _ReviewsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          spacing: rs.space(10),
+          runSpacing: rs.space(10),
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
               '${reviews.length} Reviews',
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const Spacer(),
             PressableScale(
               onTap: onRangeTap,
               child: InkWell(
                 onTap: onRangeTap,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(rs.radius(10)),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: rs.space(12),
+                    vertical: rs.space(8),
                   ),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(rs.radius(10)),
                     border: Border.all(color: AppColors.primary),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         selectedRange.label,
@@ -848,10 +877,10 @@ class _ReviewsSection extends StatelessWidget {
                           color: AppColors.primary,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      const Icon(
+                      rs.gapW(6),
+                      Icon(
                         Icons.expand_more,
-                        size: 16,
+                        size: rs.icon(16),
                         color: AppColors.primary,
                       ),
                     ],
@@ -861,10 +890,10 @@ class _ReviewsSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        rs.gapH(12),
         if (loading && reviews.isEmpty) ...[
           const Center(child: AppStatePanel.loading(title: 'Loading reviews')),
-          const SizedBox(height: 12),
+          rs.gapH(12),
         ],
         if (!loading && reviews.isEmpty)
           Text(
@@ -884,15 +913,16 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final photoUrl = review.reviewerPhotoUrl.trim();
     final hasPhoto = photoUrl.isNotEmpty;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: EdgeInsets.only(bottom: rs.space(12)),
+      padding: rs.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(rs.radius(16)),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
@@ -909,14 +939,14 @@ class _ReviewCard extends StatelessWidget {
             children: [
               if (hasPhoto)
                 CircleAvatar(
-                  radius: 16,
+                  radius: rs.dimension(16),
                   backgroundColor: AppColors.background,
                   backgroundImage: safeImageProvider(photoUrl),
                 )
               else
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: rs.dimension(32),
+                  height: rs.dimension(32),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
@@ -929,14 +959,14 @@ class _ReviewCard extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     review.reviewerInitials,
-                    style: const TextStyle(
-                      fontSize: 12,
+                    style: TextStyle(
+                      fontSize: rs.text(12),
                       color: AppColors.primary,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-              const SizedBox(width: 10),
+              rs.gapW(10),
               Expanded(
                 child: Text(
                   review.reviewerName,
@@ -949,12 +979,12 @@ class _ReviewCard extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.star_rounded,
-                    size: 18,
+                    size: rs.icon(18),
                     color: Color(0xFFF59E0B),
                   ),
-                  const SizedBox(width: 4),
+                  rs.gapW(4),
                   Text(
                     review.rating.toStringAsFixed(1),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -966,7 +996,7 @@ class _ReviewCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          rs.gapH(6),
           Text(
             _reviewTimestamp(review),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -974,7 +1004,7 @@ class _ReviewCard extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 10),
+          rs.gapH(10),
           Text(
             review.comment,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(

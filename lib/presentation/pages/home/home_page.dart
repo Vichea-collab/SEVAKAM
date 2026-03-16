@@ -2,14 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../core/utils/safe_image_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../domain/entities/home_promotion.dart';
 import '../../../domain/entities/provider.dart';
 import '../../../domain/entities/profile_settings.dart';
 import '../../../domain/entities/provider_portal.dart';
 import '../../state/catalog_state.dart';
 import '../../state/chat_state.dart';
+import '../../state/home_promotion_state.dart';
 import '../../state/profile_image_state.dart';
 import '../../state/profile_settings_state.dart';
 import '../../state/provider_post_state.dart';
@@ -40,27 +43,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  static const Duration _doublePullWindow = Duration(seconds: 2);
-  DateTime? _lastPullAt;
   bool _refreshInProgress = false;
 
   Future<void> _handleRefresh() async {
-    final now = DateTime.now();
-    final last = _lastPullAt;
-    final isSecondPull =
-        last != null && now.difference(last) <= _doublePullWindow;
-
-    if (!isSecondPull) {
-      _lastPullAt = now;
-      return;
-    }
-
-    _lastPullAt = null;
     if (_refreshInProgress) return;
     _refreshInProgress = true;
     try {
       await Future.wait<void>([
         CatalogState.refresh(force: true),
+        HomePromotionState.refresh(
+          city: ProfileSettingsState.finderProfile.value.city,
+        ),
         ProviderPostState.refresh(page: 1),
         ProviderPostState.refreshAllForLookup(maxPages: 3),
         ChatState.refreshUnreadCount(),
@@ -74,6 +67,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
@@ -82,18 +77,18 @@ class _HomePageState extends State<HomePage> {
           slivers: [
             const _TopHeader(),
             SliverPadding(
-              padding: const EdgeInsets.only(
-                top: AppSpacing.lg,
-                left: AppSpacing.lg,
-                right: AppSpacing.lg,
-                bottom: AppSpacing.xl,
+              padding: EdgeInsets.only(
+                top: rs.space(AppSpacing.lg),
+                left: rs.space(AppSpacing.lg),
+                right: rs.space(AppSpacing.lg),
+                bottom: rs.space(AppSpacing.xl),
               ),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   const _SearchBar(),
-                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(height: rs.space(AppSpacing.md)),
                   const _FeaturedBanner(),
-                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: rs.space(AppSpacing.lg)),
                   SectionTitle(
                     title: 'Browse all categories',
                     actionLabel: 'View all',
@@ -102,7 +97,7 @@ class _HomePageState extends State<HomePage> {
                       slideFadeRoute(const ProviderHomePage()),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(height: rs.space(AppSpacing.md)),
                   ValueListenableBuilder<bool>(
                     valueListenable: CatalogState.loading,
                     builder: (context, catalogLoading, _) {
@@ -116,7 +111,7 @@ class _HomePageState extends State<HomePage> {
                             return const SizedBox.shrink();
                           }
                           return SizedBox(
-                            height: 154,
+                            height: rs.dimension(154),
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               cacheExtent: 500,
@@ -135,7 +130,7 @@ class _HomePageState extends State<HomePage> {
                                 );
                               },
                               separatorBuilder: (_, _) =>
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: rs.space(12)),
                               itemCount: categories.length,
                             ),
                           );
@@ -143,7 +138,7 @@ class _HomePageState extends State<HomePage> {
                       );
                     },
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: rs.space(AppSpacing.lg)),
                   SectionTitle(
                     title: 'Popular services',
                     actionLabel: 'See all',
@@ -152,7 +147,7 @@ class _HomePageState extends State<HomePage> {
                       slideFadeRoute(const SearchPage()),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(height: rs.space(AppSpacing.md)),
                   ValueListenableBuilder<bool>(
                     valueListenable: CatalogState.loading,
                     builder: (context, catalogLoading, _) {
@@ -169,7 +164,7 @@ class _HomePageState extends State<HomePage> {
                             return const SizedBox.shrink();
                           }
                           return SizedBox(
-                            height: 240,
+                            height: rs.dimension(240),
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               cacheExtent: 500,
@@ -189,7 +184,7 @@ class _HomePageState extends State<HomePage> {
                                 );
                               },
                               separatorBuilder: (_, _) =>
-                                  const SizedBox(width: AppSpacing.md),
+                                  SizedBox(width: rs.space(AppSpacing.md)),
                               itemCount: popular.length,
                             ),
                           );
@@ -197,9 +192,9 @@ class _HomePageState extends State<HomePage> {
                       );
                     },
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: rs.space(AppSpacing.lg)),
                   const _EliteProvidersSection(),
-                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: rs.space(AppSpacing.lg)),
                   const _ProviderPostSection(),
                   Center(
                     child: PressableScale(
@@ -212,11 +207,11 @@ class _HomePageState extends State<HomePage> {
                           context,
                           slideFadeRoute(const SearchPage()),
                         ),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(rs.radius(10)),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: rs.space(8),
+                            vertical: rs.space(4),
                           ),
                           child: Text(
                             "Don't see what you are looking for?\nView all services",
@@ -281,6 +276,8 @@ class _TopHeaderState extends State<_TopHeader> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     Future<void> openChats() async {
       await Navigator.push(context, slideFadeRoute(const ChatListPage()));
       if (!mounted) return;
@@ -304,22 +301,22 @@ class _TopHeaderState extends State<_TopHeader> {
           final hasProfileContent =
               profile.name.trim().isNotEmpty || profile.city.trim().isNotEmpty;
           return Container(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+            padding: rs.only(left: 20, top: 14, right: 20, bottom: 20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [AppColors.splashStart, AppColors.splashEnd],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(rs.radius(20)),
+                bottomRight: Radius.circular(rs.radius(20)),
               ),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.primary.withValues(alpha: 28),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
+                  blurRadius: rs.space(18),
+                  offset: Offset(0, rs.space(8)),
                 ),
               ],
             ),
@@ -333,7 +330,7 @@ class _TopHeaderState extends State<_TopHeader> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(3),
+                              padding: rs.all(3),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 230),
                                 shape: BoxShape.circle,
@@ -352,21 +349,21 @@ class _TopHeaderState extends State<_TopHeader> {
                                         isProvider: false,
                                       );
                                   return CircleAvatar(
-                                    radius: 22,
+                                    radius: rs.dimension(22),
                                     backgroundColor: AppColors.background,
                                     backgroundImage: image,
                                     child: image == null
-                                        ? const Icon(
+                                        ? Icon(
                                             Icons.person_rounded,
                                             color: AppColors.primary,
-                                            size: 22,
+                                            size: rs.icon(22),
                                           )
                                         : null,
                                   );
                                 },
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            rs.gapW(12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,7 +379,7 @@ class _TopHeaderState extends State<_TopHeader> {
                                           ),
                                         ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  rs.gapH(2),
                                   Text(
                                     displayName,
                                     maxLines: 1,
@@ -395,12 +392,12 @@ class _TopHeaderState extends State<_TopHeader> {
                                           fontWeight: FontWeight.w800,
                                         ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  rs.gapH(8),
                                   _HeaderLocationPill(city: city),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            rs.gapW(12),
                             Column(
                               children: [
                                 ValueListenableBuilder<int>(
@@ -417,7 +414,7 @@ class _TopHeaderState extends State<_TopHeader> {
                                     );
                                   },
                                 ),
-                                const SizedBox(height: 10),
+                                rs.gapH(10),
                                 _HeaderActionButton(
                                   icon: Icons.favorite_border_rounded,
                                   onTap: openFavorites,
@@ -441,35 +438,37 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(rs.radius(16)),
       onTap: () => Navigator.push(context, slideFadeRoute(const SearchPage())),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: rs.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(rs.radius(16)),
           border: Border.all(color: Theme.of(context).dividerColor),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 10),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              blurRadius: rs.space(12),
+              offset: Offset(0, rs.space(4)),
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              height: 36,
-              width: 36,
+              height: rs.dimension(36),
+              width: rs.dimension(36),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 20),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(rs.radius(12)),
               ),
-              child: const Icon(Icons.search, color: Colors.white),
+              child: Icon(Icons.search, color: Colors.white, size: rs.icon(20)),
             ),
-            const SizedBox(width: 10),
+            rs.gapW(10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,7 +481,7 @@ class _SearchBar extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  rs.gapH(2),
                   Text(
                     'Providers, categories, or tasks',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -492,18 +491,18 @@ class _SearchBar extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 10),
+            rs.gapW(10),
             Container(
-              height: 36,
-              width: 36,
+              height: rs.dimension(36),
+              width: rs.dimension(36),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 20),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(rs.radius(12)),
                 border: Border.all(
                   color: AppColors.primary.withValues(alpha: 38),
                 ),
               ),
-              child: const Icon(Icons.tune, color: Colors.white, size: 18),
+              child: Icon(Icons.tune, color: Colors.white, size: rs.icon(18)),
             ),
           ],
         ),
@@ -520,56 +519,76 @@ class _FeaturedBanner extends StatefulWidget {
 }
 
 class _FeaturedBannerState extends State<_FeaturedBanner> {
-  static const _promoSlides = <_PromoSlide>[
-    _PromoSlide(
-      label: 'Limited offer',
+  static const _fallbackPromotions = <HomePromotion>[
+    HomePromotion(
+      id: 'fallback_cleaning',
+      placement: 'finder_home',
+      badgeLabel: 'Limited offer',
       title: 'House Cleaning this week',
       description: 'Book trusted house cleaning with faster response today.',
-      buttonLabel: 'Book cleaning',
-      imageAsset: 'assets/images/cleaning/house-cleaning.jpg',
-      category: 'Cleaner',
+      imageUrl: 'assets/images/cleaning/house-cleaning.jpg',
+      ctaLabel: 'Book cleaning',
+      targetType: HomePromotionTargetType.service,
+      targetValue: 'House Cleaning',
       query: 'House Cleaning',
-      colors: [Color(0xFFE8F0FF), Color(0xFF4D7CFE)],
+      category: 'Cleaner',
+      sortOrder: 0,
     ),
-    _PromoSlide(
-      label: 'Fast response',
+    HomePromotion(
+      id: 'fallback_plumber',
+      placement: 'finder_home',
+      badgeLabel: 'Fast response',
       title: 'Pipe leaks fixed today',
       description: 'Find plumbers for urgent pipe leaks around your area.',
-      buttonLabel: 'Find plumber',
-      imageAsset: 'assets/images/plumber/pipe-leak.jpg',
-      category: 'Plumber',
+      imageUrl: 'assets/images/plumber/pipe-leak.jpg',
+      ctaLabel: 'Find plumber',
+      targetType: HomePromotionTargetType.service,
+      targetValue: 'Pipe leaks',
       query: 'Pipe leaks',
-      colors: [Color(0xFFEFFBF6), Color(0xFF18B77A)],
+      category: 'Plumber',
+      sortOrder: 1,
     ),
-    _PromoSlide(
-      label: 'Home comfort',
+    HomePromotion(
+      id: 'fallback_appliance',
+      placement: 'finder_home',
+      badgeLabel: 'Home comfort',
       title: 'Air Conditioner Repair',
       description: 'Keep your home cool with quick repair this week.',
-      buttonLabel: 'Explore repair',
-      imageAsset: 'assets/images/home_appliance_repair/ac-repair.jpg',
-      category: 'Home Appliance',
+      imageUrl: 'assets/images/home_appliance_repair/ac-repair.jpg',
+      ctaLabel: 'Explore repair',
+      targetType: HomePromotionTargetType.service,
+      targetValue: 'Air Conditioner Repair',
       query: 'Air Conditioner Repair',
-      colors: [Color(0xFFF2F0FF), Color(0xFF7C5CFF)],
+      category: 'Home Appliance',
+      sortOrder: 2,
     ),
-    _PromoSlide(
-      label: 'Popular now',
+    HomePromotion(
+      id: 'fallback_electrician',
+      placement: 'finder_home',
+      badgeLabel: 'Popular now',
       title: 'Power Outage Fixes',
       description: 'Restore power safely with electricians available now.',
-      buttonLabel: 'View electricians',
-      imageAsset: 'assets/images/electrician/power-outages-fix.jpg',
-      category: 'Electrician',
+      imageUrl: 'assets/images/electrician/power-outages-fix.jpg',
+      ctaLabel: 'View electricians',
+      targetType: HomePromotionTargetType.service,
+      targetValue: 'Power Outage Fixes',
       query: 'Power Outage Fixes',
-      colors: [Color(0xFFFFF3E8), Color(0xFFFF9A3C)],
+      category: 'Electrician',
+      sortOrder: 3,
     ),
-    _PromoSlide(
-      label: 'Weekend ready',
+    HomePromotion(
+      id: 'fallback_maintenance',
+      placement: 'finder_home',
+      badgeLabel: 'Weekend ready',
       title: 'Furniture Fixing made easy',
       description: 'Quick help for shelves, doors, and furniture repairs.',
-      buttonLabel: 'See options',
-      imageAsset: 'assets/images/home_maintenance/furniture-repair.jpg',
-      category: 'Home Maintenance',
+      imageUrl: 'assets/images/home_maintenance/furniture-repair.jpg',
+      ctaLabel: 'See options',
+      targetType: HomePromotionTargetType.service,
+      targetValue: 'Furniture Fixing',
       query: 'Furniture Fixing',
-      colors: [Color(0xFFFFF8E8), Color(0xFFE6B325)],
+      category: 'Home Maintenance',
+      sortOrder: 4,
     ),
   ];
 
@@ -582,9 +601,16 @@ class _FeaturedBannerState extends State<_FeaturedBanner> {
     super.initState();
     _pageController = PageController(
       viewportFraction: 1,
-      initialPage: _promoSlides.length * 200,
+      initialPage: _fallbackPromotions.length * 200,
     );
     _startAutoScroll();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        HomePromotionState.refresh(
+          city: ProfileSettingsState.finderProfile.value.city,
+        ),
+      );
+    });
   }
 
   @override
@@ -609,166 +635,293 @@ class _FeaturedBannerState extends State<_FeaturedBanner> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 278,
-      child: Column(
-        children: [
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (page) {
-                final nextIndex = page % _promoSlides.length;
-                if (_currentIndex != nextIndex) {
-                  setState(() => _currentIndex = nextIndex);
-                }
-              },
-              itemBuilder: (context, page) {
-                final promo = _promoSlides[page % _promoSlides.length];
-                return _PromoBannerCard(
-                  slide: promo,
-                  onTap: () => Navigator.push(
-                    context,
-                    slideFadeRoute(
-                      SearchPage(
-                        initialQuery: promo.query,
-                        initialCategory: promo.category,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+    return ValueListenableBuilder<List<HomePromotion>>(
+      valueListenable: HomePromotionState.promotions,
+      builder: (context, promotions, _) {
+        final slides = promotions.isEmpty ? _fallbackPromotions : promotions;
+        final currentIndex = slides.isEmpty ? 0 : _currentIndex % slides.length;
+        return SizedBox(
+          height: 278,
+          child: Column(
+            children: [
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (page) {
+                    final nextIndex = page % slides.length;
+                    if (_currentIndex != nextIndex) {
+                      setState(() => _currentIndex = nextIndex);
+                    }
+                  },
+                  itemBuilder: (context, page) {
+                    final promo = slides[page % slides.length];
+                    return _PromoBannerCard(
+                      slide: promo,
+                      onTap: () => unawaited(_openPromotion(promo)),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  slides.length,
+                  (index) => _PromoDot(active: index == currentIndex),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              _promoSlides.length,
-              (index) => _PromoDot(active: index == _currentIndex),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  Future<void> _openPromotion(HomePromotion promo) async {
+    switch (promo.targetType) {
+      case HomePromotionTargetType.provider:
+        final post = await ProviderPostState.findLatestByUid(promo.targetValue);
+        if (!mounted) return;
+        if (post != null) {
+          await Navigator.push(
+            context,
+            slideFadeRoute(
+              ProviderDetailPage(provider: ProviderItem.fromPost(post)),
+            ),
+          );
+          return;
+        }
+        await Navigator.push(
+          context,
+          slideFadeRoute(
+            SearchPage(
+              initialQuery: promo.query.isEmpty
+                  ? promo.targetValue
+                  : promo.query,
+              initialCategory: promo.category.isEmpty ? null : promo.category,
+            ),
+          ),
+        );
+        return;
+      case HomePromotionTargetType.category:
+        await Navigator.push(
+          context,
+          slideFadeRoute(SearchPage(initialCategory: promo.targetValue)),
+        );
+        return;
+      case HomePromotionTargetType.post:
+        await Navigator.push(
+          context,
+          slideFadeRoute(
+            ProviderPostsPage(
+              initialQuery: promo.query.isEmpty
+                  ? promo.targetValue
+                  : promo.query,
+              initialCategory: promo.category.isEmpty ? null : promo.category,
+            ),
+          ),
+        );
+        return;
+      case HomePromotionTargetType.page:
+        final page = promo.targetValue.trim().toLowerCase();
+        if (page == 'favorites') {
+          await Navigator.push(context, slideFadeRoute(const FavoritesPage()));
+          return;
+        }
+        if (page == 'providers') {
+          await Navigator.push(
+            context,
+            slideFadeRoute(const ProviderHomePage()),
+          );
+          return;
+        }
+        await Navigator.push(context, slideFadeRoute(const SearchPage()));
+        return;
+      case HomePromotionTargetType.service:
+      case HomePromotionTargetType.search:
+        await Navigator.push(
+          context,
+          slideFadeRoute(
+            SearchPage(
+              initialQuery: promo.query.isEmpty
+                  ? promo.targetValue
+                  : promo.query,
+              initialCategory: promo.category.isEmpty ? null : promo.category,
+            ),
+          ),
+        );
+        return;
+    }
   }
 }
 
 class _PromoBannerCard extends StatelessWidget {
-  final _PromoSlide slide;
+  final HomePromotion slide;
   final VoidCallback onTap;
 
   const _PromoBannerCard({required this.slide, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: slide.colors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 16),
-            blurRadius: 20,
-            spreadRadius: -6,
-            offset: const Offset(0, 12),
+    final titleStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+      color: const Color(0xFF10203A),
+      fontWeight: FontWeight.w800,
+      height: 1.0,
+      letterSpacing: -0.7,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final imageWidth = constraints.maxWidth * 0.42;
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: _paletteForPromotion(slide),
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 16),
+                blurRadius: 20,
+                spreadRadius: -6,
+                offset: const Offset(0, 12),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFE17A),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    slide.label,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.primaryDark,
-                      fontWeight: FontWeight.w700,
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Stack(
+                  children: [
+                    _PromoImage(
+                      promotion: slide,
+                      width: imageWidth,
+                      height: double.infinity,
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  slide.title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: const Color(0xFF10203A),
-                    fontWeight: FontWeight.w800,
-                    height: 1.05,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  slide.description,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF536277),
-                    height: 1.35,
-                  ),
-                ),
-                const Spacer(),
-                SizedBox(
-                  height: 38,
-                  child: ElevatedButton(
-                    onPressed: onTap,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1656E8),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.08),
+                              Colors.black.withValues(alpha: 0.20),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    child: Text(slide.buttonLabel),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Stack(
-              children: [
-                Image.asset(
-                  slide.imageAsset,
-                  width: 118,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withValues(alpha: 24),
-                          Colors.black.withValues(alpha: 24),
-                        ],
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFE17A),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          slide.badgeLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: AppColors.primaryDark,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
                       ),
-                    ),
+                      const Spacer(),
+                      Text(
+                        slide.title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: titleStyle,
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        height: 40,
+                        child: ElevatedButton(
+                          onPressed: onTap,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1656E8),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            minimumSize: Size.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Text(
+                            slide.ctaLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
+    );
+  }
+}
+
+class _PromoImage extends StatelessWidget {
+  final HomePromotion promotion;
+  final double width;
+  final double height;
+
+  const _PromoImage({
+    required this.promotion,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fallbackAsset = _promotionFallbackAsset(promotion);
+    final primarySource = promotion.imageUrl.trim().isNotEmpty
+        ? promotion.imageUrl.trim()
+        : fallbackAsset;
+    final fallbackWidget = fallbackAsset.isNotEmpty
+        ? SafeImage(
+            source: fallbackAsset,
+            width: width,
+            height: height,
+            fit: BoxFit.cover,
+            errorBuilder: _promoImagePlaceholder(width),
+          )
+        : _promoImagePlaceholder(width);
+
+    return SafeImage(
+      source: primarySource,
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      placeholder: fallbackWidget,
+      errorBuilder: fallbackWidget,
     );
   }
 }
@@ -793,26 +946,104 @@ class _PromoDot extends StatelessWidget {
   }
 }
 
-class _PromoSlide {
-  final String label;
-  final String title;
-  final String description;
-  final String buttonLabel;
-  final String imageAsset;
-  final String category;
-  final String query;
-  final List<Color> colors;
+List<Color> _paletteForPromotion(HomePromotion promotion) {
+  final key = promotion.category.trim().toLowerCase().isNotEmpty
+      ? promotion.category.trim().toLowerCase()
+      : promotion.targetType.name;
+  switch (key) {
+    case 'cleaner':
+      return const [Color(0xFFE8F0FF), Color(0xFF4D7CFE)];
+    case 'plumber':
+      return const [Color(0xFFEFFBF6), Color(0xFF18B77A)];
+    case 'electrician':
+      return const [Color(0xFFFFF3E8), Color(0xFFFF9A3C)];
+    case 'home appliance':
+      return const [Color(0xFFF2F0FF), Color(0xFF7C5CFF)];
+    case 'home maintenance':
+      return const [Color(0xFFFFF8E8), Color(0xFFE6B325)];
+    default:
+      return const [Color(0xFFEAF2FF), Color(0xFF3B82F6)];
+  }
+}
 
-  const _PromoSlide({
-    required this.label,
-    required this.title,
-    required this.description,
-    required this.buttonLabel,
-    required this.imageAsset,
-    required this.category,
-    required this.query,
-    required this.colors,
-  });
+String _promotionFallbackAsset(HomePromotion promotion) {
+  final category = promotion.category.trim().toLowerCase();
+  final targetValue = promotion.targetValue.trim().toLowerCase();
+  final query = promotion.query.trim().toLowerCase();
+  final haystack = '$category $targetValue $query';
+
+  if (haystack.contains('house cleaning')) {
+    return 'assets/images/cleaning/house-cleaning.jpg';
+  }
+  if (haystack.contains('move-in') || haystack.contains('move out')) {
+    return 'assets/images/cleaning/move-in-out-cleaning.jpg';
+  }
+  if (haystack.contains('office cleaning')) {
+    return 'assets/images/cleaning/office-cleaning.jpg';
+  }
+  if (haystack.contains('pipe leak')) {
+    return 'assets/images/plumber/pipe-leak.jpg';
+  }
+  if (haystack.contains('toilet')) {
+    return 'assets/images/plumber/toilet-repair.jpg';
+  }
+  if (haystack.contains('water installation')) {
+    return 'assets/images/plumber/water-installation.jpg';
+  }
+  if (haystack.contains('power outage')) {
+    return 'assets/images/electrician/power-outages-fix.jpg';
+  }
+  if (haystack.contains('fan') || haystack.contains('light')) {
+    return 'assets/images/electrician/fan-installation.jpg';
+  }
+  if (haystack.contains('wiring')) {
+    return 'assets/images/electrician/wiring-repair.jpg';
+  }
+  if (haystack.contains('air conditioner')) {
+    return 'assets/images/home_appliance_repair/ac-repair.jpg';
+  }
+  if (haystack.contains('washing machine')) {
+    return 'assets/images/home_appliance_repair/washing-machine-repair.jpg';
+  }
+  if (haystack.contains('refrigerator')) {
+    return 'assets/images/home_appliance_repair/refrigerator-repair.jpg';
+  }
+  if (haystack.contains('furniture')) {
+    return 'assets/images/home_maintenance/furniture-repair.jpg';
+  }
+  if (haystack.contains('shelf') || haystack.contains('curtain')) {
+    return 'assets/images/home_maintenance/shelf-curtain-installation.jpg';
+  }
+  if (haystack.contains('door') || haystack.contains('window')) {
+    return 'assets/images/home_maintenance/doorwindow-repair.jpg';
+  }
+
+  switch (category) {
+    case 'cleaner':
+      return 'assets/images/cleaning/house-cleaning.jpg';
+    case 'plumber':
+      return 'assets/images/plumber/pipe-leak.jpg';
+    case 'electrician':
+      return 'assets/images/electrician/power-outages-fix.jpg';
+    case 'home appliance':
+      return 'assets/images/home_appliance_repair/ac-repair.jpg';
+    case 'home maintenance':
+      return 'assets/images/home_maintenance/furniture-repair.jpg';
+    default:
+      return '';
+  }
+}
+
+Widget _promoImagePlaceholder(double width) {
+  return DecoratedBox(
+    decoration: const BoxDecoration(color: Color(0xFFE5EDF8)),
+    child: SizedBox(
+      width: width,
+      child: const Center(
+        child: Icon(Icons.campaign_rounded, color: AppColors.primary, size: 34),
+      ),
+    ),
+  );
 }
 
 class _FinderHeaderLoading extends StatelessWidget {
@@ -1289,7 +1520,7 @@ class _EliteProvidersSection extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 SizedBox(
-                  height: 180,
+                  height: 208,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: elitePosts.length,
@@ -1315,13 +1546,14 @@ class _EliteProviderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     const accentColor = Color(0xFFF59E0B); // Gold for Elite
     final card = Container(
-      width: 200,
-      padding: const EdgeInsets.all(12),
+      width: rs.dimension(200),
+      padding: rs.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF8EC),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(rs.radius(16)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -1336,16 +1568,16 @@ class _EliteProviderCard extends StatelessWidget {
           Row(
             children: [
               CircleAvatar(
-                radius: 20,
+                radius: rs.dimension(20),
                 backgroundColor: AppColors.background,
                 backgroundImage: post.avatarPath.isNotEmpty
                     ? safeImageProvider(post.avatarPath)
                     : null,
                 child: post.avatarPath.isEmpty
-                    ? const Icon(Icons.person, color: accentColor)
+                    ? Icon(Icons.person, color: accentColor, size: rs.icon(20))
                     : null,
               ),
-              const SizedBox(width: 8),
+              rs.gapW(8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1363,10 +1595,10 @@ class _EliteProviderCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    rs.gapH(4),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
+                      spacing: rs.space(8),
+                      runSpacing: rs.space(6),
                       children: [
                         if (post.isVerified) const VerifiedBadge(size: 10),
                         const SubscriptionBadge(
@@ -1380,7 +1612,7 @@ class _EliteProviderCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          rs.gapH(10),
           Text(
             post.details,
             maxLines: 2,
@@ -1390,8 +1622,8 @@ class _EliteProviderCard extends StatelessWidget {
           const Spacer(),
           Row(
             children: [
-              const Icon(Icons.star_rounded, size: 14, color: accentColor),
-              const SizedBox(width: 4),
+              Icon(Icons.star_rounded, size: rs.icon(14), color: accentColor),
+              rs.gapW(4),
               Text(
                 post.rating.toStringAsFixed(1),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(

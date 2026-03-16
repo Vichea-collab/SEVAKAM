@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../state/order_state.dart';
@@ -57,6 +58,7 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return ValueListenableBuilder<List<OrderItem>>(
       valueListenable: OrderState.finderOrders,
       builder: (context, allOrders, _) {
@@ -77,7 +79,7 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                     },
                     child: SafeArea(
                       child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        padding: EdgeInsets.all(rs.space(AppSpacing.lg)),
                         child: Column(
                           children: [
                             AppTopBar(
@@ -92,7 +94,7 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                                 }
                               },
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: rs.space(12)),
                             Row(
                               children: [
                                 _TabChip(
@@ -101,7 +103,7 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                                   onTap: () =>
                                       _onTabSelected(_FinderOrderTab.pending),
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: rs.space(8)),
                                 _TabChip(
                                   label: 'In Progress',
                                   active:
@@ -110,7 +112,7 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                                     _FinderOrderTab.inProgress,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: rs.space(8)),
                                 _TabChip(
                                   label: 'History',
                                   active:
@@ -120,7 +122,7 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: rs.space(14)),
                             Expanded(
                               child: isLoading && allOrders.isEmpty
                                   ? const Center(
@@ -150,7 +152,9 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                                                 physics:
                                                     const AlwaysScrollableScrollPhysics(),
                                                 children: [
-                                                  const SizedBox(height: 80),
+                                                  SizedBox(
+                                                    height: rs.dimension(80),
+                                                  ),
                                                   AppStatePanel.empty(
                                                     title: _emptyTitleForTab(
                                                       _activeTab,
@@ -171,8 +175,10 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                                                 itemCount: visibleOrders.length,
                                                 cacheExtent: 1000,
                                                 separatorBuilder: (_, _) =>
-                                                    const SizedBox(
-                                                      height: AppSpacing.md,
+                                                    SizedBox(
+                                                      height: rs.space(
+                                                        AppSpacing.md,
+                                                      ),
                                                     ),
                                                 itemBuilder: (context, index) {
                                                   final order =
@@ -188,7 +194,7 @@ class _OrdersPageState extends State<OrdersPage> with WidgetsBindingObserver {
                                     ),
                             ),
                             if (pagination.totalItems > pagination.limit) ...[
-                              const SizedBox(height: 12),
+                              SizedBox(height: rs.space(12)),
                               PaginationBar(
                                 currentPage: _normalizedPage(pagination.page),
                                 totalPages: pagination.totalPages > 0
@@ -374,16 +380,17 @@ class _TabChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(rs.radius(12)),
         onTap: onTap,
         child: Container(
-          height: 40,
+          height: rs.dimension(40),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: active ? const Color(0xFFEAF1FF) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(rs.radius(12)),
             border: Border.all(
               color: active ? AppColors.primary : AppColors.divider,
             ),
@@ -409,14 +416,15 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(rs.radius(14)),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: rs.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(rs.radius(14)),
           border: Border.all(color: AppColors.divider),
         ),
         child: Column(
@@ -436,10 +444,10 @@ class _OrderCard extends StatelessWidget {
                 _OrderStatusPill(status: order.status),
               ],
             ),
-            const SizedBox(height: 8),
+            rs.gapH(8),
             Wrap(
-              spacing: 12,
-              runSpacing: 6,
+              spacing: rs.space(12),
+              runSpacing: rs.space(6),
               children: [
                 _MetaText(
                   icon: Icons.calendar_today_outlined,
@@ -452,7 +460,7 @@ class _OrderCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            rs.gapH(10),
             PrimaryButton(
               label: order.status == OrderStatus.completed
                   ? 'Rate service'
@@ -482,11 +490,12 @@ class _MetaText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: AppColors.textSecondary),
-        const SizedBox(width: 4),
+        Icon(icon, size: rs.icon(14), color: AppColors.textSecondary),
+        rs.gapW(4),
         Text(text, style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
@@ -500,6 +509,7 @@ class _OrderStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final (label, bg) = switch (status) {
       OrderStatus.booked => ('Booked', const Color(0xFFD97706)),
       OrderStatus.onTheWay => ('Confirmed', AppColors.primary),
@@ -510,7 +520,7 @@ class _OrderStatusPill extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: rs.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(99),

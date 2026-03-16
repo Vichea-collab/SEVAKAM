@@ -12,7 +12,9 @@ import 'package:servicefinder/core/utils/safe_image_provider.dart';
 import 'package:servicefinder/presentation/state/provider_post_state.dart';
 import 'package:servicefinder/core/firebase/firebase_storage_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:io';
+import 'package:servicefinder/presentation/widgets/app_dialog.dart';
+
+import 'provider_post_page.dart';
 
 class ProviderPortfolioPage extends StatefulWidget {
   static const String routeName = '/provider/portfolio';
@@ -25,6 +27,7 @@ class ProviderPortfolioPage extends StatefulWidget {
 
 class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
   bool _isUploading = false;
+  bool _loadingPost = true;
   ProviderPostItem? _currentPost;
 
   @override
@@ -35,11 +38,23 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
 
   Future<void> _loadCurrentPost() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (mounted) {
+      setState(() => _loadingPost = true);
+    }
+    if (user == null) {
+      if (mounted) {
+        setState(() {
+          _currentPost = null;
+          _loadingPost = false;
+        });
+      }
+      return;
+    }
     final post = await ProviderPostState.findLatestByUid(user.uid);
     if (mounted) {
       setState(() {
         _currentPost = post;
+        _loadingPost = false;
       });
     }
   }
@@ -54,7 +69,9 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
         final plan = status.plan;
         final maxPhotos = plan.maxPhotos;
         final isUnlimited = maxPhotos < 0;
-        final remains = isUnlimited ? double.infinity : maxPhotos - _photos.length;
+        final remains = isUnlimited
+            ? double.infinity
+            : maxPhotos - _photos.length;
         final canAdd = remains > 0;
 
         return Scaffold(
@@ -63,7 +80,9 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   child: const AppTopBar(
                     title: 'Portfolio Gallery',
                     showBack: true,
@@ -76,11 +95,16 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSubscriptionStatus(plan, _photos.length, maxPhotos),
+                        _buildSubscriptionStatus(
+                          plan,
+                          _photos.length,
+                          maxPhotos,
+                        ),
                         const SizedBox(height: AppSpacing.xl),
                         Text(
                           'Work Samples',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
@@ -88,12 +112,22 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
                         const SizedBox(height: AppSpacing.sm),
                         Text(
                           'Showcase your best work to attract more clients.',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: AppColors.textSecondary),
                         ),
                         const SizedBox(height: AppSpacing.lg),
-                        _buildPhotoGrid(canAdd, remains.toDouble(), plan),
+                        if (_loadingPost) ...[
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ] else if (_currentPost == null) ...[
+                          _buildMissingPostState(),
+                        ] else ...[
+                          _buildPhotoGrid(canAdd, remains.toDouble(), plan),
+                        ],
                       ],
                     ),
                   ),
@@ -123,8 +157,11 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
                     backgroundColor: Colors.transparent,
                     elevation: 0,
                     highlightElevation: 0,
-                    icon: const Icon(Icons.add_photo_alternate_rounded,
-                        color: Colors.white, size: 20),
+                    icon: const Icon(
+                      Icons.add_photo_alternate_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                     label: const Text(
                       'Add Photo',
                       style: TextStyle(
@@ -144,8 +181,9 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
 
   Widget _buildSubscriptionStatus(SubscriptionPlan plan, int current, int max) {
     final isUnlimited = max < 0;
-    final percent =
-        isUnlimited ? 0.0 : (current / max).clamp(0.0, 1.0).toDouble();
+    final percent = isUnlimited
+        ? 0.0
+        : (current / max).clamp(0.0, 1.0).toDouble();
     final color = percent > 0.8 ? Colors.orange : AppColors.primary;
 
     return Stack(
@@ -181,7 +219,8 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
                   Text(
                     'Gallery Limit',
                     style: TextStyle(
-                        color: AppColors.textPrimary.withValues(alpha: 0.7)),
+                      color: AppColors.textPrimary.withValues(alpha: 0.7),
+                    ),
                   ),
                   Text(
                     isUnlimited ? 'Unlimited' : '$current / $max photos',
@@ -224,67 +263,64 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
     );
   }
 
-Widget _buildPhotoGrid(bool canAdd, double remains, SubscriptionPlan plan) {
-return GridView.builder(
-shrinkWrap: true,
-physics: const NeverScrollableScrollPhysics(),
-gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-crossAxisCount: 3,
-crossAxisSpacing: 10,
-mainAxisSpacing: 10,
-childAspectRatio: 1,
-),
-itemCount: _photos.length + (canAdd ? 1 : 0),
-itemBuilder: (context, index) {
-if (index < _photos.length) {
-return _buildPhotoItem(_photos[index]);
-} else {
-return _buildAddPlaceholder();
-}
-},
-);
-}
+  Widget _buildPhotoGrid(bool canAdd, double remains, SubscriptionPlan plan) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1,
+      ),
+      itemCount: _photos.length + (canAdd ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index < _photos.length) {
+          return _buildPhotoItem(_photos[index]);
+        } else {
+          return _buildAddPlaceholder();
+        }
+      },
+    );
+  }
 
-Widget _buildPhotoItem(String url) {
-return Stack(
-children: [
-GestureDetector(
-onTap: () => _showFullscreenImage(context, url),
-child: ClipRRect(
-borderRadius: BorderRadius.circular(12),
-child: SafeImage(
-source: url,
-fit: BoxFit.cover,
-),
-),
-),
-Positioned(
-top: 4,
-right: 4,
-child: GestureDetector(
-onTap: () => _deletePhoto(url),
-child: Container(
-padding: const EdgeInsets.all(4),
-decoration: const BoxDecoration(
-color: Colors.white,
-shape: BoxShape.circle,
-boxShadow: [
-BoxShadow(
-color: Colors.black12,
-blurRadius: 4,
-offset: Offset(0, 2),
-),
-],
-),
-child: const Icon(Icons.close, size: 14, color: Colors.red),
-),
-),
-),
-],
-);
-}
+  Widget _buildPhotoItem(String url) {
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: () => _showFullscreenImage(context, url),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SafeImage(source: url, fit: BoxFit.cover),
+          ),
+        ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: () => _deletePhoto(url),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.close, size: 14, color: Colors.red),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-void _showFullscreenImage(BuildContext context, String url) {
+  void _showFullscreenImage(BuildContext context, String url) {
     showDialog(
       context: context,
       useSafeArea: false,
@@ -318,44 +354,48 @@ void _showFullscreenImage(BuildContext context, String url) {
     );
   }
 
-Widget _buildAddPlaceholder() {
-return GestureDetector(
-onTap: _addPhoto,
-child: Container(
-padding: const EdgeInsets.all(12),
-decoration: BoxDecoration(
-color: const Color(0xFFF1F5F9),
-borderRadius: BorderRadius.circular(16),
-border: Border.all(
-color: AppColors.primary.withValues(alpha: 0.1),
-width: 1.5,
-),
-),
-child: Column(
-mainAxisAlignment: MainAxisAlignment.center,
-children: [
-Container(
-padding: const EdgeInsets.all(8),
-decoration: BoxDecoration(
-color: AppColors.primary.withValues(alpha: 0.1),
-shape: BoxShape.circle,
-),
-child: const Icon(Icons.add_rounded, color: AppColors.primary, size: 24),
-),
-const SizedBox(height: 8),
-const Text(
-'Upload',
-style: TextStyle(
-color: AppColors.primary,
-fontSize: 13,
-fontWeight: FontWeight.w700,
-),
-),
-],
-),
-),
-);
-}
+  Widget _buildAddPlaceholder() {
+    return GestureDetector(
+      onTap: _addPhoto,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                color: AppColors.primary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Upload',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildUpgradePrompt(SubscriptionPlan plan) {
     return Container(
@@ -379,11 +419,17 @@ fontWeight: FontWeight.w700,
               children: [
                 Text(
                   'Gallery limit reached!',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
                 ),
                 Text(
                   'Upgrade to Professional for 15 photos.',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -401,8 +447,116 @@ fontWeight: FontWeight.w700,
     );
   }
 
+  Widget _buildMissingPostState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFF),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.photo_library_outlined,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Create a provider post first',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Portfolio photos are attached to your latest provider post. Create or save a provider post first, then upload images here.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _loadCurrentPost,
+                  child: const Text('Retry'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: PrimaryButton(
+                  label: 'Open Post',
+                  onPressed: _openProviderPostPage,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openProviderPostPage() async {
+    await Navigator.pushNamed(context, ProviderPostPage.routeName);
+    await _loadCurrentPost();
+  }
+
+  Future<ProviderPostItem?> _ensureCurrentPostForUpload() async {
+    if (_currentPost != null) return _currentPost;
+    await _loadCurrentPost();
+    if (_currentPost != null) return _currentPost;
+    if (!mounted) return null;
+
+    final shouldOpenPost = await showAppConfirmDialog(
+      context: context,
+      icon: Icons.post_add_rounded,
+      title: 'Provider Post Required',
+      message:
+          'Portfolio photos are saved on your provider post. Create or save a provider post first, then upload photos here.',
+      confirmText: 'Open Post',
+      cancelText: 'Not Now',
+      tone: AppDialogTone.info,
+    );
+    if (shouldOpenPost == true && mounted) {
+      await _openProviderPostPage();
+    }
+    return _currentPost;
+  }
+
+  String _resolveImageExtension(XFile image) {
+    final name = image.name.trim();
+    final source = name.isNotEmpty ? name : image.path;
+    final dotIndex = source.lastIndexOf('.');
+    if (dotIndex < 0 || dotIndex == source.length - 1) {
+      return 'jpg';
+    }
+    return source.substring(dotIndex + 1).toLowerCase();
+  }
+
   Future<void> _addPhoto() async {
-    if (_isUploading || _currentPost == null) return;
+    if (_isUploading) return;
+
+    final post = await _ensureCurrentPostForUpload();
+    if (post == null || !mounted) return;
 
     final picker = ImagePicker();
     try {
@@ -416,27 +570,27 @@ fontWeight: FontWeight.w700,
 
       setState(() => _isUploading = true);
 
-      final bytes = await File(image.path).readAsBytes();
-      final extension = image.path.split('.').last;
-      
+      final bytes = await image.readAsBytes();
+      final extension = _resolveImageExtension(image);
+
       final downloadUrl = await FirebaseStorageService.uploadPortfolioPhoto(
         bytes,
         extension: extension,
       );
 
       if (downloadUrl == null) {
-        throw Exception('Upload failed');
+        throw Exception('Storage upload failed');
       }
 
       final nextPhotos = [..._photos, downloadUrl];
-      
+
       await ProviderPostState.updateProviderPost(
-        postId: _currentPost!.id,
-        category: _currentPost!.category,
-        services: _currentPost!.services,
-        area: _currentPost!.area,
-        details: _currentPost!.details,
-        availableNow: _currentPost!.availableNow,
+        postId: post.id,
+        category: post.category,
+        services: post.services,
+        area: post.area,
+        details: post.details,
+        availableNow: post.availableNow,
         portfolioPhotos: nextPhotos,
       );
 
@@ -444,8 +598,12 @@ fontWeight: FontWeight.w700,
       if (!mounted) return;
       AppToast.success(context, 'Photo added to your gallery!');
     } catch (e) {
+      debugPrint('ProviderPortfolioPage._addPhoto error: $e');
       if (mounted) {
-        AppToast.error(context, 'Unable to upload photo.');
+        AppToast.error(
+          context,
+          'Unable to upload photo. Please check gallery access and try again.',
+        );
       }
     } finally {
       if (mounted) {
@@ -459,9 +617,9 @@ fontWeight: FontWeight.w700,
 
     try {
       setState(() => _isUploading = true);
-      
+
       final nextPhotos = _photos.where((p) => p != url).toList();
-      
+
       await ProviderPostState.updateProviderPost(
         postId: _currentPost!.id,
         category: _currentPost!.category,

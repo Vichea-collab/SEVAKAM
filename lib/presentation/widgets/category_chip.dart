@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/category_utils.dart';
 import '../../domain/entities/category.dart';
 import 'pressable_scale.dart';
@@ -12,19 +13,25 @@ class CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final accent = accentForCategory(category.name);
     final softTint = Color.lerp(accent, Colors.white, 0.86)!;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(rs.radius(24)),
         child: Container(
-          width: 102,
-          padding: const EdgeInsets.fromLTRB(10, 12, 10, 14),
+          width: rs.dimension(96, minFactor: 0.86, maxFactor: 1.02),
+          padding: EdgeInsets.fromLTRB(
+            rs.space(8),
+            rs.space(10),
+            rs.space(8),
+            rs.space(10),
+          ),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(rs.radius(24)),
             border: Border.all(color: accent.withValues(alpha: 0.14)),
             boxShadow: [
               BoxShadow(
@@ -46,19 +53,19 @@ class CategoryChip extends StatelessWidget {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: EdgeInsets.symmetric(vertical: rs.space(8)),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [softTint, accent.withValues(alpha: 0.10)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(rs.radius(18)),
                 ),
                 child: Center(
                   child: Container(
-                    height: 52,
-                    width: 52,
+                    height: rs.dimension(42),
+                    width: rs.dimension(42),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.72),
                       shape: BoxShape.circle,
@@ -66,12 +73,12 @@ class CategoryChip extends StatelessWidget {
                     child: Icon(
                       iconForCategory(category.name),
                       color: accent,
-                      size: 26,
+                      size: rs.icon(20),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              rs.gapH(6),
               Expanded(
                 child: Align(
                   alignment: Alignment.topCenter,
@@ -83,7 +90,7 @@ class CategoryChip extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
-                      fontSize: 13.5,
+                      fontSize: rs.text(11.8),
                       height: 1.18,
                       letterSpacing: -0.1,
                     ),

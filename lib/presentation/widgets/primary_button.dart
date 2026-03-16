@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive.dart';
 import 'pressable_scale.dart';
 
 enum PrimaryButtonTone { primary, success, danger, neutral }
@@ -26,7 +27,8 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(14);
+    final rs = context.rs;
+    final radius = BorderRadius.circular(rs.radius(14));
     final toneColor = _toneColor(tone);
     final enabled = onPressed != null;
     final fillGradient = _fillGradient(tone, enabled: enabled);
@@ -44,8 +46,8 @@ class PrimaryButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (!iconTrailing) ...[
-            Icon(icon, size: 18, color: labelColor),
-            const SizedBox(width: 8),
+            Icon(icon, size: rs.icon(18), color: labelColor),
+            rs.gapW(8),
           ],
           Flexible(
             child: Text(
@@ -55,8 +57,8 @@ class PrimaryButton extends StatelessWidget {
             ),
           ),
           if (iconTrailing) ...[
-            const SizedBox(width: 8),
-            Icon(icon, size: 18, color: labelColor),
+            rs.gapW(8),
+            Icon(icon, size: rs.icon(18), color: labelColor),
           ],
         ],
       );
@@ -73,7 +75,7 @@ class PrimaryButton extends StatelessWidget {
               foregroundColor: labelColor,
               backgroundColor: enabled ? toneColor : const Color(0xFF64748B),
               disabledForegroundColor: Colors.white70,
-              padding: padding ?? const EdgeInsets.symmetric(vertical: 14),
+              padding: padding ?? EdgeInsets.symmetric(vertical: rs.space(14)),
               shape: RoundedRectangleBorder(borderRadius: radius),
               side: BorderSide(
                 color: enabled ? toneColor : const Color(0xFF64748B),
@@ -96,8 +98,8 @@ class PrimaryButton extends StatelessWidget {
                 ? [
                     BoxShadow(
                       color: toneColor.withValues(alpha: 64),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      blurRadius: rs.space(16),
+                      offset: Offset(0, rs.space(6)),
                     ),
                   ]
                 : null,
@@ -110,7 +112,7 @@ class PrimaryButton extends StatelessWidget {
               backgroundColor: Colors.transparent,
               disabledBackgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
-              padding: padding ?? const EdgeInsets.symmetric(vertical: 14),
+              padding: padding ?? EdgeInsets.symmetric(vertical: rs.space(14)),
               shape: RoundedRectangleBorder(borderRadius: radius),
             ),
             child: childLabel,

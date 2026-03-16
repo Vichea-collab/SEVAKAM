@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/order.dart';
 import '../../state/booking_catalog_state.dart';
@@ -26,6 +27,7 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final serviceFieldDefs = BookingCatalogState.bookingFieldsForService(
       widget.draft.serviceName,
@@ -41,49 +43,51 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.lg,
+              padding: EdgeInsets.fromLTRB(
+                rs.space(AppSpacing.lg),
+                rs.space(AppSpacing.lg),
+                rs.space(AppSpacing.lg),
                 0,
               ),
               child: Column(
                 children: [
                   const AppTopBar(title: 'Booking Summary'),
-                  const SizedBox(height: 16),
+                  rs.gapH(16),
                   const BookingStepProgress(
                     currentStep: BookingFlowStep.payment,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            rs.gapH(24),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                padding: EdgeInsets.symmetric(
+                  horizontal: rs.space(AppSpacing.lg),
+                ),
                 children: [
                   // Booking Detail Header Section
                   _SectionHeader(
                     title: 'Booking Details',
                     icon: Icons.assignment_outlined,
                   ),
-                  const SizedBox(height: 12),
+                  rs.gapH(12),
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(rs.radius(24)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          blurRadius: rs.space(20),
+                          offset: Offset(0, rs.space(8)),
                         ),
                       ],
                       border: Border.all(
                         color: AppColors.divider.withValues(alpha: 0.5),
                       ),
                     ),
-                    padding: const EdgeInsets.all(20),
+                    padding: rs.all(20),
                     child: Column(
                       children: [
                         _SummaryDetailRow(
@@ -114,17 +118,17 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  rs.gapH(24),
 
                   // Provider Section
                   _SectionHeader(
                     title: 'Service Provider',
                     icon: Icons.person_outline_rounded,
                   ),
-                  const SizedBox(height: 12),
+                  rs.gapH(12),
                   _ProviderInfoCard(draft: widget.draft),
 
-                  const SizedBox(height: 24),
+                  rs.gapH(24),
 
                   // Service Requirements (Dynamic Fields)
                   if (visibleServiceEntries.isNotEmpty) ...[
@@ -132,16 +136,16 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
                       title: 'Service Requirements',
                       icon: Icons.fact_check_outlined,
                     ),
-                    const SizedBox(height: 12),
+                    rs.gapH(12),
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(rs.radius(24)),
                         border: Border.all(
                           color: AppColors.divider.withValues(alpha: 0.5),
                         ),
                       ),
-                      padding: const EdgeInsets.all(20),
+                      padding: rs.all(20),
                       child: Column(
                         children: [
                           ...visibleServiceEntries.asMap().entries.map((item) {
@@ -166,38 +170,38 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
                     ),
                   ],
 
-                  const SizedBox(height: 40),
+                  rs.gapH(40),
 
                   // Bottom Info Note
                   Center(
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.info_outline_rounded,
                           color: AppColors.primary,
-                          size: 20,
+                          size: rs.icon(20),
                         ),
-                        const SizedBox(height: 8),
+                        rs.gapH(8),
                         Text(
                           "Direct cash payment to provider",
                           style: TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w700,
-                            fontSize: 14,
+                            fontSize: rs.text(14),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        rs.gapH(4),
                         Text(
                           "Pay the service fee after completion",
                           style: TextStyle(
                             color: AppColors.textSecondary,
-                            fontSize: 12,
+                            fontSize: rs.text(12),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  rs.gapH(24),
                 ],
               ),
             ),
@@ -215,7 +219,12 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
             ),
           ],
         ),
-        padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + bottomInset),
+        padding: EdgeInsets.fromLTRB(
+          rs.space(20),
+          rs.space(16),
+          rs.space(20),
+          rs.space(16) + bottomInset,
+        ),
         child: PrimaryButton(
           label: _submitting ? 'Confirming...' : 'Confirm Booking',
           icon: Icons.check_circle_rounded,
@@ -310,10 +319,11 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.primary),
-        const SizedBox(width: 8),
+        Icon(icon, size: rs.icon(18), color: AppColors.primary),
+        rs.gapW(8),
         Text(
           title,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -344,19 +354,20 @@ class _SummaryDetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: EdgeInsets.symmetric(vertical: rs.space(2)),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: rs.all(8),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(rs.radius(10)),
             ),
-            child: Icon(icon, size: 16, color: AppColors.primary),
+            child: Icon(icon, size: rs.icon(16), color: AppColors.primary),
           ),
-          const SizedBox(width: 12),
+          rs.gapW(12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,16 +375,16 @@ class _SummaryDetailRow extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: rs.text(12),
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 2),
+                rs.gapH(2),
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: isSmall ? 14 : 15,
+                    fontSize: rs.text(isSmall ? 14 : 15),
                     color: valueColor ?? AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
@@ -392,8 +403,13 @@ class _SummaryDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Padding(
-      padding: const EdgeInsets.only(left: 44, top: 10, bottom: 10),
+      padding: EdgeInsets.only(
+        left: rs.space(44),
+        top: rs.space(10),
+        bottom: rs.space(10),
+      ),
       child: Divider(
         height: 1,
         thickness: 1,
@@ -410,18 +426,19 @@ class _ProviderInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: rs.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(rs.radius(20)),
         border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: rs.dimension(52),
+            height: rs.dimension(52),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
@@ -433,26 +450,26 @@ class _ProviderInfoCard extends StatelessWidget {
               child: SafeImage(
                 isAvatar: true,
                 source: draft.provider.imagePath,
-                width: 52,
-                height: 52,
+                width: rs.dimension(52),
+                height: rs.dimension(52),
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          rs.gapW(14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   draft.provider.name,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: rs.text(16),
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 2),
+                rs.gapH(2),
                 Text(
                   draft.provider.role,
                   style: const TextStyle(
@@ -465,20 +482,20 @@ class _ProviderInfoCard extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: rs.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFFFF9E6),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(rs.radius(10)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.star_rounded,
-                  size: 16,
+                  size: rs.icon(16),
                   color: Color(0xFFF59E0B),
                 ),
-                const SizedBox(width: 4),
+                rs.gapW(4),
                 Text(
                   draft.provider.rating.toStringAsFixed(1),
                   style: const TextStyle(

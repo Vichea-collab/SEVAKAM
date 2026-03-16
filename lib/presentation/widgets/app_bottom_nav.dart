@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive.dart';
 import '../state/app_role_state.dart';
 import '../state/profile_image_state.dart';
 
@@ -9,11 +10,7 @@ class AppBottomNav extends StatelessWidget {
   final AppBottomTab current;
   final ValueChanged<AppBottomTab>? onTabChanged;
 
-  const AppBottomNav({
-    super.key,
-    required this.current,
-    this.onTabChanged,
-  });
+  const AppBottomNav({super.key, required this.current, this.onTabChanged});
 
   bool _isCurrent(AppBottomTab tab) => current == tab;
 
@@ -28,23 +25,35 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     const accentColor = AppColors.primary;
     final isProvider = AppRoleState.isProvider;
+    final navHeight = rs.dimension(68);
+    final totalHeight = rs.dimension(94);
+    final fabSize = rs.dimension(76);
+    final fabDiamond = rs.dimension(62);
+    final centerGap = rs.dimension(rs.compact ? 68 : 80);
 
     return SizedBox(
-      height: 94 + bottomPadding,
+      height: totalHeight + bottomPadding,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.bottomCenter,
         children: [
           Container(
-            height: 68 + bottomPadding,
-            padding: EdgeInsets.only(bottom: bottomPadding, left: 8, right: 8),
-            decoration: const BoxDecoration(
+            height: navHeight + bottomPadding,
+            padding: EdgeInsets.only(
+              bottom: bottomPadding,
+              left: rs.space(8),
+              right: rs.space(8),
+            ),
+            decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              boxShadow: [
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(rs.radius(20)),
+              ),
+              boxShadow: const [
                 BoxShadow(
                   color: Color(0x1A2D4678),
                   blurRadius: 20,
@@ -72,7 +81,7 @@ class AppBottomNav extends StatelessWidget {
                     accentColor: accentColor,
                   ),
                 ),
-                const SizedBox(width: 80),
+                SizedBox(width: centerGap),
                 Expanded(
                   child: _NavItem(
                     icon: Icons.list_alt_rounded,
@@ -94,37 +103,37 @@ class AppBottomNav extends StatelessWidget {
             ),
           ),
           Positioned(
-            bottom: bottomPadding + 20,
+            bottom: bottomPadding + rs.space(20),
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => _goTo(context, AppBottomTab.post),
               child: SizedBox(
-                width: 76,
-                height: 76,
+                width: fabSize,
+                height: fabSize,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     Transform.rotate(
                       angle: 0.785398, // 45deg: diamond
                       child: Container(
-                        width: 62,
-                        height: 62,
+                        width: fabDiamond,
+                        height: fabDiamond,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [Color(0xFF1E63FF), Color(0xFF3EA2FF)],
                           ),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(rs.radius(16)),
                           border: Border.all(
                             color: Colors.white,
-                            width: 3,
+                            width: rs.space(3),
                           ),
                           boxShadow: [
                             BoxShadow(
                               color: accentColor.withValues(alpha: 0.3),
-                              blurRadius: 18,
-                              offset: const Offset(0, 9),
+                              blurRadius: rs.space(18),
+                              offset: Offset(0, rs.space(9)),
                             ),
                           ],
                         ),
@@ -133,7 +142,7 @@ class AppBottomNav extends StatelessWidget {
                     Icon(
                       isProvider ? Icons.post_add_rounded : Icons.add_rounded,
                       color: Colors.white,
-                      size: isProvider ? 30 : 34,
+                      size: rs.icon(isProvider ? 30 : 34),
                     ),
                   ],
                 ),
@@ -161,13 +170,14 @@ class _ProfileNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final color = selected ? accentColor : AppColors.textSecondary;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(rs.radius(14)),
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 7),
+        padding: EdgeInsets.symmetric(vertical: rs.space(7)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -178,8 +188,8 @@ class _ProfileNavItem extends StatelessWidget {
                 final hasImage = ProfileImageState.hasCustomAvatar;
 
                 return Container(
-                  width: 36,
-                  height: 36,
+                  width: rs.dimension(36),
+                  height: rs.dimension(36),
                   decoration: BoxDecoration(
                     color: selected
                         ? accentColor.withValues(alpha: 0.15)
@@ -195,25 +205,25 @@ class _ProfileNavItem extends StatelessWidget {
                   alignment: Alignment.center,
                   child: hasImage && image != null
                       ? CircleAvatar(
-                          radius: 14,
+                          radius: rs.dimension(14),
                           backgroundColor: AppColors.background,
                           backgroundImage: image,
                         )
                       : Icon(
                           Icons.person_rounded,
-                          size: 24,
+                          size: rs.icon(24),
                           color: color,
                         ),
                 );
               },
             ),
-            const SizedBox(height: 2),
+            rs.gapH(2),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: rs.text(10, minFactor: 0.96, maxFactor: 1.08),
                 height: 1.05,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: color,
@@ -243,19 +253,20 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final color = selected ? accentColor : AppColors.textSecondary;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(rs.radius(14)),
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 7),
+        padding: EdgeInsets.symmetric(vertical: rs.space(7)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: rs.dimension(36),
+              height: rs.dimension(36),
               decoration: BoxDecoration(
                 color: selected
                     ? accentColor.withValues(alpha: 0.15)
@@ -263,15 +274,15 @@ class _NavItem extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: Icon(icon, size: 24, color: color),
+              child: Icon(icon, size: rs.icon(24), color: color),
             ),
-            const SizedBox(height: 2),
+            rs.gapH(2),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: rs.text(10, minFactor: 0.96, maxFactor: 1.08),
                 height: 1.05,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: color,

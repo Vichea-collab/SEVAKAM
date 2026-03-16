@@ -72,15 +72,8 @@ class ProviderPostState {
       pagination.value = result.pagination;
       realtimeActive.value = false;
     } catch (_) {
-      posts.value = const <ProviderPostItem>[];
-      pagination.value = PaginationMeta(
-        page: targetPage,
-        limit: limit,
-        totalItems: 0,
-        totalPages: 0,
-        hasPrevPage: false,
-        hasNextPage: false,
-      );
+      // Keep the existing offers visible when the backend is temporarily
+      // unavailable so users do not think their posts were deleted.
       realtimeActive.value = false;
     } finally {
       loading.value = false;

@@ -1,176 +1,368 @@
-Sevakam Firestore Database Schema
+Sevakam Database Structure
 
-Users Collection
-Path: users/{userId}
+Main database
+- Firestore = main data
+- Firebase Storage = images and documents
+
+Main collections
+
+1. users
+Path
+- users/{uid}
+
+Purpose
+- Main account record for every user
+
+Fields
 - name: String
 - email: String
-- role: String (e.g., 'finder', 'provider', 'admin')
+- role: String
 - photoUrl: String
+- city: String
+- location: String
+- phoneNumber: String
 - lastActiveAt: Timestamp
 - createdAt: Timestamp
 - updatedAt: Timestamp
 
-Sub-collections:
-Notifications
-Path: users/{userId}/notification/{notificationId}
-- type: String [accepted, rejected, incoming order, announcement]
-- title: String
-- body: String
-- refType: String
-- refId: String (e.g., bookingId)
-- isRead: Boolean
-- createdAt: Timestamp
+Subcollections
 
-Settings
-Path: users/{userId}/settings/notification
-- pushEnabled: Boolean
-- orderEnabled: Boolean
-- chatEnabled: Boolean
-- announcementEnabled: Boolean
+users/{uid}/app/settings
+- notifications: Map<String, dynamic>
+- darkMode: Boolean
 
-FCM Tokens
-Path: users/{userId}/fcmTokens/{tokenId}
-- token: String
-- platform: String [android, ios]
-- lastSeenAt: Timestamp
-- createdAt: Timestamp
-
----
-
-Provider Collection
-Path: provider/{userId}
-- bio: String
-- photoUrl: String
-- phoneNumber: String
-- location: GeoPoint
-- city: String
-- serviceId: String
-- serviceName: String
-- serviceImage: String
-- birthday: Timestamp
-- ratingCount: Number
-- ratingSum: Number
-- activeOrder: Number
-- completedOrder: Number
-- createdAt: Timestamp
-
----
-
-Finder Collection
-Path: finder/{userId}
-- photoUrl: String
-- phoneNumber: String
-- birthday: Timestamp
-- location: GeoPoint
-- city: String
-
----
-
-Service Collection
-Path: service/{serviceId}
-- serviceName: String
-- description: String
-- categoryId: String
-- serviceImage: String
-- bookingCount: Number
-- completedCount: Number
-- lastBookedAt: Timestamp
-- isActive: Boolean
-- createdAt: Timestamp
-
----
-
-Category Collection
-Path: category/{categoryId}
-- categoryName: String
-- categoryImage: String
-- isActive: Boolean
-
----
-
-Review Collection
-Path: review/{reviewId}
-- comment: String
-- rating: Number
-- finderId: String
-- finderName: String
-- finderProfile: String
-- providerId: String
-- bookingId: String
-- createdAt: Timestamp
-
----
-
-Booking Collection
-Path: booking/{bookingId}
-- finderId: String
-- providerId: String
-- serviceId: String
-- homeType: String
-- location: GeoPoint
-- city: String
-- bookingStatus: String (e.g., pending, accepted, completed, cancelled)
-- startDate: Timestamp
-- updatedAt: Timestamp
-- createdAt: Timestamp
-
----
-
-Provider Posts Collection
-Path: providerPost/{providerPostId}
-- providerId: String
-- providerName: String
-- providerPfPicture: String
-- caption: String
-- pictureUrl: String
-- isPublic: Boolean
-- createdAt: Timestamp
-
----
-
-Finder Request Posts Collection
-Path: finderRequestPost/{finderRequestPostId}
-- finderId: String
-- finderName: String
-- finderPfPicture: String
-- serviceId: String
-- caption: String
-- image: List<String> (Max: 3)
-- location: GeoPoint
-- city: String
-- status: String [open, assigned, cancelled]
-- bookingId: String (Nullable)
-- assignedToProviderId: String (Nullable)
-- createdAt: Timestamp
-
----
-
-Ads Collection
-Path: ads/{adsId}
-- adsImage: String
-- expiryDate: Timestamp
-- isActive: Boolean
-- createdAt: Timestamp
-
----
-
-Conversation Collection
-Path: conversation/{conversationId}
-- finderId: String
-- providerId: String
+users/{uid}/chats/{chatId}
+- otherUserId: String
+- otherUserName: String
+- otherUserPhotoUrl: String
 - lastMessage: String
 - lastMessageAt: Timestamp
-- lastSenderId: String
-- finderUnreadCount: Number
-- providerUnreadCount: Number
-- isBlocked: Boolean
-- createdAt: Timestamp
+- unreadCount: Number
+- orderId: String
+- userRole: String
 
-Sub-collections:
-Messages
-Path: conversation/{conversationId}/message/{messageId}
+users/{uid}/chats/{chatId}/messages/{messageId}
 - senderId: String
-- type: String [text, image]
+- senderRole: String
 - text: String
 - imageUrl: String
 - createdAt: Timestamp
+- readBy: List<String>
+
+users/{uid}/helpTickets/{ticketId}
+- title: String
+- status: String
+- createdAt: Timestamp
+- updatedAt: Timestamp
+- lastMessage: String
+- lastMessageAt: Timestamp
+- lastMessageSenderRole: String
+
+users/{uid}/helpTickets/{ticketId}/messages/{messageId}
+- senderId: String
+- senderRole: String
+- text: String
+- imageUrl: String
+- createdAt: Timestamp
+
+users/{uid}/addresses/{addressId}
+- label: String
+- address: String
+- city: String
+- latitude: Number
+- longitude: Number
+- isDefault: Boolean
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+2. finders
+Path
+- finders/{uid}
+
+Purpose
+- Extra finder profile data
+
+Fields
+- photoUrl: String
+- city: String
+- location: String
+- phoneNumber: String
+- birthday: Timestamp
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+3. providers
+Path
+- providers/{uid}
+
+Purpose
+- Extra provider profile, KYC, and subscription data
+
+Fields
+- bio: String
+- photoUrl: String
+- phoneNumber: String
+- city: String
+- location: String
+- service: String
+- services: List<String>
+- experienceYears: String
+- serviceArea: String
+- completedOrder: Number
+- ratingCount: Number
+- ratingSum: Number
+- subscriptionTier: String
+- stripeSubscriptionId: String
+- currentPeriodStart: Timestamp
+- currentPeriodEnd: Timestamp
+- cancelAtPeriodEnd: Boolean
+- kycStatus: String
+- kycSubmittedAt: Timestamp
+- kycIdFrontUrl: String
+- kycIdBackUrl: String
+- verified: Boolean
+- blockedDates: List<String>
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+4. categories
+Path
+- categories/{categoryId}
+
+Purpose
+- Service categories
+
+Fields
+- name: String
+- icon: String
+- isActive: Boolean
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+5. services
+Path
+- services/{serviceId}
+
+Purpose
+- Service catalog
+
+Fields
+- name: String
+- categoryId: String
+- categoryName: String
+- imageUrl: String
+- active: Boolean
+- completedCount: Number
+- rating: Number
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+6. finderPosts
+Path
+- finderPosts/{postId}
+
+Purpose
+- Finder request posts
+
+Fields
+- uid: String
+- userName: String
+- profileImage: String
+- category: String
+- service: String
+- title: String
+- description: String
+- imageUrls: List<String>
+- city: String
+- location: String
+- status: String
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+7. providerPosts
+Path
+- providerPosts/{postId}
+
+Purpose
+- Provider offer/public profile posts
+
+Fields
+- uid: String
+- userName: String
+- profileImage: String
+- category: String
+- service: String
+- services: List<String>
+- description: String
+- portfolioPhotos: List<String>
+- city: String
+- location: String
+- ratingCount: Number
+- ratingSum: Number
+- completedOrder: Number
+- subscriptionTier: String
+- verified: Boolean
+- status: String
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+8. orders
+Path
+- orders/{orderId}
+
+Purpose
+- Booking and order records
+
+Fields
+- finderUid: String
+- providerUid: String
+- service: String
+- category: String
+- address: String
+- city: String
+- latitude: Number
+- longitude: Number
+- preferredDate: String
+- preferredTime: String
+- serviceFields: Map<String, dynamic>
+- status: String
+- bookedAt: Timestamp
+- startedAt: Timestamp
+- completedAt: Timestamp
+- cancelledAt: Timestamp
+- totalAmount: Number
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+9. adminPromotions
+Path
+- adminPromotions/{promotionId}
+
+Purpose
+- Admin-managed finder home ads
+
+Fields
+- placement: String
+- badgeLabel: String
+- title: String
+- description: String
+- imageUrl: String
+- ctaLabel: String
+- targetType: String
+- targetValue: String
+- query: String
+- category: String
+- city: String
+- targetRoles: List<String>
+- sortOrder: Number
+- active: Boolean
+- startAt: Timestamp
+- endAt: Timestamp
+- createdByUid: String
+- createdByName: String
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+10. adminBroadcasts
+Path
+- adminBroadcasts/{broadcastId}
+
+Purpose
+- Admin announcements and promo broadcasts
+
+Fields
+- type: String
+- title: String
+- message: String
+- targetRoles: List<String>
+- active: Boolean
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+11. promoCodes
+Path
+- promoCodes/{promoCodeId}
+
+Purpose
+- Promo code campaigns
+
+Fields
+- code: String
+- discountType: String
+- discountValue: Number
+- minSubtotal: Number
+- maxDiscount: Number
+- usageLimit: Number
+- usedCount: Number
+- active: Boolean
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+12. adminUndoActions
+Path
+- adminUndoActions/{undoId}
+
+Purpose
+- Admin undo and audit records
+
+Fields
+- type: String
+- targetId: String
+- reason: String
+- createdByUid: String
+- createdAt: Timestamp
+
+13. adminUsage
+Path
+- adminUsage/{dayKey}
+
+Purpose
+- Admin usage and read-budget counters
+
+Fields
+- dateKey: String
+- reads: Number
+- writes: Number
+- updatedAt: Timestamp
+
+14. admins
+Path
+- admins/{uid}
+
+Purpose
+- Admin profile/access record
+
+Fields
+- email: String
+- name: String
+- role: String
+- createdAt: Timestamp
+- updatedAt: Timestamp
+
+Feature map
+- Auth
+  - users
+- Finder profile
+  - users + finders
+- Provider profile
+  - users + providers
+- Search and browse
+  - categories + services + providerPosts + finderPosts
+- Booking
+  - orders + users/{uid}/addresses
+- Chat
+  - users/{uid}/chats + messages
+- Support
+  - users/{uid}/helpTickets + messages
+- KYC
+  - providers
+- Subscription
+  - providers
+- Home promotions
+  - adminPromotions
+
+Storage folders
+- avatars/
+- portfolio/
+- provider_kyc/
+- promotions/

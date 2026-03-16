@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive.dart';
 import '../widgets/primary_button.dart';
 import 'onboarding_page.dart';
 import 'auth/customer_auth_page.dart';
@@ -13,24 +14,23 @@ class WelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
           // Background accent
           Positioned(
-            top: -100,
-            right: -50,
+            top: -rs.dimension(100),
+            right: -rs.dimension(50),
             child: Container(
-              width: 300,
-              height: 300,
+              width: rs.dimension(300),
+              height: rs.dimension(300),
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [
-                    Color(0x152A62FF),
-                    Color(0x002A62FF),
-                  ],
+                  colors: [Color(0x152A62FF), Color(0x002A62FF)],
                   stops: [0.0, 1.0],
                 ),
               ),
@@ -41,21 +41,23 @@ class WelcomePage extends StatelessWidget {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: rs.symmetric(horizontal: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 40),
+                        rs.gapH(40),
                         // Logo and App Name
                         Row(
                           children: [
                             Container(
-                              height: 48,
-                              width: 48,
-                              padding: const EdgeInsets.all(10),
+                              height: rs.dimension(48),
+                              width: rs.dimension(48),
+                              padding: rs.all(10),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(
+                                  rs.radius(14),
+                                ),
                                 boxShadow: const [
                                   BoxShadow(
                                     color: Color(0x14000000),
@@ -66,50 +68,48 @@ class WelcomePage extends StatelessWidget {
                               ),
                               child: Image.asset('assets/images/logo.png'),
                             ),
-                            const SizedBox(width: 14),
+                            rs.gapW(14),
                             Text(
                               'Sevakam',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
+                              style: Theme.of(context).textTheme.headlineSmall
                                   ?.copyWith(
                                     fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.5,
+                                    letterSpacing: rs.space(0.5),
                                   ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 40),
+                        rs.gapH(40),
                         // Value Proposition
                         Text(
                           'Your Home,\nExpertly Cared For.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineMedium
+                          style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(
-                                fontSize: 36,
+                                fontSize: rs.text(
+                                  rs.compact ? 32 : 36,
+                                  minFactor: 0.96,
+                                  maxFactor: 1.08,
+                                ),
                                 fontWeight: FontWeight.w800,
                                 height: 1.15,
                                 color: AppColors.textPrimary,
                               ),
                         ),
-                        const SizedBox(height: 16),
+                        rs.gapH(16),
                         Text(
                           'Book verified professionals for repairs, cleaning, and all your home service needs in one tap.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyLarge
+                          style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
                                 color: AppColors.textSecondary,
                                 height: 1.5,
-                                fontSize: 16,
+                                fontSize: rs.text(16),
                               ),
                         ),
-                        const SizedBox(height: 40),
+                        rs.gapH(40),
                         // Feature Graphic
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(24),
+                          padding: rs.all(24),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [
@@ -119,7 +119,7 @@ class WelcomePage extends StatelessWidget {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
-                            borderRadius: BorderRadius.circular(24),
+                            borderRadius: BorderRadius.circular(rs.radius(24)),
                             boxShadow: const [
                               BoxShadow(
                                 color: Color(0x332A62FF),
@@ -135,11 +135,17 @@ class WelcomePage extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 4),
+                                      padding: rs.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          rs.radius(8),
+                                        ),
                                       ),
                                       child: Text(
                                         'FAST BOOKING',
@@ -148,12 +154,12 @@ class WelcomePage extends StatelessWidget {
                                             .labelSmall
                                             ?.copyWith(
                                               color: Colors.white,
-                                              letterSpacing: 1.2,
+                                              letterSpacing: rs.space(1.2),
                                               fontWeight: FontWeight.w700,
                                             ),
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
+                                    rs.gapH(12),
                                     Text(
                                       'Professional\nservices on time',
                                       style: Theme.of(context)
@@ -168,10 +174,12 @@ class WelcomePage extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              rs.gapW(16),
                               Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    rs.radius(16),
+                                  ),
                                   boxShadow: const [
                                     BoxShadow(
                                       color: Color(0x26000000),
@@ -181,11 +189,13 @@ class WelcomePage extends StatelessWidget {
                                   ],
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    rs.radius(16),
+                                  ),
                                   child: Image.asset(
                                     'assets/images/plumber_category.jpg',
-                                    height: 80,
-                                    width: 80,
+                                    height: rs.dimension(80),
+                                    width: rs.dimension(80),
                                     fit: BoxFit.cover,
                                   ),
                                 ),
@@ -193,40 +203,42 @@ class WelcomePage extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 32),
+                        rs.gapH(32),
                         // Other Links
                         Text(
                           'Quick Links (Dev)',
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelLarge
+                          style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
-                        const SizedBox(height: 12),
+                        rs.gapH(12),
                         Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
+                          spacing: rs.space(12),
+                          runSpacing: rs.space(12),
                           children: [
                             _QuickLinkChip(
                               label: 'Onboarding',
                               onTap: () => Navigator.pushNamed(
-                                  context, OnboardingPage.routeName),
+                                context,
+                                OnboardingPage.routeName,
+                              ),
                             ),
                             _QuickLinkChip(
                               label: 'Forgot Password',
                               onTap: () => Navigator.pushNamed(
-                                  context, ForgotPasswordFlow.routeName),
+                                context,
+                                ForgotPasswordFlow.routeName,
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 32),
+                        rs.gapH(32),
                       ],
                     ),
                   ),
                 ),
                 // Bottom Action Area
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: rs.all(24),
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
@@ -244,15 +256,19 @@ class WelcomePage extends StatelessWidget {
                         label: 'Continue as Customer',
                         icon: Icons.person_outline_rounded,
                         onPressed: () => Navigator.pushNamed(
-                            context, CustomerAuthPage.routeName),
+                          context,
+                          CustomerAuthPage.routeName,
+                        ),
                       ),
-                      const SizedBox(height: 12),
+                      rs.gapH(12),
                       PrimaryButton(
                         label: 'Join as a Provider',
                         isOutlined: true,
                         icon: Icons.work_outline_rounded,
                         onPressed: () => Navigator.pushNamed(
-                            context, ProviderAuthPage.routeName),
+                          context,
+                          ProviderAuthPage.routeName,
+                        ),
                       ),
                     ],
                   ),
@@ -274,22 +290,24 @@ class _QuickLinkChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(rs.radius(20)),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: rs.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.divider),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(rs.radius(20)),
           color: const Color(0xFFF8FAFC),
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

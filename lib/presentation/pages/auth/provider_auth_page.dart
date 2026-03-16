@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/location_options.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
+import '../../../core/utils/responsive.dart';
 import '../../state/app_role_state.dart';
 import '../../state/auth_state.dart';
+import '../../widgets/auth_social_button.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/primary_button.dart';
 import 'forgot_password_flow.dart';
@@ -20,26 +23,6 @@ class ProviderAuthPage extends StatefulWidget {
 }
 
 class _ProviderAuthPageState extends State<ProviderAuthPage> {
-  static const String _defaultCity = 'Phnom Penh';
-  static const Map<String, List<String>> _cityDistrictOptions = {
-    'Phnom Penh': [
-      'Chamkar Mon',
-      'Daun Penh',
-      '7 Makara',
-      'Toul Kork',
-      'Sen Sok',
-      'Mean Chey',
-      'Chbar Ampov',
-      'Russey Keo',
-      'Por Senchey',
-      'Dangkao',
-      'Prek Pnov',
-      'Chroy Changvar',
-      'Boeng Keng Kang',
-      'Kamboul',
-    ],
-  };
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -58,14 +41,13 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
   bool _obscureConfirmPassword = true;
 
   List<String> get _districtsForSelectedCity {
-    final city = _cityController.text.trim();
-    return _cityDistrictOptions[city] ?? const <String>[];
+    return LocationOptions.districtsForCity(_cityController.text.trim());
   }
 
   @override
   void initState() {
     super.initState();
-    _cityController.text = _defaultCity;
+    _cityController.text = LocationOptions.defaultCity;
   }
 
   @override
@@ -83,20 +65,22 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: EdgeInsets.all(rs.space(AppSpacing.lg)),
           child: Column(
             children: [
               const _AuthHeader(
                 title: 'Join as a Provider',
                 subtitle: 'Offer as a provider and grow faster',
               ),
-              const SizedBox(height: AppSpacing.md),
+              SizedBox(height: rs.space(AppSpacing.md)),
               _AuthToggle(
                 leftLabel: 'Become a Customer',
-                rightLabel: 'Become a Service Provider',
+                rightLabel: 'Become a Provider',
                 isLeftActive: false,
                 onTapLeft: () {
                   AppRoleState.setProvider(false);
@@ -106,10 +90,10 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                   );
                 },
               ),
-              const SizedBox(height: AppSpacing.md),
+              SizedBox(height: rs.space(AppSpacing.md)),
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  padding: EdgeInsets.all(rs.space(AppSpacing.lg)),
                   child: Column(
                     children: [
                       Text(
@@ -118,22 +102,22 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                             : 'Welcome Back',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: rs.space(4)),
                       Text(
                         'Enter your details below',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      SizedBox(height: rs.space(AppSpacing.md)),
                       CircleAvatar(
-                        radius: 30,
+                        radius: rs.dimension(30),
                         backgroundColor: AppColors.primary,
-                        child: const Icon(
+                        child: Icon(
                           Icons.badge_outlined,
-                          size: 28,
+                          size: rs.icon(28),
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      SizedBox(height: rs.space(AppSpacing.md)),
                       Form(
                         key: _formKey,
                         child: Column(
@@ -151,7 +135,7 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: rs.space(12)),
                                   Expanded(
                                     child: AppTextField(
                                       hint: 'Last Name',
@@ -162,7 +146,7 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: rs.space(12)),
                               AppTextField(
                                 hint: 'Phone Number',
                                 controller: _phoneController,
@@ -170,7 +154,7 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                                 textInputAction: TextInputAction.next,
                                 validator: _validatePhone,
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: rs.space(12)),
                             ],
                             AppTextField(
                               hint: 'Enter Your Email Address',
@@ -180,7 +164,7 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                               textInputAction: TextInputAction.next,
                               validator: _validateEmail,
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: rs.space(12)),
                             AppTextField(
                               hint: 'Enter Your Password',
                               controller: _passwordController,
@@ -200,7 +184,7 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                               validator: _validatePassword,
                             ),
                             if (_isSignUp) ...[
-                              const SizedBox(height: 12),
+                              SizedBox(height: rs.space(12)),
                               AppTextField(
                                 hint: 'Re-Enter Your Password',
                                 controller: _confirmPasswordController,
@@ -219,7 +203,7 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                                 ),
                                 validator: _validateConfirmPassword,
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: rs.space(12)),
                               Row(
                                 children: [
                                   Expanded(
@@ -232,7 +216,7 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: rs.space(12)),
                                   Expanded(
                                     child: AppTextField(
                                       hint: 'Select your District',
@@ -251,7 +235,7 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      SizedBox(height: rs.space(AppSpacing.md)),
                       PrimaryButton(
                         label: _authLoading
                             ? (_isSignUp ? 'Signing up...' : 'Signing in...')
@@ -259,7 +243,7 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                         onPressed: _authLoading ? null : _submitEmailAuth,
                       ),
                       if (!_isSignUp) ...[
-                        const SizedBox(height: 12),
+                        SizedBox(height: rs.space(12)),
                         TextButton(
                           onPressed: () => Navigator.pushNamed(
                             context,
@@ -268,27 +252,35 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
                           child: const Text('Forgot Your Password?'),
                         ),
                       ],
-                      const SizedBox(height: AppSpacing.md),
+                      SizedBox(height: rs.space(AppSpacing.md)),
                       Row(
-                        children: const [
-                          Expanded(child: Divider()),
+                        children: [
+                          const Expanded(child: Divider()),
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: Text('Or Continue With'),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: rs.space(8),
+                            ),
+                            child: Text(
+                              'Or Continue With',
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          Expanded(child: Divider()),
+                          const Expanded(child: Divider()),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.md),
-                      _SocialButton(
+                      SizedBox(height: rs.space(AppSpacing.md)),
+                      AuthSocialButton(
                         label: 'Continue with Google',
-                        borderColor: const Color(0xFFE8EAED),
                         iconAsset: 'assets/images/google_icon.png',
-                        onPressed: _googleLoading ? null : _continueWithGoogle,
+                        isLoading: _googleLoading,
+                        onPressed: _continueWithGoogle,
                       ),
-                      const SizedBox(height: AppSpacing.md),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      SizedBox(height: rs.space(AppSpacing.md)),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: rs.space(4),
+                        runSpacing: rs.space(4),
                         children: [
                           Text(
                             _isSignUp
@@ -390,7 +382,7 @@ class _ProviderAuthPageState extends State<ProviderAuthPage> {
 
   Future<void> _pickDistrict() async {
     if (_cityController.text.trim().isEmpty) {
-      _cityController.text = _defaultCity;
+      _cityController.text = LocationOptions.defaultCity;
     }
 
     final options = _districtsForSelectedCity;
@@ -514,28 +506,34 @@ class _AuthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     return Row(
       children: [
         Container(
-          height: 52,
-          width: 52,
+          height: rs.dimension(52),
+          width: rs.dimension(52),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [AppColors.primary, AppColors.accent],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(rs.radius(16)),
           ),
-          child: const Icon(Icons.store_mall_directory, color: Colors.white),
+          child: Icon(
+            Icons.store_mall_directory,
+            color: Colors.white,
+            size: rs.icon(24),
+          ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: rs.space(12)),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 4),
+              SizedBox(height: rs.space(4)),
               Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
             ],
           ),
@@ -560,76 +558,46 @@ class _AuthToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        TextButton(
-          onPressed: onTapLeft,
-          child: Text(
-            leftLabel,
-            style: TextStyle(
-              color: isLeftActive ? AppColors.primary : AppColors.textSecondary,
+        Expanded(
+          child: TextButton(
+            onPressed: onTapLeft,
+            child: Text(
+              leftLabel,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: rs.text(13, minFactor: 0.96, maxFactor: 1.0),
+                color: isLeftActive
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
+              ),
             ),
           ),
         ),
-        TextButton(
-          onPressed: () {},
-          child: Text(
-            rightLabel,
-            style: TextStyle(
-              color: !isLeftActive
-                  ? AppColors.primary
-                  : AppColors.textSecondary,
+        SizedBox(width: rs.space(8)),
+        Expanded(
+          child: TextButton(
+            onPressed: () {},
+            child: Text(
+              rightLabel,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: rs.text(13, minFactor: 0.96, maxFactor: 1.0),
+                color: !isLeftActive
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
+              ),
             ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final String label;
-  final Color borderColor;
-  final String? iconAsset;
-  final VoidCallback? onPressed;
-
-  const _SocialButton({
-    required this.label,
-    required this.borderColor,
-    this.iconAsset,
-    this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        side: BorderSide(color: borderColor),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (iconAsset != null)
-            Container(
-              height: 20,
-              width: 20,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.asset(iconAsset!, fit: BoxFit.cover),
-              ),
-            ),
-          const SizedBox(width: 8),
-          Text(label),
-        ],
-      ),
     );
   }
 }

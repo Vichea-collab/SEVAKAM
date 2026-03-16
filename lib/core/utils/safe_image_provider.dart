@@ -8,19 +8,32 @@ final Uint8List _transparentPixel = base64Decode(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
 );
 
-ImageProvider safeImageProvider(String? source) {
-  if (source == null || source.trim().isEmpty) {
-    return MemoryImage(_transparentPixel);
-  }
-
+String _sanitizeImageSource(String source) {
   String trimmed = source.trim();
-  // Remove potential surrounding quotes from backend strings
   if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
     trimmed = trimmed.substring(1, trimmed.length - 1).trim();
   }
   if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
     trimmed = trimmed.substring(1, trimmed.length - 1).trim();
   }
+  if (trimmed.isEmpty) return '';
+  if (trimmed.startsWith('//')) {
+    trimmed = 'https:$trimmed';
+  } else if (trimmed.toLowerCase().startsWith('www.')) {
+    trimmed = 'https://$trimmed';
+  }
+  if (trimmed.contains(' ')) {
+    trimmed = Uri.encodeFull(trimmed);
+  }
+  return trimmed;
+}
+
+ImageProvider safeImageProvider(String? source) {
+  if (source == null || source.trim().isEmpty) {
+    return MemoryImage(_transparentPixel);
+  }
+
+  final trimmed = _sanitizeImageSource(source);
 
   if (trimmed.isEmpty) {
     return MemoryImage(_transparentPixel);
@@ -44,12 +57,9 @@ ImageProvider safeImageProvider(String? source) {
   final lowerTrimmed = trimmed.toLowerCase();
   if (lowerTrimmed.startsWith('http://') ||
       lowerTrimmed.startsWith('https://') ||
-      lowerTrimmed.startsWith('//')) {
-    String url = trimmed;
-    if (url.startsWith('//')) {
-      url = 'https:$url';
-    }
-    return CachedNetworkImageProvider(url);
+      lowerTrimmed.startsWith('//') ||
+      lowerTrimmed.startsWith('www.')) {
+    return CachedNetworkImageProvider(trimmed);
   }
 
   // Check if it's an explicit network URL
@@ -114,13 +124,7 @@ class SafeImage extends StatelessWidget {
       return _errorWidget(context);
     }
 
-    // Remove potential surrounding quotes from backend strings
-    if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-      trimmed = trimmed.substring(1, trimmed.length - 1).trim();
-    }
-    if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
-      trimmed = trimmed.substring(1, trimmed.length - 1).trim();
-    }
+    trimmed = _sanitizeImageSource(trimmed);
 
     if (trimmed.toLowerCase().startsWith('data:image')) {
       try {
@@ -144,7 +148,8 @@ class SafeImage extends StatelessWidget {
     bool isNetwork =
         lowerTrimmed.startsWith('http://') ||
         lowerTrimmed.startsWith('https://') ||
-        lowerTrimmed.startsWith('//');
+        lowerTrimmed.startsWith('//') ||
+        lowerTrimmed.startsWith('www.');
 
     String url = trimmed;
 
@@ -175,9 +180,6 @@ class SafeImage extends StatelessWidget {
     }
 
     if (isNetwork) {
-      if (url.startsWith('//')) {
-        url = 'https:$url';
-      }
       return CachedNetworkImage(
         imageUrl: url,
         width: width,

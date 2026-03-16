@@ -153,6 +153,27 @@ class AdminRemoteDataSource {
     );
   }
 
+  Future<AdminPage<Map<String, dynamic>>> fetchPromotions({
+    int page = 1,
+    int limit = defaultPageSize,
+    String query = '',
+    String placement = '',
+    String targetType = '',
+    String status = '',
+  }) {
+    return _fetchPaginated(
+      '/api/admin/promotions',
+      page: page,
+      limit: limit,
+      query: {
+        if (query.trim().isNotEmpty) 'q': query.trim(),
+        if (placement.trim().isNotEmpty) 'placement': placement.trim(),
+        if (targetType.trim().isNotEmpty) 'targetType': targetType.trim(),
+        if (status.trim().isNotEmpty) 'status': status.trim(),
+      },
+    );
+  }
+
   Future<AdminPage<Map<String, dynamic>>> fetchBroadcasts({
     int page = 1,
     int limit = defaultPageSize,
@@ -261,6 +282,61 @@ class AdminRemoteDataSource {
     final response = await _apiClient.patchJson(
       '/api/admin/services/${Uri.encodeComponent(serviceId)}/active',
       body: {'active': active, 'reason': reason},
+    );
+    return _safeMap(response['data']);
+  }
+
+  Future<Map<String, dynamic>> createPromotion({
+    required String placement,
+    required String badgeLabel,
+    required String title,
+    required String description,
+    required String imageUrl,
+    required String ctaLabel,
+    required String targetType,
+    required String targetValue,
+    required List<String> targetRoles,
+    String query = '',
+    String category = '',
+    String city = '',
+    int sortOrder = 0,
+    bool active = true,
+    String? startAtIso,
+    String? endAtIso,
+  }) async {
+    final body = <String, dynamic>{
+      'placement': placement,
+      'badgeLabel': badgeLabel,
+      'title': title,
+      'description': description,
+      'imageUrl': imageUrl,
+      'ctaLabel': ctaLabel,
+      'targetType': targetType,
+      'targetValue': targetValue,
+      'targetRoles': targetRoles,
+      'query': query,
+      'category': category,
+      'city': city,
+      'sortOrder': sortOrder,
+      'active': active,
+    };
+    if (startAtIso != null && startAtIso.trim().isNotEmpty) {
+      body['startAt'] = startAtIso.trim();
+    }
+    if (endAtIso != null && endAtIso.trim().isNotEmpty) {
+      body['endAt'] = endAtIso.trim();
+    }
+    final response = await _apiClient.postJson('/api/admin/promotions', body: body);
+    return _safeMap(response['data']);
+  }
+
+  Future<Map<String, dynamic>> updatePromotionActive({
+    required String promotionId,
+    required bool active,
+  }) async {
+    final response = await _apiClient.patchJson(
+      '/api/admin/promotions/${Uri.encodeComponent(promotionId)}/active',
+      body: {'active': active},
     );
     return _safeMap(response['data']);
   }

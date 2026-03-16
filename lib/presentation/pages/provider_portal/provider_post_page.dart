@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/constants/location_options.dart';
 import 'package:servicefinder/core/constants/app_spacing.dart';
 import 'package:servicefinder/core/utils/app_toast.dart';
 import 'package:servicefinder/domain/entities/provider_portal.dart';
@@ -26,11 +27,18 @@ class ProviderPostPage extends StatefulWidget {
 class _ProviderPostPageState extends State<ProviderPostPage> {
   late String _selectedCategory;
   final Set<String> _selectedServices = <String>{};
-  final _areaController = TextEditingController(text: 'Phnom Penh, Cambodia');
+  final _cityController = TextEditingController(
+    text: LocationOptions.defaultCity,
+  );
+  final _districtController = TextEditingController();
+  final _areaController = TextEditingController();
   final _detailsController = TextEditingController();
   String? _editingPostId;
   bool _availableNow = true;
   bool _posting = false;
+
+  bool get _isStandaloneRoute =>
+      ModalRoute.of(context)?.settings.name == ProviderPostPage.routeName;
 
   InputDecoration _fieldDecoration({String? hintText}) {
     return InputDecoration(
@@ -64,9 +72,15 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
   void dispose() {
     CatalogState.categories.removeListener(_syncSelectionFromCatalog);
     CatalogState.services.removeListener(_syncSelectionFromCatalog);
+    _cityController.dispose();
+    _districtController.dispose();
     _areaController.dispose();
     _detailsController.dispose();
     super.dispose();
+  }
+
+  List<String> get _districtsForSelectedCity {
+    return LocationOptions.districtsForCity(_cityController.text.trim());
   }
 
   void _syncSelectionFromCatalog() {
@@ -135,7 +149,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
               AppTopBar(
                 title: 'Post',
                 showBack: true,
-                onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
+                onBack: _handleBackNavigation,
                 actions: [
                   TextButton.icon(
                     onPressed: _openManageSheet,
@@ -193,11 +207,9 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                               ),
                               const SizedBox(height: 8),
                               _FieldLabel(label: 'Service area*'),
-                              TextField(
-                                controller: _areaController,
-                                decoration: _fieldDecoration(
-                                  hintText: 'Example: Toul Kork, Phnom Penh',
-                                ),
+                              _PickerField(
+                                label: _selectedDistrictLabel,
+                                onTap: _pickDistrict,
                               ),
                               const SizedBox(height: 8),
                               SwitchListTile(
@@ -253,6 +265,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
   }
 
   Future<void> _submit() async {
+    _syncAreaFromDistrict();
     if (_selectedCategory.isEmpty ||
         _selectedServices.isEmpty ||
         _areaController.text.trim().isEmpty ||
@@ -294,10 +307,14 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
         success: true,
         title: editingPostId == null ? 'Post Published' : 'Post Updated',
         message: successMessage,
-        actionLabel: 'Go to Home',
+        actionLabel: _isStandaloneRoute ? 'Back' : 'Go to Home',
       );
       if (!mounted) return;
-      MainShellPage.activeTab.value = AppBottomTab.home;
+      if (_isStandaloneRoute) {
+        Navigator.pop(context, true);
+      } else {
+        MainShellPage.activeTab.value = AppBottomTab.home;
+      }
     } catch (error) {
       if (!mounted) return;
       await _showPostSubmitResultSheet(
@@ -311,6 +328,14 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
         setState(() => _posting = false);
       }
     }
+  }
+
+  void _handleBackNavigation() {
+    if (_isStandaloneRoute && Navigator.of(context).canPop()) {
+      Navigator.pop(context);
+      return;
+    }
+    MainShellPage.activeTab.value = AppBottomTab.home;
   }
 
   Future<void> _showPostSubmitResultSheet({
@@ -436,6 +461,8 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
       _selectedServices
         ..clear()
         ..addAll(post.serviceList.toSet());
+      _cityController.text = LocationOptions.defaultCity;
+      _districtController.text = LocationOptions.districtFromArea(post.area);
       _areaController.text = post.area;
       _detailsController.text = post.details;
       _availableNow = post.availableNow;
@@ -517,6 +544,45 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
       _selectedServices
         ..clear()
         ..addAll(picked);
+    });
+  }
+
+  String get _selectedDistrictLabel {
+    final district = _districtController.text.trim();
+    return district.isEmpty ? 'Select district' : district;
+  }
+
+  void _syncAreaFromDistrict() {
+    final district = _districtController.text.trim();
+    _areaController.text = district.isEmpty
+        ? ''
+        : LocationOptions.areaFromDistrict(
+            district,
+            city: _cityController.text.trim(),
+          );
+  }
+
+  Future<void> _pickDistrict() async {
+    if (_cityController.text.trim().isEmpty) {
+      _cityController.text = LocationOptions.defaultCity;
+    }
+
+    final options = _districtsForSelectedCity;
+    if (options.isEmpty) {
+      AppToast.warning(context, 'No district options available for this city.');
+      return;
+    }
+
+    final picked = await _showOptionSheet<String>(
+      title: 'Select service district',
+      options: options,
+      selected: _districtController.text.trim(),
+      labelBuilder: (item) => item,
+    );
+    if (picked == null) return;
+    setState(() {
+      _districtController.text = picked;
+      _syncAreaFromDistrict();
     });
   }
 

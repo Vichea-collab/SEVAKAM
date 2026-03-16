@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/location_options.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_calendar_picker.dart';
 import '../../../core/utils/app_toast.dart';
@@ -193,9 +194,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                     const SizedBox(height: 10),
                     _LabeledField(
-                      label: 'City',
-                      hint: 'Enter city',
+                      label: 'City / District',
+                      hint: 'Select district',
                       controller: _cityController,
+                      readOnly: true,
+                      onTap: _pickDistrict,
+                      suffixIcon: Icons.keyboard_arrow_down,
                     ),
                     if (_isProvider) ...[
                       const SizedBox(height: 10),
@@ -332,6 +336,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _dobController.text = _formatDob(picked);
   }
 
+  Future<void> _pickDistrict() async {
+    final options = LocationOptions.districtsForCity(
+      LocationOptions.defaultCity,
+    );
+    if (options.isEmpty) {
+      AppToast.warning(context, 'No district options available for this city.');
+      return;
+    }
+
+    final picked = await _showOptionSheet(
+      title: 'Select your district',
+      options: options,
+      selected: LocationOptions.districtFromArea(_cityController.text),
+    );
+    if (picked == null) return;
+    setState(() {
+      _cityController.text = LocationOptions.areaFromDistrict(picked);
+    });
+  }
+
   DateTime? _tryParseDob(String raw) {
     final value = raw.trim();
     if (value.isEmpty) return null;
@@ -360,6 +384,62 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final month = value.month.toString().padLeft(2, '0');
     final year = value.year.toString().padLeft(4, '0');
     return '$day/$month/$year';
+  }
+
+  Future<String?> _showOptionSheet({
+    required String title,
+    required List<String> options,
+    required String selected,
+  }) {
+    return showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final option = options[index];
+                      final active = option == selected;
+                      return ListTile(
+                        title: Text(option),
+                        trailing: active
+                            ? const Icon(
+                                Icons.check_circle,
+                                color: AppColors.primary,
+                              )
+                            : null,
+                        onTap: () => Navigator.pop(context, option),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _saveProfile() async {

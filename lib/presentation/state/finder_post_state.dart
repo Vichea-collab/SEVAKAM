@@ -72,15 +72,8 @@ class FinderPostState {
       pagination.value = result.pagination;
       realtimeActive.value = false;
     } catch (_) {
-      posts.value = const <FinderPostItem>[];
-      pagination.value = PaginationMeta(
-        page: targetPage,
-        limit: limit,
-        totalItems: 0,
-        totalPages: 0,
-        hasPrevPage: false,
-        hasNextPage: false,
-      );
+      // Keep the existing posts visible when the backend is temporarily
+      // unavailable so users do not think their requests were deleted.
       realtimeActive.value = false;
     } finally {
       loading.value = false;
@@ -217,8 +210,10 @@ class FinderPostState {
   static List<FinderPostItem> _sortFinderPosts(List<FinderPostItem> source) {
     final sorted = List<FinderPostItem>.from(source);
     sorted.sort((a, b) {
-      final right = b.updatedAt ?? b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-      final left = a.updatedAt ?? a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final right =
+          b.updatedAt ?? b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final left =
+          a.updatedAt ?? a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       final byTime = right.compareTo(left);
       if (byTime != 0) return byTime;
       return a.id.compareTo(b.id);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/safe_image_provider.dart';
 import '../../domain/entities/service.dart';
 import 'pressable_scale.dart';
@@ -8,26 +9,25 @@ class ServiceCard extends StatelessWidget {
   final ServiceItem item;
   final VoidCallback? onTap;
 
-  const ServiceCard({
-    super.key,
-    required this.item,
-    this.onTap,
-  });
+  const ServiceCard({super.key, required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(rs.radius(20)),
         child: Container(
-          width: 200,
-          padding: const EdgeInsets.all(12),
+          width: rs.dimension(200, minFactor: 0.8, maxFactor: 1.05),
+          padding: rs.all(12),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+            borderRadius: BorderRadius.circular(rs.radius(20)),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
@@ -45,7 +45,7 @@ class ServiceCard extends StatelessWidget {
                     tag: 'service-${item.title}',
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(rs.radius(16)),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.08),
@@ -55,10 +55,10 @@ class ServiceCard extends StatelessWidget {
                         ],
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(rs.radius(16)),
                         child: SafeImage(
                           source: item.imagePath,
-                          height: 110,
+                          height: rs.dimension(110),
                           width: double.infinity,
                           fit: BoxFit.cover,
                         ),
@@ -69,13 +69,13 @@ class ServiceCard extends StatelessWidget {
                     left: 10,
                     top: 10,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: rs.space(10),
+                        vertical: rs.space(5),
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(rs.radius(10)),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.primary.withValues(alpha: 0.3),
@@ -97,7 +97,7 @@ class ServiceCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              rs.gapH(14),
               Text(
                 item.title,
                 maxLines: 1,
@@ -107,11 +107,15 @@ class ServiceCard extends StatelessWidget {
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 10),
+              rs.gapH(10),
               Row(
                 children: [
-                  const Icon(Icons.star_rounded, size: 18, color: Color(0xFFF59E0B)),
-                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.star_rounded,
+                    size: rs.icon(18),
+                    color: const Color(0xFFF59E0B),
+                  ),
+                  rs.gapW(4),
                   Text(
                     item.rating.toStringAsFixed(1),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -121,14 +125,14 @@ class ServiceCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: rs.all(6),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(rs.radius(10)),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_forward_rounded,
-                      size: 16,
+                      size: rs.icon(16),
                       color: AppColors.primary,
                     ),
                   ),

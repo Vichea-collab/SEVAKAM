@@ -172,6 +172,31 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
+  Future<AdminPage<AdminPromotionRow>> fetchPromotions({
+    int page = 1,
+    int limit = 10,
+    String query = '',
+    String placement = '',
+    String targetType = '',
+    String status = '',
+  }) async {
+    final result = await _remoteDataSource.fetchPromotions(
+      page: page,
+      limit: limit,
+      query: query,
+      placement: placement,
+      targetType: targetType,
+      status: status,
+    );
+    return AdminPage(
+      items: result.items
+          .map(AdminPromotionRow.fromMap)
+          .toList(growable: false),
+      pagination: result.pagination,
+    );
+  }
+
+  @override
   Future<AdminPage<AdminBroadcastRow>> fetchBroadcasts({
     int page = 1,
     int limit = 10,
@@ -301,6 +326,58 @@ class AdminRepositoryImpl implements AdminRepository {
       serviceId: serviceId,
       active: active,
       reason: reason,
+    );
+    return AdminActionResult.fromMap(row);
+  }
+
+  @override
+  Future<AdminPromotionRow> createPromotion({
+    required String placement,
+    required String badgeLabel,
+    required String title,
+    required String description,
+    required String imageUrl,
+    required String ctaLabel,
+    required String targetType,
+    required String targetValue,
+    required List<String> targetRoles,
+    String query = '',
+    String category = '',
+    String city = '',
+    int sortOrder = 0,
+    bool active = true,
+    String? startAtIso,
+    String? endAtIso,
+  }) async {
+    final row = await _remoteDataSource.createPromotion(
+      placement: placement,
+      badgeLabel: badgeLabel,
+      title: title,
+      description: description,
+      imageUrl: imageUrl,
+      ctaLabel: ctaLabel,
+      targetType: targetType,
+      targetValue: targetValue,
+      targetRoles: targetRoles,
+      query: query,
+      category: category,
+      city: city,
+      sortOrder: sortOrder,
+      active: active,
+      startAtIso: startAtIso,
+      endAtIso: endAtIso,
+    );
+    return AdminPromotionRow.fromMap(row);
+  }
+
+  @override
+  Future<AdminActionResult> updatePromotionActive({
+    required String promotionId,
+    required bool active,
+  }) async {
+    final row = await _remoteDataSource.updatePromotionActive(
+      promotionId: promotionId,
+      active: active,
     );
     return AdminActionResult.fromMap(row);
   }

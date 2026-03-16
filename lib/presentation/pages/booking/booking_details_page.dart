@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_calendar_picker.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/entities/provider.dart';
@@ -106,6 +107,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final draft = widget.draft.copyWith(
       provider: _currentProvider,
@@ -120,20 +122,20 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.lg,
-            80,
+          padding: EdgeInsets.fromLTRB(
+            rs.space(AppSpacing.lg),
+            rs.space(AppSpacing.lg),
+            rs.space(AppSpacing.lg),
+            rs.dimension(80),
           ),
           child: ListView(
             children: [
               AppTopBar(title: draft.categoryName),
-              const SizedBox(height: 12),
+              rs.gapH(12),
               const BookingStepProgress(currentStep: BookingFlowStep.details),
-              const SizedBox(height: 12),
+              rs.gapH(12),
               _ProviderCard(draft: draft, loading: _refreshingProvider),
-              const SizedBox(height: 16),
+              rs.gapH(16),
               Text(
                 'Select Service',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -141,7 +143,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 8),
+              rs.gapH(8),
               _PickerField(
                 label: _selectedService.isEmpty
                     ? 'No available services'
@@ -152,7 +154,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                     : () => _pickService(_allAvailableServices),
               ),
               if (_serviceError != null) ...[
-                const SizedBox(height: 8),
+                rs.gapH(8),
                 Text(
                   _serviceError!,
                   style: Theme.of(
@@ -160,9 +162,9 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                   ).textTheme.bodyMedium?.copyWith(color: AppColors.danger),
                 ),
               ],
-              const SizedBox(height: 16),
+              rs.gapH(16),
               _SectionHeader(title: 'Booking Schedule'),
-              const SizedBox(height: 8),
+              rs.gapH(8),
               Row(
                 children: [
                   Expanded(
@@ -173,7 +175,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                       onTap: _pickDate,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  rs.gapW(10),
                   Expanded(
                     child: _PickerField(
                       label: _preferredTime,
@@ -184,7 +186,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              rs.gapH(16),
             ],
           ),
         ),
@@ -196,7 +198,12 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
         ),
         child: SafeArea(
           top: false,
-          minimum: EdgeInsets.fromLTRB(18, 10, 18, 14 + bottomInset),
+          minimum: EdgeInsets.fromLTRB(
+            rs.space(18),
+            rs.space(10),
+            rs.space(18),
+            rs.space(14) + bottomInset,
+          ),
           child: Row(
             children: [
               Expanded(
@@ -425,11 +432,12 @@ class _ProviderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: rs.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(rs.radius(14)),
         border: Border.all(color: AppColors.divider),
       ),
       child: Row(
@@ -437,8 +445,8 @@ class _ProviderCard extends StatelessWidget {
           Stack(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: rs.dimension(36),
+                height: rs.dimension(36),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -450,8 +458,8 @@ class _ProviderCard extends StatelessWidget {
                   child: SafeImage(
                     isAvatar: true,
                     source: draft.provider.imagePath,
-                    width: 36,
-                    height: 36,
+                    width: rs.dimension(36),
+                    height: rs.dimension(36),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -467,7 +475,7 @@ class _ProviderCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(width: 10),
+          rs.gapW(10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,8 +488,12 @@ class _ProviderCard extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.star, size: 14, color: Color(0xFFF59E0B)),
-                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.star,
+                      size: rs.icon(14),
+                      color: const Color(0xFFF59E0B),
+                    ),
+                    rs.gapW(4),
                     Text(
                       draft.provider.rating.toStringAsFixed(1),
                       style: Theme.of(context).textTheme.bodyMedium,
@@ -535,31 +547,32 @@ class _PickerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(rs.radius(14)),
       onTap: onTap,
       child: Ink(
         padding: EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: compact ? 12 : 14,
+          horizontal: rs.space(12),
+          vertical: compact ? rs.space(12) : rs.space(14),
         ),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(rs.radius(14)),
           border: Border.all(color: AppColors.divider),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
               color: Color(0x0A0F172A),
-              blurRadius: 12,
-              offset: Offset(0, 4),
+              blurRadius: rs.space(12),
+              offset: Offset(0, rs.space(4)),
             ),
           ],
         ),
         child: Row(
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
+              Icon(icon, size: rs.icon(18), color: AppColors.primary),
+              rs.gapW(8),
             ],
             Expanded(
               child: Text(
@@ -571,10 +584,11 @@ class _PickerField extends StatelessWidget {
                 ).textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
               ),
             ),
-            const SizedBox(width: 8),
-            const Icon(
+            rs.gapW(8),
+            Icon(
               Icons.keyboard_arrow_down_rounded,
               color: AppColors.textSecondary,
+              size: rs.icon(24),
             ),
           ],
         ),

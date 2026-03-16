@@ -11,7 +11,7 @@
       "ios": {
         "default": {
           "projectId": "sevakam-88825",
-          "appId": "1:219402736520:ios:38ff562d18b6a9a9a7203d",
+          "appId": "1:219402736520:ios:6024b3316d1a86bda7203d",
           "uploadDebugSymbols": false,
           "fileOutput": "ios/Runner/GoogleService-Info.plist"
         }

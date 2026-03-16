@@ -7,6 +7,7 @@ import '../core/constants/app_colors.dart';
 import '../core/firebase/firebase_bootstrap.dart';
 import '../core/theme/app_theme.dart';
 import '../core/utils/page_transition.dart';
+import '../core/utils/responsive.dart';
 import '../domain/entities/provider.dart';
 import 'pages/splash_page.dart';
 import 'pages/welcome_page.dart';
@@ -68,9 +69,27 @@ class _ServiceFinderAppState extends State<ServiceFinderApp> {
           themeMode: themeMode,
           initialRoute: SplashPage.routeName,
           builder: (context, child) {
-            return _GlobalNotificationHost(
-              navigatorKey: _navigatorKey,
-              child: child ?? const SizedBox.shrink(),
+            final responsive = context.rs;
+            final brightness = Theme.of(context).brightness;
+            final scaledTheme = brightness == Brightness.dark
+                ? AppTheme.dark(scale: responsive.shortestSide / 390)
+                : AppTheme.light(scale: responsive.shortestSide / 390);
+            final mediaQuery = MediaQuery.of(context);
+
+            return MediaQuery(
+              data: mediaQuery.copyWith(
+                textScaler: mediaQuery.textScaler.clamp(
+                  minScaleFactor: 0.9,
+                  maxScaleFactor: 1.15,
+                ),
+              ),
+              child: Theme(
+                data: scaledTheme,
+                child: _GlobalNotificationHost(
+                  navigatorKey: _navigatorKey,
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              ),
             );
           },
           onGenerateRoute: (settings) {
@@ -293,9 +312,23 @@ class _GlobalNotificationHostState extends State<_GlobalNotificationHost> {
     }
 
     try {
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token != null && token.trim().isNotEmpty) {
-        debugPrint('FCM token ready (${kIsWeb ? 'web' : 'mobile'}): $token');
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        if (apnsToken == null || apnsToken.trim().isEmpty) {
+          debugPrint(
+            'FCM token fetch deferred until APNS token is available on iOS.',
+          );
+        } else {
+          final token = await FirebaseMessaging.instance.getToken();
+          if (token != null && token.trim().isNotEmpty) {
+            debugPrint('FCM token ready (mobile): $token');
+          }
+        }
+      } else {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null && token.trim().isNotEmpty) {
+          debugPrint('FCM token ready (${kIsWeb ? 'web' : 'mobile'}): $token');
+        }
       }
     } catch (error) {
       debugPrint('FCM token fetch skipped: $error');
@@ -396,11 +429,7 @@ class _GlobalNotificationHostState extends State<_GlobalNotificationHost> {
         navigator.pushNamed(ChatListPage.routeName);
         return;
       }
-      navigator.push(
-        MaterialPageRoute<void>(
-          builder: (_) => ChatConversationPage(thread: thread),
-        ),
-      );
+      navigator.push(slideFadeRoute(ChatConversationPage(thread: thread)));
       unawaited(ChatState.markThreadAsRead(thread.id, syncThreads: true));
     } catch (_) {
       navigator.pushNamed(ChatListPage.routeName);

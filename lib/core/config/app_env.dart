@@ -12,14 +12,53 @@ class AppEnv {
   }
 
   static String apiBaseUrl() {
-    final raw = _read(
-      key: 'API_BASE_URL',
-      fallback: const String.fromEnvironment(
-        'API_BASE_URL',
-        defaultValue: 'http://localhost:5050',
-      ),
-    );
+    final raw = _platformApiBaseUrl();
     return _normalizeApiBaseUrl(raw);
+  }
+
+  static String _platformApiBaseUrl() {
+    if (kIsWeb) {
+      return _read(
+        key: 'API_BASE_URL',
+        fallback: const String.fromEnvironment(
+          'API_BASE_URL',
+          defaultValue: 'http://localhost:5050',
+        ),
+      );
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.iOS:
+        return _read(
+          key: 'API_BASE_URL_IOS',
+          fallback: _read(
+            key: 'API_BASE_URL',
+            fallback: const String.fromEnvironment(
+              'API_BASE_URL',
+              defaultValue: 'http://localhost:5050',
+            ),
+          ),
+        );
+      case TargetPlatform.android:
+        return _read(
+          key: 'API_BASE_URL_ANDROID',
+          fallback: _read(
+            key: 'API_BASE_URL',
+            fallback: const String.fromEnvironment(
+              'API_BASE_URL',
+              defaultValue: 'http://localhost:5050',
+            ),
+          ),
+        );
+      default:
+        return _read(
+          key: 'API_BASE_URL',
+          fallback: const String.fromEnvironment(
+            'API_BASE_URL',
+            defaultValue: 'http://localhost:5050',
+          ),
+        );
+    }
   }
 
   static String apiAuthToken() {

@@ -5,6 +5,7 @@ import '../../../core/utils/app_toast.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../domain/entities/order.dart';
 import '../../state/order_state.dart';
 import '../../widgets/app_state_panel.dart';
@@ -38,10 +39,11 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: EdgeInsets.all(rs.space(AppSpacing.lg)),
           child: Column(
             children: [
               AppTopBar(
@@ -49,14 +51,14 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
                 actions: [
                   TextButton.icon(
                     onPressed: () => _openAddressSheet(),
-                    icon: const Icon(Icons.add, size: 16),
+                    icon: Icon(Icons.add, size: rs.icon(16)),
                     label: const Text('Add'),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              rs.gapH(10),
               const BookingStepProgress(currentStep: BookingFlowStep.address),
-              const SizedBox(height: 10),
+              rs.gapH(10),
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 220),
@@ -77,21 +79,25 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
                           ),
                           itemCount: _addresses.length,
                           separatorBuilder: (_, _) =>
-                              const SizedBox(height: 10),
+                              SizedBox(height: rs.space(10)),
                           itemBuilder: (context, index) {
                             final address = _addresses[index];
                             final selected = _selectedId == address.id;
                             return InkWell(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(
+                                rs.radius(12),
+                              ),
                               onTap: () =>
                                   setState(() => _selectedId = address.id),
                               child: Container(
-                                padding: const EdgeInsets.all(12),
+                                padding: rs.all(12),
                                 decoration: BoxDecoration(
                                   color: selected
                                       ? const Color(0xFFEFF4FF)
                                       : Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    rs.radius(12),
+                                  ),
                                   border: Border.all(
                                     color: selected
                                         ? AppColors.primary
@@ -100,8 +106,11 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.home_outlined, size: 18),
-                                    const SizedBox(width: 10),
+                                    Icon(
+                                      Icons.home_outlined,
+                                      size: rs.icon(18),
+                                    ),
+                                    rs.gapW(10),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -113,7 +122,7 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
                                               context,
                                             ).textTheme.bodyLarge,
                                           ),
-                                          const SizedBox(height: 2),
+                                          rs.gapH(2),
                                           Text(
                                             address.street,
                                             style: Theme.of(
@@ -198,6 +207,7 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
   }
 
   Future<void> _openAddressSheet({HomeAddress? existing}) async {
+    final rs = context.rs;
     final labelController = TextEditingController();
     final mapLinkController = TextEditingController();
     final streetController = TextEditingController();
@@ -240,19 +250,19 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(22, 12, 22, 22),
+                padding: rs.only(left: 22, top: 12, right: 22, bottom: 22),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 64,
-                      height: 6,
+                      width: rs.dimension(64),
+                      height: rs.dimension(6),
                       decoration: BoxDecoration(
                         color: AppColors.textSecondary.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(99),
                       ),
                     ),
-                    const SizedBox(height: 22),
+                    rs.gapH(22),
                     Text(
                       existing == null ? 'Add Address' : 'Edit Address',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -282,7 +292,7 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Pick location from Google Map',
+                              'Pick location from map',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(color: AppColors.textPrimary),
                             ),
@@ -325,7 +335,7 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
                       textInputAction: TextInputAction.next,
                       readOnly: true,
                       decoration: _sheetInputDecoration(
-                        'Address link from Google Map',
+                        'Address link from map',
                       ),
                     ),
                     const SizedBox(height: 12),

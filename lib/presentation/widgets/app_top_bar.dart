@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive.dart';
 
 class AppTopBar extends StatelessWidget {
   final String title;
@@ -21,15 +22,19 @@ class AppTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final header = Padding(
-      padding: const EdgeInsets.fromLTRB(4, 6, 4, 10),
+      padding: EdgeInsets.fromLTRB(
+        rs.space(4),
+        rs.space(6),
+        rs.space(4),
+        rs.space(10),
+      ),
       child: Row(
         children: [
           if (showBack) ...[
-            _BackButton(
-              onTap: onBack ?? () => Navigator.maybePop(context),
-            ),
-            const SizedBox(width: 8),
+            _BackButton(onTap: onBack ?? () => Navigator.maybePop(context)),
+            rs.gapW(8),
           ],
           Expanded(
             child: Column(
@@ -46,7 +51,7 @@ class AppTopBar extends StatelessWidget {
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 1),
+                  rs.gapH(1),
                   Text(
                     subtitle!,
                     maxLines: 1,
@@ -81,15 +86,16 @@ class _BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(rs.radius(12)),
       onTap: onTap,
       child: Ink(
-        height: 38,
-        width: 38,
+        height: rs.dimension(38),
+        width: rs.dimension(38),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(rs.radius(12)),
           border: Border.all(color: AppColors.divider),
           boxShadow: const [
             BoxShadow(

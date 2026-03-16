@@ -39,7 +39,8 @@ class ProviderProfilePage extends StatefulWidget {
 }
 
 class _ProviderProfilePageState extends State<ProviderProfilePage> {
-  double _providerRating = 0.0;
+  double? _providerRating;
+  int? _providerCompletedOrders;
   bool _switchingRole = false;
   bool _loadingProfile = true;
 
@@ -52,9 +53,16 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     });
   }
 
-  Future<void> _fetchRating() async {
+  Future<void> _fetchProviderStats() async {
     final providerUid = AuthState.currentUser.value?.uid.trim() ?? '';
     if (providerUid.isEmpty) return;
+    final cached = OrderState.peekProviderReviewSummary(providerUid: providerUid);
+    if (cached != null && mounted) {
+      setState(() {
+        _providerRating = cached.averageRating;
+        _providerCompletedOrders = cached.completedJobs;
+      });
+    }
     try {
       final summary = await OrderState.fetchProviderReviewSummary(
         providerUid: providerUid,
@@ -63,29 +71,20 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
       if (mounted) {
         setState(() {
           _providerRating = summary.averageRating;
+          _providerCompletedOrders = summary.completedJobs;
         });
       }
-    } catch (_) {}
-  }
-
-  Future<void> _syncCompletedOrders() async {
-    await ProfileSettingsState.syncProviderCompletedOrdersFromBackend();
-    final providerUid = AuthState.currentUser.value?.uid.trim() ?? '';
-    if (providerUid.isEmpty) return;
-    try {
-      final summary = await OrderState.fetchProviderReviewSummary(
-        providerUid: providerUid,
-        limit: 1,
-      );
-      final current = ProfileSettingsState.providerCompletedOrders.value;
-      final merged = summary.completedJobs > current
-          ? summary.completedJobs
-          : current;
-      if (merged != current) {
-        ProfileSettingsState.providerCompletedOrders.value = merged;
+      if (ProfileSettingsState.providerCompletedOrders.value !=
+          summary.completedJobs) {
+        ProfileSettingsState.providerCompletedOrders.value = summary.completedJobs;
       }
     } catch (_) {
-      // Keep current value from provider profile endpoint when summary fetch fails.
+      if (_providerCompletedOrders == null && mounted) {
+        setState(() {
+          _providerCompletedOrders ??=
+              ProfileSettingsState.providerCompletedOrders.value;
+        });
+      }
     }
   }
 
@@ -106,7 +105,11 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                 onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
               ),
               const SizedBox(height: 10),
-              _ProviderHero(rating: _providerRating, loading: _loadingProfile),
+              _ProviderHero(
+                rating: _providerRating,
+                completedOrders: _providerCompletedOrders,
+                loading: _loadingProfile,
+              ),
               const SizedBox(height: 16),
               const _SectionLabel(text: 'Business'),
               const SizedBox(height: 10),
@@ -241,12 +244,8 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     if (mounted) {
       setState(() => _loadingProfile = true);
     }
-    await Future.wait<void>([
-      ProfileSettingsState.syncRoleProfileFromBackend(isProvider: true),
-      _syncCompletedOrders(),
-      _fetchRating(),
-      SubscriptionState.fetchStatus(),
-    ]);
+    await ProfileSettingsState.syncRoleProfileFromBackend(isProvider: true);
+    await Future.wait<void>([_fetchProviderStats(), SubscriptionState.fetchStatus()]);
     if (mounted) {
       setState(() => _loadingProfile = false);
     }
@@ -292,10 +291,15 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
 }
 
 class _ProviderHero extends StatelessWidget {
-  final double rating;
+  final double? rating;
+  final int? completedOrders;
   final bool loading;
 
-  const _ProviderHero({required this.rating, required this.loading});
+  const _ProviderHero({
+    required this.rating,
+    required this.completedOrders,
+    required this.loading,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -427,28 +431,31 @@ class _ProviderHero extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              _MetricPill(
-                                icon: Icons.star_rounded,
-                                iconColor: const Color(0xFFF59E0B),
-                                text: rating.toStringAsFixed(1),
-                              ),
-                              ValueListenableBuilder<int>(
-                                valueListenable: ProfileSettingsState
-                                    .providerCompletedOrders,
-                                builder: (context, completedOrders, _) {
-                                  return _MetricPill(
-                                    icon: Icons.task_alt_rounded,
-                                    iconColor: AppColors.success,
-                                    text: '$completedOrders completed',
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
+                          if (loading &&
+                              (rating == null || completedOrders == null))
+                            const ShimmerPlaceholder(
+                              width: 220,
+                              height: 32,
+                              borderRadius: 999,
+                            )
+                          else
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                _MetricPill(
+                                  icon: Icons.star_rounded,
+                                  iconColor: const Color(0xFFF59E0B),
+                                  text: (rating ?? 0).toStringAsFixed(1),
+                                ),
+                                _MetricPill(
+                                  icon: Icons.task_alt_rounded,
+                                  iconColor: AppColors.success,
+                                  text:
+                                      '${completedOrders ?? 0} completed',
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     ),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../domain/entities/order.dart';
 import '../../state/order_state.dart';
 import '../../state/user_notification_state.dart';
@@ -55,6 +56,7 @@ class _NotificationsPageState extends State<NotificationsPage>
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return ValueListenableBuilder<List<OrderItem>>(
       valueListenable: OrderState.finderOrders,
       builder: (context, orders, _) {
@@ -227,11 +229,11 @@ class _NotificationsPageState extends State<NotificationsPage>
                         child: RefreshIndicator(
                           onRefresh: _refreshFeed,
                           child: ListView(
-                            padding: const EdgeInsets.fromLTRB(
-                              AppSpacing.lg,
-                              AppSpacing.lg,
-                              AppSpacing.lg,
-                              AppSpacing.xl,
+                            padding: EdgeInsets.fromLTRB(
+                              rs.space(AppSpacing.lg),
+                              rs.space(AppSpacing.lg),
+                              rs.space(AppSpacing.lg),
+                              rs.space(AppSpacing.xl),
                             ),
                             children: [
                               AppTopBar(
@@ -272,14 +274,14 @@ class _NotificationsPageState extends State<NotificationsPage>
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              rs.gapH(12),
                               _HeroCard(
                                 unreadCount: unreadCount,
                                 totalCount: totalCount,
                               ),
-                              const SizedBox(height: 14),
+                              rs.gapH(14),
                               SizedBox(
-                                height: 40,
+                                height: rs.dimension(40),
                                 child: ListView(
                                   scrollDirection: Axis.horizontal,
                                   children: [
@@ -314,7 +316,7 @@ class _NotificationsPageState extends State<NotificationsPage>
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              rs.gapH(16),
                               AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 220),
                                 child: content,
@@ -659,16 +661,20 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: rs.space(16),
+        vertical: rs.space(16),
+      ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [AppColors.splashStart, AppColors.splashEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(rs.radius(18)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x25005BBB),
@@ -690,7 +696,7 @@ class _HeroCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                rs.gapH(4),
                 Text(
                   unreadCount == 0
                       ? '$totalCount notification${totalCount > 1 ? 's' : ''} reviewed'
@@ -700,10 +706,10 @@ class _HeroCard extends StatelessWidget {
                     height: 1.35,
                   ),
                 ),
-                const SizedBox(height: 10),
+                rs.gapH(10),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: rs.space(8),
+                  runSpacing: rs.space(8),
                   children: [
                     _SummaryPill(label: 'Unread', value: '$unreadCount'),
                     _SummaryPill(label: 'Total', value: '$totalCount'),
@@ -713,17 +719,17 @@ class _HeroCard extends StatelessWidget {
             ),
           ),
           Container(
-            width: 46,
-            height: 46,
+            width: rs.dimension(46),
+            height: rs.dimension(46),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.16),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
-            child: const Icon(
+            child: Icon(
               Icons.notifications_active_outlined,
               color: Colors.white,
-              size: 22,
+              size: rs.icon(22),
             ),
           ),
         ],
@@ -740,11 +746,15 @@ class _SummaryPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(
+        horizontal: rs.space(10),
+        vertical: rs.space(6),
+      ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(100),
+        borderRadius: BorderRadius.circular(rs.radius(100)),
       ),
       child: Text(
         '$label: $value',
@@ -770,19 +780,23 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: EdgeInsets.only(right: rs.space(8)),
       child: PressableScale(
         onTap: onTap,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(100),
+          borderRadius: BorderRadius.circular(rs.radius(100)),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: rs.space(14),
+              vertical: rs.space(8),
+            ),
             decoration: BoxDecoration(
               color: selected ? AppColors.primary : Colors.white,
-              borderRadius: BorderRadius.circular(100),
+              borderRadius: BorderRadius.circular(rs.radius(100)),
               border: Border.all(
                 color: selected ? AppColors.primary : AppColors.divider,
               ),
@@ -814,13 +828,17 @@ class _UpdateTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final dotColor = item.unread ? AppColors.primary : AppColors.divider;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          padding: EdgeInsets.symmetric(
+            horizontal: rs.space(12),
+            vertical: rs.space(14),
+          ),
           decoration: BoxDecoration(
             color: item.unread ? const Color(0xFFF8FAFF) : Colors.white,
             border: isLast
@@ -831,15 +849,19 @@ class _UpdateTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                height: 44,
-                width: 44,
+                height: rs.dimension(44),
+                width: rs.dimension(44),
                 decoration: BoxDecoration(
                   color: item.iconColor.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(rs.radius(8)),
                 ),
-                child: Icon(item.icon, color: item.iconColor, size: 22),
+                child: Icon(
+                  item.icon,
+                  color: item.iconColor,
+                  size: rs.icon(22),
+                ),
               ),
-              const SizedBox(width: 12),
+              rs.gapW(12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -851,24 +873,24 @@ class _UpdateTile extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    rs.gapH(4),
                     Row(
                       children: [
                         Container(
-                          height: 8,
-                          width: 8,
+                          height: rs.dimension(8),
+                          width: rs.dimension(8),
                           decoration: BoxDecoration(
                             color: dotColor,
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(
+                        rs.gapW(8),
+                        Icon(
                           Icons.access_time,
-                          size: 14,
+                          size: rs.icon(14),
                           color: AppColors.textSecondary,
                         ),
-                        const SizedBox(width: 4),
+                        rs.gapW(4),
                         Text(
                           item.timeLabel,
                           style: Theme.of(context).textTheme.bodySmall
@@ -876,7 +898,7 @@ class _UpdateTile extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    rs.gapH(8),
                     Text(
                       item.description,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -907,12 +929,16 @@ class _PromoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          padding: EdgeInsets.symmetric(
+            horizontal: rs.space(12),
+            vertical: rs.space(14),
+          ),
           decoration: BoxDecoration(
             color: item.unread ? const Color(0xFFF8FAFF) : Colors.white,
             border: isLast
@@ -935,13 +961,13 @@ class _PromoTile extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: rs.space(12),
+                      vertical: rs.space(4),
                     ),
                     decoration: BoxDecoration(
                       color: item.trailingColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(100),
+                      borderRadius: BorderRadius.circular(rs.radius(100)),
                       border: Border.all(color: item.trailingColor),
                     ),
                     child: Text(
@@ -954,7 +980,7 @@ class _PromoTile extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              rs.gapH(8),
               Text(
                 item.description,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -963,7 +989,7 @@ class _PromoTile extends StatelessWidget {
                 ),
               ),
               if (item.dateRange != null) ...[
-                const SizedBox(height: 6),
+                rs.gapH(6),
                 Text(
                   item.dateRange!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

@@ -14,8 +14,9 @@ import 'provider_portal/provider_profile_page.dart';
 
 class MainShellPage extends StatefulWidget {
   static const String routeName = '/main';
-  static final ValueNotifier<AppBottomTab> activeTab =
-      ValueNotifier(AppBottomTab.home);
+  static final ValueNotifier<AppBottomTab> activeTab = ValueNotifier(
+    AppBottomTab.home,
+  );
 
   const MainShellPage({super.key});
 
@@ -24,6 +25,8 @@ class MainShellPage extends StatefulWidget {
 }
 
 class _MainShellPageState extends State<MainShellPage> {
+  int _transitionNonce = 0;
+
   @override
   void initState() {
     super.initState();
@@ -39,7 +42,8 @@ class _MainShellPageState extends State<MainShellPage> {
   }
 
   void _onStateChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() => _transitionNonce++);
   }
 
   @override
@@ -63,10 +67,28 @@ class _MainShellPageState extends State<MainShellPage> {
           ];
 
     return Scaffold(
-      body: IndexedStack(
-        key: ValueKey('main_shell_${isProvider ? 'provider' : 'finder'}'),
-        index: MainShellPage.activeTab.value.index,
-        children: children,
+      body: TweenAnimationBuilder<double>(
+        key: ValueKey<String>(
+          'main_shell_transition_${isProvider ? 'provider' : 'finder'}_${MainShellPage.activeTab.value.name}_$_transitionNonce',
+        ),
+        tween: Tween<double>(begin: 0.985, end: 1),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        child: IndexedStack(
+          key: ValueKey('main_shell_${isProvider ? 'provider' : 'finder'}'),
+          index: MainShellPage.activeTab.value.index,
+          children: children,
+        ),
+        builder: (context, value, child) {
+          final opacity = ((value - 0.985) / 0.015).clamp(0.0, 1.0);
+          return Opacity(
+            opacity: opacity,
+            child: Transform.translate(
+              offset: Offset(0, (1 - value) * 24),
+              child: child,
+            ),
+          );
+        },
       ),
       bottomNavigationBar: AppBottomNav(
         current: MainShellPage.activeTab.value,

@@ -236,6 +236,7 @@ class _CurrentPlanCard extends StatelessWidget {
     final statusLabel = status.isCanceling
         ? 'Ending soon'
         : (status.isActive ? 'Active' : _prettyStatus(status.status));
+    final statusPalette = _statusPalette();
     final periodLabel = _periodLabel();
 
     return Container(
@@ -313,13 +314,14 @@ class _CurrentPlanCard extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
+                  color: statusPalette.background,
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: statusPalette.border, width: 1.2),
                 ),
                 child: Text(
                   statusLabel,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white,
+                    color: statusPalette.foreground,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -433,6 +435,49 @@ class _CurrentPlanCard extends StatelessWidget {
               : '${part[0].toUpperCase()}${part.substring(1)}',
         )
         .join(' ');
+  }
+
+  ({Color background, Color border, Color foreground}) _statusPalette() {
+    if (status.isCanceling) {
+      return (
+        background: const Color(0xFFFFF3D6),
+        border: const Color(0xFFFBBF24),
+        foreground: const Color(0xFF92400E),
+      );
+    }
+
+    switch (status.status.trim().toLowerCase()) {
+      case 'active':
+      case 'trialing':
+        return (
+          background: const Color(0xFFDCFCE7),
+          border: const Color(0xFF4ADE80),
+          foreground: const Color(0xFF166534),
+        );
+      case 'expired':
+      case 'canceled':
+      case 'cancelled':
+      case 'unpaid':
+        return (
+          background: const Color(0xFFFEE2E2),
+          border: const Color(0xFFF87171),
+          foreground: const Color(0xFF991B1B),
+        );
+      case 'past_due':
+      case 'incomplete':
+      case 'incomplete_expired':
+        return (
+          background: const Color(0xFFFFF3D6),
+          border: const Color(0xFFFBBF24),
+          foreground: const Color(0xFF92400E),
+        );
+      default:
+        return (
+          background: Colors.white.withValues(alpha: 0.18),
+          border: Colors.white.withValues(alpha: 0.24),
+          foreground: Colors.white,
+        );
+    }
   }
 
   String _formatShortDate(DateTime date) {

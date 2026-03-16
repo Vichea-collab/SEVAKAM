@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive.dart';
 
 class PaginationBar extends StatelessWidget {
   final int currentPage;
@@ -18,6 +19,7 @@ class PaginationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     if (totalPages <= 1) return const SizedBox.shrink();
     final pages = _buildPages();
     final canPrev = currentPage > 1 && !loading;
@@ -28,10 +30,10 @@ class PaginationBar extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         opacity: loading ? 0.8 : 1,
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: rs.all(8),
           decoration: BoxDecoration(
             color: const Color(0xFFF5F7FC),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(rs.radius(22)),
             border: Border.all(color: const Color(0xFFE3E8F2)),
           ),
           child: SingleChildScrollView(
@@ -40,14 +42,16 @@ class PaginationBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _arrowButton(
+                  context: context,
                   icon: Icons.chevron_left_rounded,
                   enabled: canPrev,
                   onTap: () => onPageSelected(currentPage - 1),
                 ),
-                const SizedBox(width: 8),
+                rs.gapW(8),
                 for (final token in pages) ...[
                   if (token is int)
                     _pageButton(
+                      context: context,
                       label: '$token',
                       active: token == currentPage,
                       enabled: !loading,
@@ -55,14 +59,16 @@ class PaginationBar extends StatelessWidget {
                     )
                   else
                     _pageButton(
+                      context: context,
                       label: '...',
                       active: false,
                       enabled: false,
                       onTap: null,
                     ),
-                  const SizedBox(width: 8),
+                  rs.gapW(8),
                 ],
                 _arrowButton(
+                  context: context,
                   icon: Icons.chevron_right_rounded,
                   enabled: canNext,
                   onTap: () => onPageSelected(currentPage + 1),
@@ -76,11 +82,13 @@ class PaginationBar extends StatelessWidget {
   }
 
   Widget _arrowButton({
+    required BuildContext context,
     required IconData icon,
     required bool enabled,
     required VoidCallback onTap,
   }) {
     return _pageButton(
+      context: context,
       label: '',
       active: false,
       enabled: enabled,
@@ -90,12 +98,14 @@ class PaginationBar extends StatelessWidget {
   }
 
   Widget _pageButton({
+    required BuildContext context,
     required String label,
     required bool active,
     required bool enabled,
     required VoidCallback? onTap,
     IconData? icon,
   }) {
+    final rs = context.rs;
     final bg = active ? AppColors.primary : Colors.white;
     final borderColor = active ? AppColors.primary : const Color(0xFFD5DCE8);
     final textColor = active
@@ -105,17 +115,17 @@ class PaginationBar extends StatelessWidget {
         : AppColors.textSecondary;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(rs.radius(14)),
       onTap: enabled ? onTap : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
         curve: Curves.easeOutCubic,
-        width: 44,
-        height: 44,
+        width: rs.dimension(44),
+        height: rs.dimension(44),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(rs.radius(14)),
           border: Border.all(color: borderColor, width: 1.15),
           boxShadow: active
               ? const [
@@ -128,11 +138,11 @@ class PaginationBar extends StatelessWidget {
               : const [],
         ),
         child: icon != null
-            ? Icon(icon, color: textColor, size: 22)
+            ? Icon(icon, color: textColor, size: rs.icon(22))
             : Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 18,
+                style: TextStyle(
+                  fontSize: rs.text(18),
                   fontWeight: FontWeight.w600,
                 ).copyWith(color: textColor),
               ),

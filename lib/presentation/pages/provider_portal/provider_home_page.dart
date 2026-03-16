@@ -6,6 +6,7 @@ import 'package:servicefinder/core/constants/app_colors.dart';
 import 'package:servicefinder/core/constants/app_spacing.dart';
 import 'package:servicefinder/core/utils/app_toast.dart';
 import 'package:servicefinder/core/utils/page_transition.dart';
+import 'package:servicefinder/core/utils/responsive.dart';
 import 'package:servicefinder/core/utils/safe_image_provider.dart';
 import 'package:servicefinder/domain/entities/pagination.dart';
 import 'package:servicefinder/domain/entities/profile_settings.dart';
@@ -31,8 +32,6 @@ class ProviderPortalHomePage extends StatefulWidget {
 }
 
 class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
-  static const Duration _doublePullWindow = Duration(seconds: 2);
-  DateTime? _lastPullAt;
   bool _refreshInProgress = false;
   bool _isPaging = false;
 
@@ -86,6 +85,7 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return ValueListenableBuilder<List<FinderPostItem>>(
       valueListenable: FinderPostState.posts,
       builder: (context, posts, _) {
@@ -106,11 +106,11 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                       slivers: [
                         SliverToBoxAdapter(child: const _ProviderTopHeader()),
                         SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.lg,
-                            AppSpacing.lg,
-                            AppSpacing.lg,
-                            AppSpacing.xl,
+                          padding: EdgeInsets.fromLTRB(
+                            rs.space(AppSpacing.lg),
+                            rs.space(AppSpacing.lg),
+                            rs.space(AppSpacing.lg),
+                            rs.space(AppSpacing.xl),
                           ),
                           sliver: SliverList(
                             delegate: SliverChildListDelegate([
@@ -122,7 +122,7 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                                   _onSearchChanged('');
                                 },
                               ),
-                              const SizedBox(height: 22),
+                              SizedBox(height: rs.space(22)),
                               Row(
                                 children: [
                                   Text(
@@ -145,12 +145,12 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: rs.space(12)),
                               AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 220),
                                 child: isLoading && posts.isEmpty
-                                    ? const SizedBox(
-                                        height: 320,
+                                    ? SizedBox(
+                                        height: rs.dimension(320),
                                         child: Center(
                                           child: AppStatePanel.loading(
                                             title: 'Loading finder requests',
@@ -184,7 +184,7 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
                               ),
                               if (pagination.totalPages > 1 &&
                                   _searchQuery.isEmpty) ...[
-                                const SizedBox(height: 12),
+                                SizedBox(height: rs.space(12)),
                                 PaginationBar(
                                   currentPage: currentPage,
                                   totalPages: pagination.totalPages,
@@ -208,15 +208,6 @@ class _ProviderPortalHomePageState extends State<ProviderPortalHomePage> {
   }
 
   Future<void> _handleRefresh() async {
-    final now = DateTime.now();
-    final last = _lastPullAt;
-    final isSecondPull =
-        last != null && now.difference(last) <= _doublePullWindow;
-    if (!isSecondPull) {
-      _lastPullAt = now;
-      return;
-    }
-    _lastPullAt = null;
     if (_refreshInProgress) return;
     _refreshInProgress = true;
     try {
@@ -334,6 +325,7 @@ class _ProviderTopHeaderState extends State<_ProviderTopHeader> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     Future<void> openChats() async {
       await Navigator.push(context, slideFadeRoute(const ChatListPage()));
       if (!mounted) return;
@@ -352,22 +344,22 @@ class _ProviderTopHeaderState extends State<_ProviderTopHeader> {
         final hasProfileContent =
             profile.name.trim().isNotEmpty || profile.city.trim().isNotEmpty;
         return Container(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          padding: rs.only(left: 20, top: 14, right: 20, bottom: 20),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [AppColors.splashStart, AppColors.splashEnd],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(20),
-              bottomRight: Radius.circular(20),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(rs.radius(20)),
+              bottomRight: Radius.circular(rs.radius(20)),
             ),
             boxShadow: [
               BoxShadow(
                 color: AppColors.primary.withValues(alpha: 28),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+                blurRadius: rs.space(18),
+                offset: Offset(0, rs.space(8)),
               ),
             ],
           ),
@@ -381,7 +373,7 @@ class _ProviderTopHeaderState extends State<_ProviderTopHeader> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(3),
+                            padding: rs.all(3),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 235),
                               shape: BoxShape.circle,
@@ -399,21 +391,21 @@ class _ProviderTopHeaderState extends State<_ProviderTopHeader> {
                                   isProvider: true,
                                 );
                                 return CircleAvatar(
-                                  radius: 22,
+                                  radius: rs.dimension(22),
                                   backgroundColor: AppColors.background,
                                   backgroundImage: image,
                                   child: image == null
-                                      ? const Icon(
+                                      ? Icon(
                                           Icons.person_rounded,
                                           color: AppColors.primary,
-                                          size: 22,
+                                          size: rs.icon(22),
                                         )
                                       : null,
                                 );
                               },
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          rs.gapW(12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +419,7 @@ class _ProviderTopHeaderState extends State<_ProviderTopHeader> {
                                         ),
                                       ),
                                 ),
-                                const SizedBox(height: 2),
+                                rs.gapH(2),
                                 Text(
                                   displayName,
                                   maxLines: 1,
@@ -438,12 +430,12 @@ class _ProviderTopHeaderState extends State<_ProviderTopHeader> {
                                         fontWeight: FontWeight.w800,
                                       ),
                                 ),
-                                const SizedBox(height: 8),
+                                rs.gapH(8),
                                 _ProviderHeaderLocationPill(city: city),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          rs.gapW(12),
                           ValueListenableBuilder<int>(
                             valueListenable: ChatState.unreadCount,
                             builder: (context, unreadThreads, _) {
@@ -482,37 +474,38 @@ class _ProviderSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: rs.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(rs.radius(16)),
         border: Border.all(color: AppColors.divider),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 10),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: rs.space(12),
+            offset: Offset(0, rs.space(4)),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            height: 36,
-            width: 36,
+            height: rs.dimension(36),
+            width: rs.dimension(36),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 20),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(rs.radius(12)),
             ),
-            child: const Icon(Icons.search, color: Colors.white),
+            child: Icon(Icons.search, color: Colors.white, size: rs.icon(20)),
           ),
-          const SizedBox(width: 10),
+          rs.gapW(10),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -520,7 +513,7 @@ class _ProviderSearchBar extends StatelessWidget {
                 hintText: 'Search client, service, or location',
                 hintStyle: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 14,
+                  fontSize: rs.text(14),
                 ),
               ),
             ),
@@ -528,24 +521,24 @@ class _ProviderSearchBar extends StatelessWidget {
           if (controller.text.isNotEmpty)
             GestureDetector(
               onTap: onClear,
-              child: const Icon(
+              child: Icon(
                 Icons.close_rounded,
-                size: 20,
+                size: rs.icon(20),
                 color: AppColors.textSecondary,
               ),
             ),
-          const SizedBox(width: 8),
+          rs.gapW(8),
           Container(
-            height: 34,
-            width: 34,
+            height: rs.dimension(34),
+            width: rs.dimension(34),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 20),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(rs.radius(10)),
               border: Border.all(
                 color: AppColors.primary.withValues(alpha: 40),
               ),
             ),
-            child: const Icon(Icons.tune, color: Colors.white, size: 18),
+            child: Icon(Icons.tune, color: Colors.white, size: rs.icon(18)),
           ),
         ],
       ),
@@ -560,8 +553,9 @@ class _ResultsCountPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: rs.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(999),
@@ -712,17 +706,18 @@ class _FinderPostTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: EdgeInsets.only(bottom: rs.space(12)),
+      padding: rs.all(14),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(rs.radius(16)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: rs.space(10),
+            offset: Offset(0, rs.space(4)),
           ),
         ],
         border: Border.all(
@@ -736,11 +731,11 @@ class _FinderPostTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 80,
-                height: 80,
+                width: rs.dimension(80),
+                height: rs.dimension(80),
                 decoration: BoxDecoration(
                   color: AppColors.background,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(rs.radius(12)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.08),
@@ -750,23 +745,23 @@ class _FinderPostTile extends StatelessWidget {
                   ],
                 ),
                 child: post.avatarPath.trim().isEmpty
-                    ? const Icon(
+                    ? Icon(
                         Icons.person_rounded,
-                        size: 40,
+                        size: rs.icon(40),
                         color: AppColors.primary,
                       )
                     : ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(rs.radius(12)),
                         child: SafeImage(
                           isAvatar: true,
                           source: post.avatarPath,
-                          width: 80,
-                          height: 80,
+                          width: rs.dimension(80),
+                          height: rs.dimension(80),
                           fit: BoxFit.cover,
                         ),
                       ),
               ),
-              const SizedBox(width: 14),
+              rs.gapW(14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -793,7 +788,7 @@ class _FinderPostTile extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    rs.gapH(6),
                     Text(
                       post.message,
                       maxLines: 2,
@@ -803,10 +798,10 @@ class _FinderPostTile extends StatelessWidget {
                         height: 1.3,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    rs.gapH(10),
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                      spacing: rs.space(6),
+                      runSpacing: rs.space(6),
                       children: [
                         _MetaPill(text: post.category),
                         _MetaPill(text: post.serviceLabel),
@@ -822,9 +817,9 @@ class _FinderPostTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          rs.gapH(16),
           const Divider(height: 1, thickness: 1.2, color: AppColors.divider),
-          const SizedBox(height: 12),
+          rs.gapH(12),
           Row(
             children: [
               const Spacer(),

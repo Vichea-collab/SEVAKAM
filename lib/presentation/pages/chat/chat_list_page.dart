@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/chat.dart';
 import '../../../domain/entities/pagination.dart';
@@ -23,12 +24,10 @@ class ChatListPage extends StatefulWidget {
 }
 
 class _ChatListPageState extends State<ChatListPage> {
-  static const Duration _doublePullWindow = Duration(seconds: 2);
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
   bool _isPaging = false;
   bool _refreshInProgress = false;
-  DateTime? _lastPullAt;
   Timer? _uiRefreshTimer;
 
   @override
@@ -54,6 +53,7 @@ class _ChatListPageState extends State<ChatListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return ValueListenableBuilder<List<ChatThread>>(
       valueListenable: ChatState.threads,
       builder: (context, threads, _) {
@@ -112,11 +112,21 @@ class _ChatListPageState extends State<ChatListPage> {
                     child: Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                          padding: EdgeInsets.fromLTRB(
+                            rs.space(10),
+                            rs.space(8),
+                            rs.space(10),
+                            rs.space(4),
+                          ),
                           child: AppTopBar(title: 'Chats'),
                         ),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                          padding: EdgeInsets.fromLTRB(
+                            rs.space(16),
+                            rs.space(8),
+                            rs.space(16),
+                            rs.space(12),
+                          ),
                           child: TextField(
                             controller: _searchController,
                             onChanged: (value) =>
@@ -142,7 +152,12 @@ class _ChatListPageState extends State<ChatListPage> {
                         ),
                         if (pagination.totalPages > 1 && query.isEmpty)
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                            padding: EdgeInsets.fromLTRB(
+                              rs.space(12),
+                              rs.space(4),
+                              rs.space(12),
+                              rs.space(12),
+                            ),
                             child: PaginationBar(
                               currentPage: currentPage,
                               totalPages: pagination.totalPages,
@@ -178,16 +193,6 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   Future<void> _handleRefresh() async {
-    final now = DateTime.now();
-    final last = _lastPullAt;
-    final isSecondPull =
-        last != null && now.difference(last) <= _doublePullWindow;
-    if (!isSecondPull) {
-      _lastPullAt = now;
-      return;
-    }
-
-    _lastPullAt = null;
     if (_refreshInProgress) return;
     _refreshInProgress = true;
     try {
@@ -201,12 +206,13 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   Widget _pullablePlaceholder(Widget child) {
+    final rs = context.rs;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: <Widget>[
-        const SizedBox(height: 160),
+        SizedBox(height: rs.dimension(160)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: rs.space(24)),
           child: child,
         ),
       ],
@@ -226,13 +232,15 @@ class _ChatThreadTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final hasUnread = thread.unreadCount > 0;
     const accentColor = AppColors.primary;
-    final isActive = DateTime.now().difference(thread.lastActiveAt.toLocal()).inMinutes < 2;
+    final isActive =
+        DateTime.now().difference(thread.lastActiveAt.toLocal()).inMinutes < 2;
 
     void openConversation() {
       final currentPage = ChatState.threadPagination.value.page;
-      
+
       // Navigate immediately without awaiting
       Navigator.push(
         context,
@@ -252,24 +260,29 @@ class _ChatThreadTile extends StatelessWidget {
       child: InkWell(
         onTap: openConversation,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: EdgeInsets.symmetric(
+            horizontal: rs.space(16),
+            vertical: rs.space(14),
+          ),
           decoration: BoxDecoration(
-            color: hasUnread ? accentColor.withValues(alpha: 0.03) : Colors.transparent,
+            color: hasUnread
+                ? accentColor.withValues(alpha: 0.03)
+                : Colors.transparent,
           ),
           child: Row(
             children: [
               Stack(
                 children: [
                   CircleAvatar(
-                    radius: 28,
+                    radius: rs.dimension(28),
                     backgroundColor: AppColors.background,
                     backgroundImage: thread.avatarPath.trim().isNotEmpty
                         ? safeImageProvider(thread.avatarPath)
                         : null,
                     child: thread.avatarPath.trim().isEmpty
-                        ? const Icon(
+                        ? Icon(
                             Icons.person_rounded,
-                            size: 32,
+                            size: rs.icon(32),
                             color: AppColors.primary,
                           )
                         : null,
@@ -278,10 +291,12 @@ class _ChatThreadTile extends StatelessWidget {
                     right: 0,
                     bottom: 0,
                     child: Container(
-                      width: 14,
-                      height: 14,
+                      width: rs.dimension(14),
+                      height: rs.dimension(14),
                       decoration: BoxDecoration(
-                        color: isActive ? AppColors.success : const Color(0xFFCBD5E1),
+                        color: isActive
+                            ? AppColors.success
+                            : const Color(0xFFCBD5E1),
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2.5),
                       ),
@@ -289,7 +304,7 @@ class _ChatThreadTile extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(width: 14),
+              rs.gapW(14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,24 +314,32 @@ class _ChatThreadTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             thread.title,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: const Color(0xFF0F172A),
-                              fontWeight: hasUnread ? FontWeight.w800 : FontWeight.w700,
-                              fontSize: 16,
-                              letterSpacing: -0.3,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: const Color(0xFF0F172A),
+                                  fontWeight: hasUnread
+                                      ? FontWeight.w800
+                                      : FontWeight.w700,
+                                  fontSize: rs.text(16),
+                                  letterSpacing: -0.3,
+                                ),
                           ),
                         ),
                         Text(
                           _timeLabel(thread.updatedAt),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: hasUnread ? accentColor : const Color(0xFF64748B),
-                            fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: hasUnread
+                                    ? accentColor
+                                    : const Color(0xFF64748B),
+                                fontWeight: hasUnread
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    rs.gapH(4),
                     Row(
                       children: [
                         Expanded(
@@ -324,22 +347,35 @@ class _ChatThreadTile extends StatelessWidget {
                             thread.subtitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
-                              color: hasUnread ? const Color(0xFF1E293B) : const Color(0xFF64748B),
-                              fontSize: 14,
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  fontWeight: hasUnread
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: hasUnread
+                                      ? const Color(0xFF1E293B)
+                                      : const Color(0xFF64748B),
+                                  fontSize: rs.text(14),
+                                ),
                           ),
                         ),
                         if (hasUnread)
                           Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            margin: EdgeInsets.only(left: rs.space(8)),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: rs.space(8),
+                              vertical: rs.space(3),
+                            ),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [accentColor, accentColor.withValues(alpha: 0.85)],
+                                colors: [
+                                  accentColor,
+                                  accentColor.withValues(alpha: 0.85),
+                                ],
                               ),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(
+                                rs.radius(10),
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: accentColor.withValues(alpha: 0.3),

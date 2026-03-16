@@ -66,9 +66,9 @@ class FirebaseBootstrap {
 
   static Future<void> _activateAppCheckIfSupported() async {
     try {
-      if (kDebugMode && !AppEnv.enableDebugMobileAppCheck()) {
+      if (!AppEnv.enableDebugMobileAppCheck()) {
         debugPrint(
-          'Firebase App Check (mobile) skipped in debug mode. '
+          'Firebase App Check (mobile) skipped by config. '
           'Set FIREBASE_ENABLE_DEBUG_MOBILE_APP_CHECK=true to enable it.',
         );
         return;

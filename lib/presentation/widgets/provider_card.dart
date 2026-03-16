@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/safe_image_provider.dart';
 import '../../domain/entities/provider.dart';
 import '../state/favorite_state.dart';
@@ -23,25 +24,35 @@ class ProviderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final effectiveHeroTag = heroTag ?? 'provider-card-${provider.uid}';
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxHeight < 350;
+        final compact =
+            constraints.maxHeight < rs.dimension(350) ||
+            constraints.maxWidth < rs.dimension(210);
+        final veryCompact =
+            constraints.maxHeight < rs.dimension(320) ||
+            constraints.maxWidth < rs.dimension(190);
         final tier = provider.subscriptionTier.toLowerCase().trim();
         final isElite = tier == 'elite';
         final accent = _tierAccent(tier) ?? provider.accentColor;
         final softTint = isElite
             ? const Color(0xFFFFF4D6)
             : Color.lerp(accent, Colors.white, 0.82)!;
-        final serviceChips = _serviceChips(context, compact: compact);
+        final serviceChips = _serviceChips(
+          context,
+          compact: compact,
+          hidden: veryCompact,
+        );
         final name = provider.name.trim().isEmpty
             ? 'Service Provider'
             : provider.name.trim();
         final card = Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(rs.radius(26)),
             border: isElite
                 ? null
                 : Border.all(color: accent.withValues(alpha: 0.22)),
@@ -71,12 +82,20 @@ class ProviderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    height: compact ? 96 : 108,
+                    height: veryCompact
+                        ? rs.dimension(88)
+                        : compact
+                        ? rs.dimension(96)
+                        : rs.dimension(108),
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
                         Container(
-                          height: compact ? 70 : 78,
+                          height: veryCompact
+                              ? rs.dimension(64)
+                              : compact
+                              ? rs.dimension(70)
+                              : rs.dimension(78),
                           width: double.infinity,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -96,8 +115,12 @@ class ProviderCard extends StatelessWidget {
                                 right: -18,
                                 top: -20,
                                 child: Container(
-                                  width: compact ? 78 : 92,
-                                  height: compact ? 78 : 92,
+                                  width: compact
+                                      ? rs.dimension(78)
+                                      : rs.dimension(92),
+                                  height: compact
+                                      ? rs.dimension(78)
+                                      : rs.dimension(92),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withValues(alpha: 0.18),
                                     shape: BoxShape.circle,
@@ -108,21 +131,24 @@ class ProviderCard extends StatelessWidget {
                           ),
                         ),
                         Positioned(
-                          top: compact ? 26 : 32,
-                          left: 18,
+                          top: veryCompact
+                              ? rs.space(24)
+                              : compact
+                              ? rs.space(26)
+                              : rs.space(32),
+                          left: rs.space(18),
                           child: Hero(
                             tag: effectiveHeroTag,
                             child: _ProviderAvatar(
                               imagePath: provider.imagePath,
                               accent: accent,
-                              initials: _initials(name),
-                              compact: compact,
+                              compact: compact || veryCompact,
                             ),
                           ),
                         ),
                         Positioned(
-                          top: 14,
-                          right: 14,
+                          top: rs.space(14),
+                          right: rs.space(14),
                           child: _FavoriteButton(providerUid: provider.uid),
                         ),
                       ],
@@ -131,29 +157,53 @@ class ProviderCard extends StatelessWidget {
                   Expanded(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                        16,
-                        compact ? 4 : 6,
-                        16,
-                        compact ? 12 : 14,
+                        rs.space(16),
+                        veryCompact
+                            ? rs.space(10)
+                            : compact
+                            ? rs.space(12)
+                            : rs.space(14),
+                        rs.space(16),
+                        veryCompact
+                            ? rs.space(10)
+                            : compact
+                            ? rs.space(12)
+                            : rs.space(14),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (provider.isVerified || tier != 'basic') ...[
                             Wrap(
-                              spacing: 8,
-                              runSpacing: 6,
+                              spacing: rs.space(8),
+                              runSpacing: rs.space(6),
                               children: [
                                 if (provider.isVerified)
-                                  VerifiedBadge(size: compact ? 11 : 12),
+                                  VerifiedBadge(
+                                    size: veryCompact
+                                        ? 10
+                                        : compact
+                                        ? 11
+                                        : 12,
+                                  ),
                                 if (tier != 'basic')
                                   SubscriptionBadge.fromString(
                                     provider.subscriptionTier,
-                                    size: compact ? 12 : 14,
+                                    size: veryCompact
+                                        ? 11
+                                        : compact
+                                        ? 12
+                                        : 14,
                                   ),
                               ],
                             ),
-                            SizedBox(height: compact ? 8 : 10),
+                            SizedBox(
+                              height: veryCompact
+                                  ? rs.space(6)
+                                  : compact
+                                  ? rs.space(8)
+                                  : rs.space(10),
+                            ),
                           ],
                           Text(
                             name,
@@ -162,13 +212,23 @@ class ProviderCard extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   color: AppColors.textPrimary,
-                                  fontSize: compact ? 17 : 19,
+                                  fontSize: veryCompact
+                                      ? rs.text(15.5)
+                                      : compact
+                                      ? rs.text(17)
+                                      : rs.text(19),
                                   fontWeight: FontWeight.w800,
                                   height: 1.08,
                                   letterSpacing: -0.35,
                                 ),
                           ),
-                          SizedBox(height: compact ? 4 : 6),
+                          SizedBox(
+                            height: veryCompact
+                                ? rs.space(3)
+                                : compact
+                                ? rs.space(4)
+                                : rs.space(6),
+                          ),
                           Text(
                             provider.role,
                             maxLines: 1,
@@ -176,11 +236,21 @@ class ProviderCard extends StatelessWidget {
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   color: AppColors.textSecondary,
-                                  fontSize: compact ? 12.5 : 13.5,
+                                  fontSize: veryCompact
+                                      ? rs.text(11.5)
+                                      : compact
+                                      ? rs.text(12.5)
+                                      : rs.text(13.5),
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
-                          SizedBox(height: compact ? 10 : 12),
+                          SizedBox(
+                            height: veryCompact
+                                ? rs.space(8)
+                                : compact
+                                ? rs.space(10)
+                                : rs.space(12),
+                          ),
                           Row(
                             children: [
                               _InfoPill(
@@ -188,25 +258,27 @@ class ProviderCard extends StatelessWidget {
                                 label: provider.rating.toStringAsFixed(1),
                                 background: const Color(0xFFFFF5DD),
                                 foreground: const Color(0xFFB45309),
-                                compact: compact,
+                                compact: compact || veryCompact,
                               ),
-                              const SizedBox(width: 8),
+                              rs.gapW(8),
                               Expanded(
                                 child: _InfoPill(
                                   icon: Icons.radio_button_checked_rounded,
                                   label: 'Open now',
                                   background: accent.withValues(alpha: 0.10),
                                   foreground: accent,
-                                  compact: compact,
+                                  compact: compact || veryCompact,
                                 ),
                               ),
                             ],
                           ),
                           if (serviceChips.isNotEmpty) ...[
-                            SizedBox(height: compact ? 10 : 12),
+                            SizedBox(
+                              height: compact ? rs.space(10) : rs.space(12),
+                            ),
                             Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
+                              spacing: rs.space(8),
+                              runSpacing: rs.space(8),
                               children: serviceChips,
                             ),
                           ],
@@ -214,12 +286,22 @@ class ProviderCard extends StatelessWidget {
                           Container(
                             width: double.infinity,
                             padding: EdgeInsets.symmetric(
-                              horizontal: compact ? 12 : 14,
-                              vertical: compact ? 11 : 12,
+                              horizontal: veryCompact
+                                  ? rs.space(10)
+                                  : compact
+                                  ? rs.space(12)
+                                  : rs.space(14),
+                              vertical: veryCompact
+                                  ? rs.space(9)
+                                  : compact
+                                  ? rs.space(11)
+                                  : rs.space(12),
                             ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(
+                                rs.radius(18),
+                              ),
                               border: Border.all(
                                 color: AppColors.divider.withValues(
                                   alpha: 0.75,
@@ -228,19 +310,33 @@ class ProviderCard extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                Text(
-                                  'View profile',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: AppColors.textPrimary,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: compact ? 13 : 14,
-                                      ),
+                                Expanded(
+                                  child: Text(
+                                    'View profile',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: veryCompact
+                                              ? rs.text(12)
+                                              : compact
+                                              ? rs.text(13)
+                                              : rs.text(14),
+                                        ),
+                                  ),
                                 ),
-                                const Spacer(),
+                                SizedBox(width: rs.space(8)),
                                 Icon(
                                   Icons.arrow_forward_rounded,
-                                  size: compact ? 17 : 18,
+                                  size: veryCompact
+                                      ? rs.icon(16)
+                                      : compact
+                                      ? rs.icon(17)
+                                      : rs.icon(18),
                                   color: accent,
                                 ),
                               ],
@@ -267,7 +363,12 @@ class ProviderCard extends StatelessWidget {
     );
   }
 
-  List<Widget> _serviceChips(BuildContext context, {required bool compact}) {
+  List<Widget> _serviceChips(
+    BuildContext context, {
+    required bool compact,
+    required bool hidden,
+  }) {
+    if (hidden) return const <Widget>[];
     final values = provider.services
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
@@ -303,16 +404,6 @@ class ProviderCard extends StatelessWidget {
         .toList(growable: false);
   }
 
-  String _initials(String name) {
-    final parts = name
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .take(2)
-        .toList(growable: false);
-    if (parts.isEmpty) return 'SP';
-    return parts.map((part) => part.substring(0, 1).toUpperCase()).join();
-  }
-
   Color? _tierAccent(String tier) {
     switch (tier) {
       case 'elite':
@@ -328,23 +419,22 @@ class ProviderCard extends StatelessWidget {
 class _ProviderAvatar extends StatelessWidget {
   final String imagePath;
   final Color accent;
-  final String initials;
   final bool compact;
 
   const _ProviderAvatar({
     required this.imagePath,
     required this.accent,
-    required this.initials,
     required this.compact,
   });
 
   @override
   Widget build(BuildContext context) {
-    final size = compact ? 66.0 : 74.0;
+    final rs = context.rs;
+    final resolvedSize = compact ? rs.dimension(66) : rs.dimension(74);
 
     return Container(
-      width: size,
-      height: size,
+      width: resolvedSize,
+      height: resolvedSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 4),
@@ -358,23 +448,19 @@ class _ProviderAvatar extends StatelessWidget {
       ),
       child: imagePath.trim().isEmpty
           ? CircleAvatar(
-              backgroundColor: const Color(0xFFE7F0FF),
-              child: Text(
-                initials,
-                style: TextStyle(
-                  color: accent,
-                  fontSize: compact ? 24 : 27,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
-                ),
+              backgroundColor: const Color(0xFFEAF1FF),
+              child: Icon(
+                Icons.person_rounded,
+                color: accent,
+                size: compact ? rs.icon(30) : rs.icon(34),
               ),
             )
           : ClipOval(
               child: SafeImage(
                 isAvatar: true,
                 source: imagePath,
-                width: size,
-                height: size,
+                width: resolvedSize,
+                height: resolvedSize,
                 fit: BoxFit.cover,
               ),
             ),
@@ -389,6 +475,7 @@ class _FavoriteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return ValueListenableBuilder<Set<String>>(
       valueListenable: FavoriteState.favoriteUids,
       builder: (context, favorites, _) {
@@ -396,8 +483,8 @@ class _FavoriteButton extends StatelessWidget {
         return PressableScale(
           onTap: () => FavoriteState.toggleFavorite(providerUid),
           child: Container(
-            width: 40,
-            height: 40,
+            width: rs.dimension(40),
+            height: rs.dimension(40),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.94),
               shape: BoxShape.circle,
@@ -411,7 +498,7 @@ class _FavoriteButton extends StatelessWidget {
             ),
             child: Icon(
               isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-              size: 20,
+              size: rs.icon(20),
               color: isFav ? AppColors.danger : AppColors.textSecondary,
             ),
           ),
@@ -438,20 +525,25 @@ class _InfoPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 9 : 10,
-        vertical: compact ? 6 : 7,
+        horizontal: compact ? rs.space(9) : rs.space(10),
+        vertical: compact ? rs.space(6) : rs.space(7),
       ),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(rs.radius(999)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: compact ? 13 : 15, color: foreground),
-          const SizedBox(width: 6),
+          Icon(
+            icon,
+            size: compact ? rs.icon(13) : rs.icon(15),
+            color: foreground,
+          ),
+          rs.gapW(6),
           Flexible(
             child: Text(
               label,

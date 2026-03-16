@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/provider_portal.dart';
 import '../../../domain/entities/provider.dart';
@@ -131,6 +132,7 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final query = _query.trim().toLowerCase();
     final filteredCategories = CatalogState.categories.value;
     final providerPosts = _providerPostsForLookup;
@@ -172,12 +174,17 @@ class _SearchPageState extends State<SearchPage> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              padding: EdgeInsets.fromLTRB(
+                rs.space(16),
+                rs.space(12),
+                rs.space(16),
+                rs.space(8),
+              ),
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back),
+                    icon: Icon(Icons.arrow_back, size: rs.icon(22)),
                   ),
                   Expanded(
                     child: _SearchField(
@@ -196,7 +203,12 @@ class _SearchPageState extends State<SearchPage> {
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   cacheExtent: 1000,
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  padding: EdgeInsets.fromLTRB(
+                    rs.space(20),
+                    rs.space(8),
+                    rs.space(20),
+                    rs.space(24),
+                  ),
                   children: [
                     Row(
                       children: [
@@ -212,10 +224,10 @@ class _SearchPageState extends State<SearchPage> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    rs.gapH(12),
                     Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
+                      spacing: rs.space(10),
+                      runSpacing: rs.space(10),
                       children: _recentSearches
                           .map(
                             (label) => _SearchChip(
@@ -227,15 +239,15 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                     if (_query.trim().isNotEmpty ||
                         _selectedCategory != null) ...[
-                      const SizedBox(height: 14),
+                      rs.gapH(14),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: rs.space(12),
+                          vertical: rs.space(10),
                         ),
                         decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(rs.radius(10)),
                           border: Border.all(
                             color: Theme.of(context).dividerColor,
                           ),
@@ -248,12 +260,12 @@ class _SearchPageState extends State<SearchPage> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 20),
+                    rs.gapH(20),
                     Text(
                       'Browse all categories',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 12),
+                    rs.gapH(12),
                     ValueListenableBuilder<bool>(
                       valueListenable: CatalogState.loading,
                       builder: (context, loading, _) {
@@ -261,7 +273,7 @@ class _SearchPageState extends State<SearchPage> {
                           return const CategoryShimmerList();
                         }
                         return SizedBox(
-                          height: 150,
+                          height: 164,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             cacheExtent: 500,
@@ -272,8 +284,9 @@ class _SearchPageState extends State<SearchPage> {
                                 onTap: () => _toggleCategory(category.name),
                               );
                             },
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: AppSpacing.md),
+                            separatorBuilder: (context, index) => SizedBox(
+                              width: context.rs.space(AppSpacing.md),
+                            ),
                             itemCount: filteredCategories.length,
                           ),
                         );
@@ -729,14 +742,18 @@ class _SearchFieldState extends State<_SearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final focused = _focusNode.hasFocus;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
       curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: rs.space(12),
+        vertical: rs.space(4),
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(rs.radius(20)),
         border: Border.all(
           color: focused ? AppColors.primary : Theme.of(context).dividerColor,
           width: focused ? 1.6 : 1,
@@ -744,8 +761,8 @@ class _SearchFieldState extends State<_SearchField> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.search, color: AppColors.primary, size: 18),
-          const SizedBox(width: 8),
+          Icon(Icons.search, color: AppColors.primary, size: rs.icon(18)),
+          rs.gapW(8),
           Expanded(
             child: TextField(
               focusNode: _focusNode,
@@ -762,7 +779,7 @@ class _SearchFieldState extends State<_SearchField> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          rs.gapW(8),
         ],
       ),
     );
@@ -777,15 +794,19 @@ class _SearchChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(rs.radius(18)),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: rs.space(12),
+            vertical: rs.space(8),
+          ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(rs.radius(18)),
             border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: Text(
@@ -817,18 +838,19 @@ class _ServiceListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final displayRating = providerRating ?? item.rating;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(rs.radius(16)),
         child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(14),
+          margin: EdgeInsets.only(bottom: rs.space(12)),
+          padding: rs.all(14),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(rs.radius(16)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
@@ -847,7 +869,7 @@ class _ServiceListTile extends StatelessWidget {
                 tag: 'service-${item.title}',
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(rs.radius(12)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.08),
@@ -857,17 +879,17 @@ class _ServiceListTile extends StatelessWidget {
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(rs.radius(12)),
                     child: SafeImage(
                       source: item.imagePath,
-                      width: 80,
-                      height: 80,
+                      width: rs.dimension(80),
+                      height: rs.dimension(80),
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              rs.gapW(14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -895,9 +917,11 @@ class _ServiceListTile extends StatelessWidget {
                                   onTap: () => FavoriteState.toggleFavorite(
                                     providerUid!,
                                   ),
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(
+                                    rs.radius(20),
+                                  ),
                                   child: Container(
-                                    padding: const EdgeInsets.all(6),
+                                    padding: rs.all(6),
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: isFav
@@ -914,7 +938,7 @@ class _ServiceListTile extends StatelessWidget {
                                       color: isFav
                                           ? AppColors.danger
                                           : AppColors.textSecondary,
-                                      size: 16,
+                                      size: rs.icon(16),
                                     ),
                                   ),
                                 ),
@@ -923,15 +947,17 @@ class _ServiceListTile extends StatelessWidget {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Row(
+                    rs.gapH(6),
+                    Wrap(
+                      spacing: rs.space(8),
+                      runSpacing: rs.space(4),
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.star_rounded,
-                          size: 16,
-                          color: Color(0xFFF59E0B),
+                          size: rs.icon(16),
+                          color: const Color(0xFFF59E0B),
                         ),
-                        const SizedBox(width: 4),
                         Text(
                           displayRating.toStringAsFixed(1),
                           style: Theme.of(context).textTheme.bodyMedium
@@ -940,25 +966,22 @@ class _ServiceListTile extends StatelessWidget {
                                 color: const Color(0xFFF59E0B),
                               ),
                         ),
-                        const SizedBox(width: 8),
                         Container(
                           width: 1,
-                          height: 12,
+                          height: rs.dimension(12),
                           color: Theme.of(context).dividerColor,
                         ),
-                        const SizedBox(width: 8),
                         Icon(
                           item.available ? Icons.circle : Icons.circle_outlined,
-                          size: 8,
+                          size: rs.icon(8),
                           color: item.available
                               ? const Color(0xFF10B981)
                               : Colors.grey,
                         ),
-                        const SizedBox(width: 4),
                         Text(
                           item.available ? "Available Now" : "Currently Closed",
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: rs.text(11),
                             fontWeight: FontWeight.w600,
                             color: item.available
                                 ? const Color(0xFF10B981)
@@ -968,22 +991,22 @@ class _ServiceListTile extends StatelessWidget {
                       ],
                     ),
                     if (providerName != null) ...[
-                      const SizedBox(height: 8),
+                      rs.gapH(8),
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(4),
+                            padding: rs.all(4),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.person,
-                              size: 10,
+                              size: rs.icon(10),
                               color: AppColors.primary,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          rs.gapW(6),
                           Expanded(
                             child: Text(
                               providerName!,
@@ -997,15 +1020,15 @@ class _ServiceListTile extends StatelessWidget {
                         ],
                       ),
                     ],
-                    const SizedBox(height: 8),
+                    rs.gapH(8),
                     Row(
                       children: [
                         Icon(
                           Icons.location_on_rounded,
-                          size: 12,
+                          size: rs.icon(12),
                           color: Theme.of(context).hintColor,
                         ),
-                        const SizedBox(width: 4),
+                        rs.gapW(4),
                         Expanded(
                           child: Text(
                             '${item.location} • ${item.etaHours}h arrival',
@@ -1041,16 +1064,20 @@ class _SortPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return PressableScale(
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(rs.radius(12)),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: EdgeInsets.symmetric(
+            horizontal: rs.space(14),
+            vertical: rs.space(10),
+          ),
           decoration: BoxDecoration(
             color: active ? AppColors.primary : Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(rs.radius(12)),
             border: Border.all(
               color: active
                   ? AppColors.primary
@@ -1073,10 +1100,10 @@ class _SortPill extends StatelessWidget {
               if (icon != null) ...[
                 Icon(
                   icon,
-                  size: 16,
+                  size: rs.icon(16),
                   color: active ? Colors.white : AppColors.primary,
                 ),
-                const SizedBox(width: 8),
+                rs.gapW(8),
               ],
               Text(
                 label,
@@ -1086,10 +1113,10 @@ class _SortPill extends StatelessWidget {
                   letterSpacing: 0.2,
                 ),
               ),
-              const SizedBox(width: 8),
+              rs.gapW(8),
               Icon(
                 Icons.keyboard_arrow_down_rounded,
-                size: 18,
+                size: rs.icon(18),
                 color: active ? Colors.white : AppColors.primary,
               ),
             ],
@@ -1108,15 +1135,19 @@ class _ActiveSortPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: rs.space(14),
+        vertical: rs.space(10),
+      ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [AppColors.primary, AppColors.splashEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(rs.radius(12)),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.2),
@@ -1135,19 +1166,23 @@ class _ActiveSortPill extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(width: 10),
+          rs.gapW(10),
           PressableScale(
             onTap: onClear,
             child: InkWell(
               onTap: onClear,
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(rs.radius(30)),
               child: Container(
-                padding: const EdgeInsets.all(2),
+                padding: rs.all(2),
                 decoration: const BoxDecoration(
                   color: Colors.white24,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.close, color: Colors.white, size: 14),
+                child: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: rs.icon(14),
+                ),
               ),
             ),
           ),

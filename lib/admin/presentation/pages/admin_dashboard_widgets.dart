@@ -1086,8 +1086,12 @@ class _OverviewKpiGrid extends StatelessWidget {
         icon: Icons.diamond_rounded,
       ),
       _KpiData(
-        label: 'Completed Revenue',
-        value: _toMoney(_numValue(kpis['completedRevenue'])),
+        label: 'Total Revenue',
+        value: _toMoney(
+          _numValue(kpis['totalRevenue']) != 0
+              ? _numValue(kpis['totalRevenue'])
+              : _numValue(kpis['completedRevenue']),
+        ),
         icon: Icons.attach_money_rounded,
       ),
     ];

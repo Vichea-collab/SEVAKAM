@@ -1,62 +1,70 @@
-Business Model: Provider Subscription Tiers (Current App State + Near-Term Plan)
-   * Payment Logic: Providers pay subscription fees only.
-   * Accepted Methods: Credit Card (Stripe) is live. KHQR is planned / coming soon.
+Sevakam Subscription
 
-   * Basic (Starter) — $0 / month
-     - Purpose: Try the platform and build early credibility.
-     - Includes: Basic profile, direct chat with finders, standard search placement.
-     - Trial: 7-day initial visibility boost.
-     - Limits: Accept up to 5 booking requests per month.
-     - Search Ranking: 1x (standard).
-     - Best For: Freelancers starting out or testing demand.
-     - Recommended Actions: Complete profile, submit KYC, upload 3–5 photos, reply to chats within 24 hours.
+Who pays
+- Only providers pay for subscription plans.
+- Finders use the app for free.
 
-   * Professional (Growth / Featured) — $10 / month ($100 / year — save $20)
-     - Purpose: Grow steady bookings and improve ranking.
-     - Includes: Featured Provider badge (blue), 2x category ranking weight.
-     - Current Features: Portfolio gallery up to 15 photos, profile analytics dashboard.
-     - Public UI: If KYC is approved, provider shows Verified badge. Subscription badge remains separate from KYC badge.
-     - Planned Feature: Priority KYC review.
-     - Limits: Accept up to 25 booking requests per month.
-     - Search Ranking: 2x boost.
-     - Displayed Quality Gate: KYC complete + 3.5+ rating + 5 completed orders.
-     - Current App Status: This gate is shown in UI text, but it is not yet enforced in checkout logic.
-     - Trial: 7-day free trial for new providers (auto-downgrade to Basic if not subscribed).
-     - Best For: Full-time professionals building a consistent client base.
-     - Recommended Actions: Add case studies, use analytics to optimize profile, reply within 12 hours.
+Payment
+- Stripe is live.
+- KHQR is planned later.
 
-   * Elite Business (Premium) — $25 / month ($250 / year — save $50)
-     - Purpose: Maximum visibility and scale.
-     - Includes: Top Tier badge (gold), top-of-list ranking, featured on Home "Top Providers".
-     - Current Features: Unlimited portfolio photos, premium visibility, home-page exposure.
-     - Public UI: If KYC is approved, provider shows Verified badge plus Elite plan badge in public cards and detail surfaces.
-     - Limits: Unlimited booking requests (subject to fair-use policy).
-     - Search Ranking: 5x boost + featured on homepage.
-     - Displayed Quality Gate: KYC complete + 4.5+ rating + 20 completed orders.
-     - Current App Status: This gate is shown in UI text, but it is not yet enforced in checkout logic.
-     - Planned / Not Fully Implemented Yet: special-offer broadcasting entitlement, dedicated premium support, KHQR direct payment.
-     - Best For: Established companies and teams with multiple workers.
-     - Recommended Actions: Launch monthly promotions, maintain 4.5+ rating, and keep response quality high.
+Plans
 
-   * KYC Review Flow (Current Real Implementation)
-     - Providers upload front and back images of National ID documents.
-     - Submission marks provider KYC status as pending review.
-     - Admin can open Provider Verification (KYC) in admin dashboard.
-     - Admin can view uploaded KYC documents and approve / reject / reset status.
-     - Approved KYC marks provider as verified.
-     - Verified state should surface in provider portal header and public finder-facing provider cards / detail pages.
+Basic
+- Price: Free
+- For: New providers
+- Includes:
+  - Basic profile
+  - Direct chat
+  - Standard search ranking
+  - Up to 5 booking requests per month
+  - 7-day new-provider boost
 
-   * Role Surfaces (Current Real Implementation)
-     - Finder app: sees provider subscription plan badge on public provider cards, home recommendation tiles, and provider detail page.
-     - Finder app: sees provider Verified badge separately from the subscription badge when admin-approved KYC exists.
-     - Provider app: manages subscription from provider portal and sees current plan in provider profile / subscription / portfolio-related UI.
-     - Admin app: reviews plan, billing state, renewal mode, and period end from the dedicated Subscriptions section.
+Professional
+- Price: $10/month or $100/year
+- For: Providers who want more visibility
+- Includes:
+  - Blue Professional badge
+  - 2x search ranking boost
+  - Up to 25 booking requests per month
+  - Up to 15 portfolio photos
+  - Profile analytics
+  - 7-day free trial for new providers
 
-   * Business Rules
-     - Annual plan discount: 2 months free on yearly billing.
-     - Booking limits: Hard stop at limit with "Upgrade" prompt (no overage charges for MVP).
-     - Grace period: Downgraded providers keep features until billing cycle ends.
-     - Search ranking factors: subscription tier, rating, response time, completion rate.
-     - Quality gates: Paid-tier quality gates are currently product rules / UI guidance, not enforced backend upgrade blockers yet.
-     - Monthly reset: Booking counts reset at each billing period start.
-     - Cancellation: Takes effect at end of current billing period (no immediate cutoff).
+Elite Business
+- Price: $25/month or $250/year
+- For: Top providers and teams
+- Includes:
+  - Gold Elite badge
+  - 5x search ranking boost
+  - Homepage exposure
+  - Unlimited booking requests
+  - Unlimited portfolio photos
+  - Premium visibility
+
+KYC and subscription
+- KYC and subscription are separate.
+- KYC approved = Verified badge.
+- Subscription = plan badge like Professional or Elite.
+- A provider can show both badges at the same time.
+
+Current app behavior
+- Finder side:
+  - Shows provider plan badge on public provider cards and detail pages
+  - Shows Verified badge separately when KYC is approved
+- Provider side:
+  - Provider manages subscription in the provider portal
+  - Provider can see current plan, billing period, and renewal status
+- Admin side:
+  - Admin reviews subscriptions in the Subscriptions section
+  - Admin reviews KYC in the Provider Verification section
+
+Business rules
+- Yearly billing gives discount
+- Booking count resets each billing period
+- Cancel takes effect at end of billing period
+- Downgrade keeps current plan until the period ends
+
+Important note
+- Quality-gate text for paid plans is shown in the app UI
+- It is not fully enforced in checkout yet

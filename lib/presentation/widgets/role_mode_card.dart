@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive.dart';
 import 'pressable_scale.dart';
 
 class RoleModeCard extends StatelessWidget {
@@ -17,14 +18,15 @@ class RoleModeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     final theme = Theme.of(context);
     final targetTitle = isProvider ? 'Finder' : 'Provider';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: rs.all(16),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(rs.radius(18)),
         border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
@@ -40,22 +42,23 @@ class RoleModeCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                height: 42,
-                width: 42,
+                height: rs.dimension(42),
+                width: rs.dimension(42),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [AppColors.splashStart, AppColors.splashEnd],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(rs.radius(12)),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.swap_horiz_rounded,
                   color: Colors.white,
+                  size: rs.icon(22),
                 ),
               ),
-              const SizedBox(width: 12),
+              rs.gapW(12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,7 +70,7 @@ class RoleModeCard extends StatelessWidget {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    rs.gapH(2),
                     Text(
                       'Switch between finder and provider workspace.',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -79,7 +82,7 @@ class RoleModeCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          rs.gapH(16),
           Row(
             children: [
               Expanded(
@@ -89,7 +92,7 @@ class RoleModeCard extends StatelessWidget {
                   active: !isProvider,
                 ),
               ),
-              const SizedBox(width: 10),
+              rs.gapW(10),
               Expanded(
                 child: _RolePill(
                   icon: Icons.design_services_rounded,
@@ -99,7 +102,7 @@ class RoleModeCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          rs.gapH(16),
           SizedBox(
             width: double.infinity,
             child: PressableScale(
@@ -107,9 +110,9 @@ class RoleModeCard extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: isSwitching ? null : onSwitch,
                 icon: isSwitching
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
+                    ? SizedBox(
+                        height: rs.dimension(18),
+                        width: rs.dimension(18),
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           color: Colors.white,
@@ -124,14 +127,14 @@ class RoleModeCard extends StatelessWidget {
                   isSwitching ? 'Switching...' : 'Switch to $targetTitle',
                 ),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: EdgeInsets.symmetric(vertical: rs.space(14)),
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: AppColors.primary.withValues(
                     alpha: 0.6,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(rs.radius(14)),
                   ),
                   elevation: 0,
                   textStyle: theme.textTheme.bodyLarge?.copyWith(
@@ -160,12 +163,16 @@ class _RolePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rs = context.rs;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: rs.space(12),
+        vertical: rs.space(12),
+      ),
       decoration: BoxDecoration(
         color: active ? const Color(0xFFF3F8FF) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(rs.radius(14)),
         border: Border.all(
           color: active ? AppColors.primary : const Color(0xFFE2E8F0),
         ),
@@ -176,10 +183,10 @@ class _RolePill extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: 18,
+            size: rs.icon(18),
             color: active ? AppColors.primary : AppColors.textSecondary,
           ),
-          const SizedBox(width: 8),
+          rs.gapW(8),
           Flexible(
             child: Text(
               label,
@@ -192,12 +199,15 @@ class _RolePill extends StatelessWidget {
             ),
           ),
           if (active) ...[
-            const SizedBox(width: 6),
+            rs.gapW(6),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              padding: EdgeInsets.symmetric(
+                horizontal: rs.space(7),
+                vertical: rs.space(3),
+              ),
               decoration: BoxDecoration(
                 color: AppColors.primary,
-                borderRadius: BorderRadius.circular(100),
+                borderRadius: BorderRadius.circular(rs.radius(100)),
               ),
               child: Text(
                 'On',

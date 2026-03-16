@@ -53,7 +53,7 @@ class OrderState {
   static Future<bool>? _tokenRefreshInFlight;
   static bool _realtimeEnabled = const bool.fromEnvironment(
     'ORDER_REALTIME_STREAM',
-    defaultValue: true,
+    defaultValue: false,
   );
   static StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
   _ordersSubscription;

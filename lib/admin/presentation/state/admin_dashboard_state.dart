@@ -25,6 +25,7 @@ class AdminDashboardState {
   static final ValueNotifier<bool> loadingPosts = ValueNotifier(false);
   static final ValueNotifier<bool> loadingTickets = ValueNotifier(false);
   static final ValueNotifier<bool> loadingServices = ValueNotifier(false);
+  static final ValueNotifier<bool> loadingPromotions = ValueNotifier(false);
   static final ValueNotifier<bool> loadingBroadcasts = ValueNotifier(false);
   static final ValueNotifier<bool> loadingReadBudget = ValueNotifier(false);
   static final ValueNotifier<bool> loadingGlobalSearch = ValueNotifier(false);
@@ -55,6 +56,9 @@ class AdminDashboardState {
   static final ValueNotifier<List<AdminServiceRow>> services = ValueNotifier(
     const <AdminServiceRow>[],
   );
+  static final ValueNotifier<List<AdminPromotionRow>> promotions = ValueNotifier(
+    const <AdminPromotionRow>[],
+  );
   static final ValueNotifier<List<AdminBroadcastRow>> broadcasts =
       ValueNotifier(const <AdminBroadcastRow>[]);
   static final ValueNotifier<List<AdminUndoHistoryRow>> undoHistory =
@@ -75,6 +79,8 @@ class AdminDashboardState {
     const AdminPagination.initial(limit: pageSize),
   );
   static final ValueNotifier<AdminPagination> servicesPagination =
+      ValueNotifier(const AdminPagination.initial(limit: pageSize));
+  static final ValueNotifier<AdminPagination> promotionsPagination =
       ValueNotifier(const AdminPagination.initial(limit: pageSize));
   static final ValueNotifier<AdminPagination> broadcastsPagination =
       ValueNotifier(const AdminPagination.initial(limit: pageSize));
@@ -100,6 +106,7 @@ class AdminDashboardState {
     posts.value = const <AdminPostRow>[];
     tickets.value = const <AdminTicketRow>[];
     services.value = const <AdminServiceRow>[];
+    promotions.value = const <AdminPromotionRow>[];
     broadcasts.value = const <AdminBroadcastRow>[];
     undoHistory.value = const <AdminUndoHistoryRow>[];
     ticketMessages.value = const <AdminTicketMessageRow>[];
@@ -109,6 +116,7 @@ class AdminDashboardState {
     postsPagination.value = const AdminPagination.initial(limit: pageSize);
     ticketsPagination.value = const AdminPagination.initial(limit: pageSize);
     servicesPagination.value = const AdminPagination.initial(limit: pageSize);
+    promotionsPagination.value = const AdminPagination.initial(limit: pageSize);
     broadcastsPagination.value = const AdminPagination.initial(limit: pageSize);
     undoHistoryPagination.value = const AdminPagination.initial(
       limit: pageSize,
@@ -265,6 +273,32 @@ class AdminDashboardState {
       servicesPagination.value = result.pagination;
     } finally {
       loadingServices.value = false;
+    }
+  }
+
+  static Future<void> refreshPromotions({
+    int page = 1,
+    int limit = pageSize,
+    String query = '',
+    String placement = '',
+    String targetType = '',
+    String status = '',
+  }) async {
+    final safePage = page < 1 ? 1 : page;
+    loadingPromotions.value = true;
+    try {
+      final result = await _repository.fetchPromotions(
+        page: safePage,
+        limit: limit,
+        query: query,
+        placement: placement,
+        targetType: targetType,
+        status: status,
+      );
+      promotions.value = result.items;
+      promotionsPagination.value = result.pagination;
+    } finally {
+      loadingPromotions.value = false;
     }
   }
 
@@ -425,6 +459,56 @@ class AdminDashboardState {
       serviceId: serviceId,
       active: active,
       reason: reason,
+    );
+  }
+
+  static Future<AdminPromotionRow> createPromotion({
+    required String placement,
+    required String badgeLabel,
+    required String title,
+    required String description,
+    required String imageUrl,
+    required String ctaLabel,
+    required String targetType,
+    required String targetValue,
+    required List<String> targetRoles,
+    String query = '',
+    String category = '',
+    String city = '',
+    int sortOrder = 0,
+    bool active = true,
+    String? startAtIso,
+    String? endAtIso,
+  }) async {
+    final row = await _repository.createPromotion(
+      placement: placement,
+      badgeLabel: badgeLabel,
+      title: title,
+      description: description,
+      imageUrl: imageUrl,
+      ctaLabel: ctaLabel,
+      targetType: targetType,
+      targetValue: targetValue,
+      targetRoles: targetRoles,
+      query: query,
+      category: category,
+      city: city,
+      sortOrder: sortOrder,
+      active: active,
+      startAtIso: startAtIso,
+      endAtIso: endAtIso,
+    );
+    promotions.value = [row, ...promotions.value.where((item) => item.id != row.id)];
+    return row;
+  }
+
+  static Future<AdminActionResult> updatePromotionActive({
+    required String promotionId,
+    required bool active,
+  }) {
+    return _repository.updatePromotionActive(
+      promotionId: promotionId,
+      active: active,
     );
   }
 

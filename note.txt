@@ -27,62 +27,20 @@ Error:
 
 tmr prompts:
 //- update the chat feature for me, the notification messages should have between finder/provider and for admin the support with finder/provider
-- help me check are the transition is smoothies?, navigation have interaction? app feel smoothies and feel like a real production?
-- checking my whole app features work with ios device yet?
-- in home page of finder of the promotion ads, can u suggest for me how to setup that ads it need provider post or admin add the ads?
+//- help me check are the transition is smoothies?, navigation have interaction? app feel smoothies and feel like a real production?
+//- in home page of finder of the promotion ads, can u suggest for me how to setup that ads it need provider post or admin add the ads?
 //- in subscription do visual pass to make the plan cards shorter, because they still carry a lot of feature text on mobile.
 
 //- audit for home and profile screens of both role, is there need to clean any remaining inconsistent UI?
 //- implement that refresh audit pass next and standardize the refresh behavior across finder, provider, and admin.
 
+//- update my database.txt with my whole app
+//- update my subscription.txt with simple text to let reader short and easy to understand
+//- update the rating for category of each service, the concept all sum of all provider rating/n of provider to get display rating of all services
+//- checking my whole app features work with ios device yet?
+- for address map picker, the currect location, the tracking is not track in current location, it goes default the singe point set in simulator of location
 
-
-
-Best setup: use admin-managed ads, not provider posts directly.
-
-Recommended model:
-
-Provider posts: regular marketplace content
-shown in search, provider detail, recommendations, feed-style sections
-Admin ads/promotions: curated banner carousel
-shown in the home promo slider
-admin chooses which provider/service/campaign to feature
-Best approach is a hybrid:
-
-Admin creates the ad.
-Admin can optionally link that ad to:
-a provider
-a service
-a category
-an internal target page
-Home page reads only active ads from admin data.
-Clicking the ad opens:
-provider detail
-filtered search page
-provider post page
-or a special promo landing
-What admin ad should contain:
-
-title
-subtitle/description
-imageUrl
-badgeLabel like Limited offer
-ctaLabel
-targetType like provider, service, category, search
-targetValue
-startAt
-endAt
-isActive
-sortOrder
-optional city/category targeting
-Good future upgrade:
-
-allow only Elite providers to request promotions
-but admin still approves/publishes them
-that keeps subscription value connected to promotions without losing quality control
-So my recommendation is:
-
-do not make the carousel auto-read provider posts
-make it an admin-managed promotions system
-optionally let admin link promotions to provider content
-
+//- update my whole app responsive for me, make it all fix with all mobile devices like a professional
+//- fix my address picker in ios, it not working at all
+- address picker i think it should auto detect to Cambodia default and when u click track current location, it track ur currect location for both os and it Available in Cambodia country only
+//- update the promotion in home page of finder for me, i think it too much text and it no space for images/photos

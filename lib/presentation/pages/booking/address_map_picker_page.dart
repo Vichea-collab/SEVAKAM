@@ -45,18 +45,22 @@ class AddressMapPickerPage extends StatefulWidget {
 }
 
 class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
-  static const LatLng _phnomPenh = LatLng(11.5564, 104.9282);
-  static const String _fixedCity = 'Phnom Penh';
-  static const double _phnomPenhNorth = 11.82;
-  static const double _phnomPenhSouth = 11.35;
-  static const double _phnomPenhWest = 104.62;
-  static const double _phnomPenhEast = 105.12;
-  static const double _phnomPenhMaxDistanceMeters = 60000;
+  static const LatLng _cambodiaCenter = LatLng(12.5657, 104.9910);
+  static const String _defaultCountry = 'Cambodia';
+  static const String _defaultCity = 'Phnom Penh';
+  static const double _cambodiaNorth = 14.80;
+  static const double _cambodiaSouth = 10.30;
+  static const double _cambodiaWest = 102.30;
+  static const double _cambodiaEast = 107.70;
 
   String get _apiKey => AppEnv.googleMapsApiKey();
 
   static const Map<String, LatLng> _cambodiaCities = {
-    _fixedCity: LatLng(11.5564, 104.9282),
+    'Phnom Penh': LatLng(11.5564, 104.9282),
+    'Siem Reap': LatLng(13.3671, 103.8448),
+    'Battambang': LatLng(13.0957, 103.2022),
+    'Sihanoukville': LatLng(10.6250, 103.5239),
+    'Kampot': LatLng(10.6104, 104.1814),
   };
 
   final TextEditingController _searchController = TextEditingController();
@@ -64,7 +68,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   late LatLng _selectedPoint;
   LatLng? _currentLiveLocation;
   GoogleMapController? _googleMapController;
-  String _selectedAddress = 'Phnom Penh, Cambodia';
+  String _selectedAddress = _defaultCountry;
   bool _searching = false;
   bool _locating = false;
   bool _hasLocationPermission = false;
@@ -74,9 +78,14 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   bool _followCurrentLocation = false;
   bool _cameraMoveByApp = false;
 
+  LatLng get _defaultStartPoint => _cambodiaCities[_defaultCity]!;
+
   bool get _useOpenStreetMap {
-    // Keep Android debug/emulator stable even when Google Maps SDK key
-    // restrictions are not fully configured yet.
+    // Keep iOS and Android debug stable even when Google Maps platform-view
+    // integration or SDK restrictions are unreliable.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      return true;
+    }
     if (!kIsWeb &&
         kDebugMode &&
         defaultTargetPlatform == TargetPlatform.android) {
@@ -94,7 +103,8 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   @override
   void initState() {
     super.initState();
-    _selectedPoint = _phnomPenh;
+    _selectedPoint = _defaultStartPoint;
+    _selectedAddress = '$_defaultCity, $_defaultCountry';
     _prepareLocationPermissions();
   }
 
@@ -117,7 +127,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
               child: AppTopBar(
                 title: 'Pick Location',
-                subtitle: 'Phnom Penh, Cambodia',
+                subtitle: 'Cambodia only',
                 actions: [
                   TextButton(
                     onPressed: _confirmLocation,
@@ -170,29 +180,6 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                           ),
                   ),
                 ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                height: 42,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _cambodiaCities.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final city = _cambodiaCities.keys.elementAt(index);
-                    return ActionChip(
-                      label: Text(city),
-                      onPressed: () {
-                        _stopFollowingCurrentLocation();
-                        _moveToCity(city);
-                      },
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: AppColors.divider),
-                    );
-                  },
-                ),
               ),
             ),
             const SizedBox(height: 10),
@@ -266,9 +253,12 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   Widget _buildMap() {
     if (_useOpenStreetMap) return _buildOpenStreetMap();
     return GoogleMap(
-      initialCameraPosition: CameraPosition(target: _selectedPoint, zoom: 11.5),
+      initialCameraPosition: CameraPosition(
+        target: _selectedPoint,
+        zoom: _defaultMapZoom,
+      ),
       myLocationEnabled: _hasLocationPermission,
-      // Use the custom "current location" action so we can enforce Phnom Penh bounds.
+      // Use the custom "current location" action so we can enforce Cambodia bounds.
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
       onCameraMoveStarted: () {
@@ -277,15 +267,15 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       },
       onMapCreated: (controller) {
         _googleMapController = controller;
-        if (_selectedPoint != _phnomPenh) {
+        if (_selectedPoint != _cambodiaCenter) {
           _moveCamera(_selectedPoint, zoom: 15.0);
         }
       },
       onTap: (point) {
         _stopFollowingCurrentLocation();
-        if (!_isInsidePhnomPenh(point)) {
+        if (!_isInsideCambodia(point)) {
           _showMessage(
-            'Please choose a location inside Phnom Penh.',
+            'Please choose a location inside Cambodia.',
             type: AppToastType.warning,
           );
           return;
@@ -351,8 +341,8 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
           _selectedPoint.latitude,
           _selectedPoint.longitude,
         ),
-        initialZoom: 11.5,
-        minZoom: 10.5,
+        initialZoom: _defaultMapZoom,
+        minZoom: 6.0,
         maxZoom: 18,
         onPositionChanged: (pos, hasGesture) {
           if (hasGesture) _stopFollowingCurrentLocation();
@@ -360,9 +350,9 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
         onTap: (_, point) {
           _stopFollowingCurrentLocation();
           final selected = LatLng(point.latitude, point.longitude);
-          if (!_isInsidePhnomPenh(selected)) {
+          if (!_isInsideCambodia(selected)) {
             _showMessage(
-              'Please choose a location inside Phnom Penh.',
+              'Please choose a location inside Cambodia.',
               type: AppToastType.warning,
             );
             return;
@@ -383,6 +373,9 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     );
   }
 
+  double get _defaultMapZoom =>
+      _selectedPoint == _defaultStartPoint ? 12.4 : 11.5;
+
   Widget _buildUnsupportedFallback() {
     return Container(
       color: const Color(0xFFF3F6FF),
@@ -390,7 +383,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       padding: const EdgeInsets.all(16),
       child: Text(
         'Live map is not supported on this device target.\n'
-        'Search by location name or use current location to continue.',
+        'Search by location name or pick manually on the map in Cambodia.',
         textAlign: TextAlign.center,
         style: Theme.of(
           context,
@@ -428,7 +421,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
           : await _searchWithGoogle(query);
       if (!success) {
         _showMessage(
-          'No result found for "$query" in Phnom Penh.',
+          'No result found for "$query" in Cambodia.',
           type: AppToastType.warning,
         );
       }
@@ -446,7 +439,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
 
   Future<bool> _searchWithGoogle(String query) async {
     final uri = Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
-      'address': '$query, Phnom Penh, Cambodia',
+      'address': '$query, Cambodia',
       'components': 'country:KH',
       'region': 'kh',
       'language': 'en',
@@ -464,11 +457,11 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     final lng = (location['lng'] as num?)?.toDouble();
     if (lat == null || lng == null) return false;
     final point = LatLng(lat, lng);
-    if (!_isInsidePhnomPenh(point)) return false;
+    if (!_isInsideCambodia(point)) return false;
     setState(() {
       _selectedPoint = point;
       _selectedAddress =
-          (first['formatted_address'] as String?) ?? 'Phnom Penh, Cambodia';
+          (first['formatted_address'] as String?) ?? _defaultCountry;
     });
     await _moveCamera(point, zoom: 14.8);
     return true;
@@ -476,7 +469,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
 
   Future<bool> _searchWithOpenStreetMap(String query) async {
     final uri = Uri.https('nominatim.openstreetmap.org', '/search', {
-      'q': '$query, Phnom Penh, Cambodia',
+      'q': '$query, Cambodia',
       'format': 'jsonv2',
       'limit': '1',
       'countrycodes': 'kh',
@@ -497,11 +490,10 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     final lon = double.tryParse('${first['lon']}');
     if (lat == null || lon == null) return false;
     final point = LatLng(lat, lon);
-    if (!_isInsidePhnomPenh(point)) return false;
+    if (!_isInsideCambodia(point)) return false;
     setState(() {
       _selectedPoint = point;
-      _selectedAddress =
-          (first['display_name'] as String?) ?? 'Phnom Penh, Cambodia';
+      _selectedAddress = (first['display_name'] as String?) ?? _defaultCountry;
     });
     await _moveCamera(point, zoom: 14.8);
     return true;
@@ -551,25 +543,14 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       _startLiveTracking();
 
       final position = await _resolveBestCurrentPosition(forceRefresh: !silent);
-      LatLng? point;
-
-      if (position != null) {
-        point = LatLng(position.latitude, position.longitude);
-      } else {
-        // Fallback to network if GPS fails or times out
-        point = await _resolveApproxNetworkLocation();
-        if (point != null && !silent) {
-          _showMessage(
-            'GPS unavailable. Using network location fallback.',
-            type: AppToastType.info,
-          );
-        }
-      }
+      final point = position == null
+          ? null
+          : LatLng(position.latitude, position.longitude);
 
       if (point == null) {
         if (!silent) {
           _showMessage(
-            'Unable to get your current location. Please try moving the map manually.',
+            'Unable to get a real Cambodia device location. Set a Cambodia location on the device or pick manually on the map.',
             type: AppToastType.error,
           );
         }
@@ -577,48 +558,29 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       }
 
       final isSimulatorHq = _isSimulatorDefaultHq(position);
-
-      final outsidePhnomPenh = !_isInsidePhnomPenh(point);
-      if (outsidePhnomPenh) {
-        // If GPS is outside, maybe network location is better (VPN or something)
-        if (position != null) {
-          final networkPoint = await _resolveApproxNetworkLocation();
-          if (networkPoint != null && _isInsidePhnomPenh(networkPoint)) {
-            setState(() => _selectedPoint = networkPoint);
-            await _moveCamera(networkPoint, zoom: 15.0);
-            await _reverseGeocode(networkPoint);
-            if (!silent && isSimulatorHq && !kDebugMode) {
-              _showMessage(
-                'Using Phnom Penh fallback while emulator location is still the default mock point.',
-                type: AppToastType.info,
-              );
-            }
-            return;
-          }
+      final outsideCambodia = !_isInsideCambodia(point);
+      if (outsideCambodia || isSimulatorHq) {
+        _stopFollowingCurrentLocation();
+        if (mounted) {
+          setState(() {
+            _currentLiveLocation = null;
+            _selectedPoint = _defaultStartPoint;
+            _selectedAddress = '$_defaultCity, $_defaultCountry';
+          });
         }
-
+        await _moveCamera(_defaultStartPoint, zoom: 12.4);
         if (!silent) {
-          if (isSimulatorHq) {
-            _moveToCity(_fixedCity);
-            if (!kDebugMode) {
-              _showMessage(
-                'Emulator location is still the default USA mock point. Set a Phnom Penh location or route in emulator controls.',
-                type: AppToastType.info,
-              );
-            }
-            return;
-          }
-          _moveToCity(_fixedCity);
-          _showMessage(
-            'Your location is outside Phnom Penh. Showing city center instead.',
-            type: AppToastType.warning,
-          );
+          final message = isSimulatorHq
+              ? 'The iOS simulator is still using its default mock location. In Simulator, choose Features > Location and set a Cambodia location.'
+              : 'Current location is outside Cambodia. This picker works in Cambodia only.';
+          _showMessage(message, type: AppToastType.info);
         }
         return;
       }
 
       setState(() {
-        _selectedPoint = point!;
+        _currentLiveLocation = point;
+        _selectedPoint = point;
       });
       await _moveCamera(point, zoom: 15.0);
       await _reverseGeocode(point);
@@ -664,19 +626,20 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     _positionSubscription?.cancel();
     _positionSubscription =
         Geolocator.getPositionStream(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 3, // Smaller distance for smoother tracking
-          ),
+          locationSettings: _liveTrackingLocationSettings(),
         ).listen(
           (position) {
             if (mounted) {
               final point = LatLng(position.latitude, position.longitude);
+              if (!_isInsideCambodia(point) ||
+                  _isSimulatorDefaultHq(position)) {
+                return;
+              }
               setState(() {
                 _currentLiveLocation = point;
               });
 
-              if (_followCurrentLocation && _isInsidePhnomPenh(point)) {
+              if (_followCurrentLocation) {
                 final movedMeters = Geolocator.distanceBetween(
                   _selectedPoint.latitude,
                   _selectedPoint.longitude,
@@ -684,7 +647,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                   point.longitude,
                 );
                 final shouldRefreshSelection =
-                    _selectedPoint == _phnomPenh || movedMeters >= 3;
+                    _selectedPoint == _defaultStartPoint || movedMeters >= 3;
                 if (!shouldRefreshSelection) return;
 
                 setState(() => _selectedPoint = point);
@@ -702,13 +665,13 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   Future<Position?> _resolveBestCurrentPosition({
     bool forceRefresh = false,
   }) async {
-    if (!forceRefresh) {
-      try {
-        final lastKnown = await Geolocator.getLastKnownPosition();
-        if (lastKnown != null && _isPositionFresh(lastKnown)) {
-          return lastKnown;
-        }
-      } catch (_) {}
+    final livePosition = await _awaitLivePosition(
+      timeout: forceRefresh
+          ? const Duration(seconds: 6)
+          : const Duration(seconds: 4),
+    );
+    if (livePosition != null) {
+      return livePosition;
     }
 
     try {
@@ -716,11 +679,21 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       final LocationSettings highAccuracy =
           (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
           ? AndroidSettings(
-              accuracy: LocationAccuracy.high,
+              accuracy: LocationAccuracy.best,
+              timeLimit: const Duration(seconds: 8),
+              forceLocationManager: true,
+            )
+          : (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
+          ? AppleSettings(
+              accuracy: LocationAccuracy.best,
+              distanceFilter: 0,
+              pauseLocationUpdatesAutomatically: false,
+              activityType: ActivityType.otherNavigation,
+              showBackgroundLocationIndicator: false,
               timeLimit: const Duration(seconds: 8),
             )
           : const LocationSettings(
-              accuracy: LocationAccuracy.high,
+              accuracy: LocationAccuracy.best,
               timeLimit: Duration(seconds: 8),
             );
       return await Geolocator.getCurrentPosition(
@@ -736,6 +709,15 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                 timeLimit: const Duration(seconds: 5),
                 forceLocationManager: true,
               )
+            : (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
+            ? AppleSettings(
+                accuracy: LocationAccuracy.medium,
+                distanceFilter: 0,
+                pauseLocationUpdatesAutomatically: false,
+                activityType: ActivityType.otherNavigation,
+                showBackgroundLocationIndicator: false,
+                timeLimit: const Duration(seconds: 5),
+              )
             : const LocationSettings(
                 accuracy: LocationAccuracy.medium,
                 timeLimit: Duration(seconds: 5),
@@ -744,9 +726,57 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
           locationSettings: mediumAccuracy,
         );
       } catch (__) {
+        if (!forceRefresh) {
+          try {
+            final lastKnown = await Geolocator.getLastKnownPosition();
+            if (lastKnown != null && _isPositionFresh(lastKnown)) {
+              return lastKnown;
+            }
+          } catch (_) {}
+        }
         return null;
       }
     }
+  }
+
+  Future<Position?> _awaitLivePosition({
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
+    try {
+      return await Geolocator.getPositionStream(
+            locationSettings: _liveTrackingLocationSettings(),
+          )
+          .where((position) {
+            return position.latitude != 0 || position.longitude != 0;
+          })
+          .first
+          .timeout(timeout);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  LocationSettings _liveTrackingLocationSettings() {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return AndroidSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 0,
+        forceLocationManager: true,
+      );
+    }
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      return AppleSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 0,
+        pauseLocationUpdatesAutomatically: false,
+        activityType: ActivityType.otherNavigation,
+        showBackgroundLocationIndicator: false,
+      );
+    }
+    return const LocationSettings(
+      accuracy: LocationAccuracy.best,
+      distanceFilter: 0,
+    );
   }
 
   bool _isPositionFresh(Position position) {
@@ -802,9 +832,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       final first = results.first as Map<String, dynamic>;
       setState(() {
         final formatted = (first['formatted_address'] as String?) ?? '';
-        _selectedAddress = formatted.isEmpty
-            ? 'Phnom Penh, Cambodia'
-            : formatted;
+        _selectedAddress = formatted.isEmpty ? _defaultCountry : formatted;
       });
     } catch (_) {}
   }
@@ -891,7 +919,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       PickedMapLocation(
         lat: _selectedPoint.latitude,
         lng: _selectedPoint.longitude,
-        city: _fixedCity,
+        city: _resolveCityFromAddress(_selectedAddress),
         label: parsed.label,
         mapLink:
             'https://maps.google.com/?q=${_selectedPoint.latitude},${_selectedPoint.longitude}',
@@ -952,78 +980,41 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     return _AddressParts(label: label, street: street, additional: additional);
   }
 
-  bool _isInsidePhnomPenh(LatLng point) {
-    final inBounds =
-        point.latitude >= _phnomPenhSouth &&
-        point.latitude <= _phnomPenhNorth &&
-        point.longitude >= _phnomPenhWest &&
-        point.longitude <= _phnomPenhEast;
-    if (!inBounds) return false;
+  String _resolveCityFromAddress(String raw) {
+    final cleaned = raw.trim();
+    if (cleaned.isEmpty) return _defaultCity;
 
-    final meters = Geolocator.distanceBetween(
-      _phnomPenh.latitude,
-      _phnomPenh.longitude,
-      point.latitude,
-      point.longitude,
-    );
-    return meters <= _phnomPenhMaxDistanceMeters;
-  }
+    final parts = cleaned
+        .split(',')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
 
-  Future<LatLng?> _resolveApproxNetworkLocation() async {
-    if (kIsWeb) return null;
-
-    final endpoints = <Uri>[
-      Uri.https('ipapi.co', '/json'),
-      Uri.https('ipwho.is', '/'),
-      Uri.https('ipinfo.io', '/json'),
-    ];
-
-    for (final endpoint in endpoints) {
-      try {
-        final response = await http
-            .get(
-              endpoint,
-              headers: const {
-                'User-Agent':
-                    'servicefinder/1.0 (contact: support@servicefinder.local)',
-              },
-            )
-            .timeout(const Duration(seconds: 5));
-        if (response.statusCode != 200) continue;
-        final body = jsonDecode(response.body);
-        if (body is! Map<String, dynamic>) continue;
-
-        double? lat, lng;
-        if (body.containsKey('loc')) {
-          final loc = body['loc'].toString().split(',');
-          if (loc.length == 2) {
-            lat = double.tryParse(loc[0]);
-            lng = double.tryParse(loc[1]);
-          }
+    for (final part in parts) {
+      for (final city in _cambodiaCities.keys) {
+        if (part.toLowerCase().contains(city.toLowerCase())) {
+          return city;
         }
-
-        lat ??= _extractDouble(body, const ['latitude', 'lat']);
-        lng ??= _extractDouble(body, const ['longitude', 'lon', 'lng', 'long']);
-
-        if (lat == null || lng == null) continue;
-
-        final point = LatLng(lat, lng);
-        return point;
-      } catch (_) {}
-    }
-    return null;
-  }
-
-  double? _extractDouble(Map<String, dynamic> map, List<String> keys) {
-    for (final key in keys) {
-      final value = map[key];
-      if (value is num) return value.toDouble();
-      if (value is String) {
-        final parsed = double.tryParse(value);
-        if (parsed != null) return parsed;
       }
     }
-    return null;
+
+    final filtered = parts
+        .where(
+          (item) =>
+              !item.toLowerCase().contains('cambodia') &&
+              !item.toLowerCase().contains('kingdom of cambodia'),
+        )
+        .toList(growable: false);
+    if (filtered.isEmpty) return _defaultCity;
+    if (filtered.length == 1) return filtered.first;
+    return filtered.last;
+  }
+
+  bool _isInsideCambodia(LatLng point) {
+    return point.latitude >= _cambodiaSouth &&
+        point.latitude <= _cambodiaNorth &&
+        point.longitude >= _cambodiaWest &&
+        point.longitude <= _cambodiaEast;
   }
 
   void _showMessage(String text, {AppToastType type = AppToastType.info}) {

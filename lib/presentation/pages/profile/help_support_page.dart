@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/app_toast.dart';
+import '../../../core/utils/page_transition.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../../domain/entities/profile_settings.dart';
 import 'help_support_chat_page.dart';
@@ -384,11 +385,9 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
       );
       return;
     }
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => HelpSupportChatPage(ticket: ticket),
-      ),
-    );
+    await Navigator.of(
+      context,
+    ).push(slideFadeRoute(HelpSupportChatPage(ticket: ticket)));
     if (!mounted) return;
     unawaited(
       ProfileSettingsState.refreshCurrentHelpTickets(page: _activePage),

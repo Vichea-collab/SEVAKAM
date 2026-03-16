@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
 import 'package:servicefinder/core/constants/app_spacing.dart';
 import 'package:servicefinder/domain/entities/provider_portal.dart';
+import 'package:servicefinder/core/utils/page_transition.dart';
 import 'package:servicefinder/presentation/state/order_state.dart';
 import 'package:servicefinder/presentation/state/user_notification_state.dart';
 import 'package:servicefinder/presentation/widgets/app_dialog.dart';
@@ -133,8 +134,8 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage>
                                       if (notice.key.startsWith('order:')) {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute<void>(
-                                            builder: (_) => ProviderOrdersPage(
+                                          slideFadeRoute(
+                                            ProviderOrdersPage(
                                               initialTab: notice.tab,
                                             ),
                                           ),

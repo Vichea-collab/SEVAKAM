@@ -52,6 +52,14 @@ abstract class AdminRepository {
     String query = '',
     String active = '',
   });
+  Future<AdminPage<AdminPromotionRow>> fetchPromotions({
+    int page = 1,
+    int limit = 10,
+    String query = '',
+    String placement = '',
+    String targetType = '',
+    String status = '',
+  });
   Future<AdminPage<AdminBroadcastRow>> fetchBroadcasts({
     int page = 1,
     int limit = 10,
@@ -98,6 +106,28 @@ abstract class AdminRepository {
     required String serviceId,
     required bool active,
     required String reason,
+  });
+  Future<AdminPromotionRow> createPromotion({
+    required String placement,
+    required String badgeLabel,
+    required String title,
+    required String description,
+    required String imageUrl,
+    required String ctaLabel,
+    required String targetType,
+    required String targetValue,
+    required List<String> targetRoles,
+    String query,
+    String category,
+    String city,
+    int sortOrder,
+    bool active,
+    String? startAtIso,
+    String? endAtIso,
+  });
+  Future<AdminActionResult> updatePromotionActive({
+    required String promotionId,
+    required bool active,
   });
   Future<AdminBroadcastRow> createBroadcast({
     required String type,
