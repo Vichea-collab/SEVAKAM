@@ -79,7 +79,7 @@ class _HomePageState extends State<HomePage> {
             const _TopHeader(),
             SliverPadding(
               padding: EdgeInsets.only(
-                top: rs.space(AppSpacing.lg),
+                top: rs.space(AppSpacing.md),
                 left: rs.space(AppSpacing.lg),
                 right: rs.space(AppSpacing.lg),
                 bottom: rs.space(AppSpacing.xl),
@@ -112,7 +112,7 @@ class _HomePageState extends State<HomePage> {
                             return const SizedBox.shrink();
                           }
                           return SizedBox(
-                            height: rs.dimension(154),
+                            height: rs.dimension(136),
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               cacheExtent: 500,
@@ -302,7 +302,7 @@ class _TopHeaderState extends State<_TopHeader> {
           final hasProfileContent =
               profile.name.trim().isNotEmpty || profile.city.trim().isNotEmpty;
           return Container(
-            padding: rs.only(left: 20, top: 14, right: 20, bottom: 20),
+            padding: rs.only(left: 20, top: 10, right: 20, bottom: 16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [AppColors.splashStart, AppColors.splashEnd],
@@ -322,7 +322,7 @@ class _TopHeaderState extends State<_TopHeader> {
               ],
             ),
             child: SafeArea(
-              bottom: false,
+                bottom: false,
               child: _syncingProfile && !hasProfileContent
                   ? const _FinderHeaderLoading()
                   : Column(
@@ -350,7 +350,7 @@ class _TopHeaderState extends State<_TopHeader> {
                                         isProvider: false,
                                       );
                                   return CircleAvatar(
-                                    radius: rs.dimension(22),
+                                    radius: rs.dimension(20),
                                     backgroundColor: AppColors.background,
                                     backgroundImage: image,
                                     child: image == null
@@ -368,6 +368,7 @@ class _TopHeaderState extends State<_TopHeader> {
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
                                     'Welcome Finder',
@@ -393,7 +394,7 @@ class _TopHeaderState extends State<_TopHeader> {
                                           fontWeight: FontWeight.w800,
                                         ),
                                   ),
-                                  rs.gapH(8),
+                                  rs.gapH(6),
                                   _HeaderLocationPill(city: city),
                                 ],
                               ),
@@ -415,7 +416,7 @@ class _TopHeaderState extends State<_TopHeader> {
                                     );
                                   },
                                 ),
-                                rs.gapH(10),
+                                rs.gapH(8),
                                 _HeaderActionButton(
                                   icon: Icons.favorite_border_rounded,
                                   onTap: openFavorites,
@@ -446,8 +447,8 @@ class _SearchBar extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(rs.radius(16)),
       onTap: () => Navigator.push(context, slideFadeRoute(const SearchPage())),
-      child: Container(
-        padding: rs.symmetric(horizontal: 14, vertical: 8),
+        child: Container(
+        padding: rs.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(rs.radius(16)),
@@ -466,7 +467,7 @@ class _SearchBar extends StatelessWidget {
               height: rs.dimension(36),
               width: rs.dimension(36),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 20),
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(rs.radius(12)),
               ),
               child: Icon(Icons.search, color: Colors.white, size: rs.icon(20)),
@@ -488,7 +489,7 @@ class _SearchBar extends StatelessWidget {
                   Text(
                     'Providers, categories, or tasks',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodyMedium?.color,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -499,13 +500,13 @@ class _SearchBar extends StatelessWidget {
               height: rs.dimension(36),
               width: rs.dimension(36),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 20),
+                color: const Color(0xFFF1F5FF),
                 borderRadius: BorderRadius.circular(rs.radius(12)),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 38),
+                  color: AppColors.primary.withValues(alpha: 0.16),
                 ),
               ),
-              child: Icon(Icons.tune, color: Colors.white, size: rs.icon(18)),
+              child: Icon(Icons.tune, color: AppColors.primary, size: rs.icon(18)),
             ),
           ],
         ),
@@ -644,7 +645,7 @@ class _FeaturedBannerState extends State<_FeaturedBanner> {
         final slides = promotions.isEmpty ? _fallbackPromotions : promotions;
         final currentIndex = slides.isEmpty ? 0 : _currentIndex % slides.length;
         return SizedBox(
-          height: 278,
+          height: 232,
           child: Column(
             children: [
               Expanded(
@@ -665,7 +666,7 @@ class _FeaturedBannerState extends State<_FeaturedBanner> {
                   },
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
@@ -777,27 +778,29 @@ class _PromoBannerCard extends StatelessWidget {
       builder: (context, constraints) {
         final imageWidth = constraints.maxWidth * 0.42;
         return Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: _paletteForPromotion(slide),
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 16),
-                blurRadius: 20,
-                spreadRadius: -6,
-                offset: const Offset(0, 12),
+                color: slide.category.trim().toLowerCase() == 'home appliance'
+                    ? const Color(0xFF7C5CFF).withValues(alpha: 0.12)
+                    : AppColors.primary.withValues(alpha: 0.08),
+                blurRadius: 14,
+                spreadRadius: -4,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(18),
                 child: Stack(
                   children: [
                     _PromoImage(
@@ -812,8 +815,8 @@ class _PromoBannerCard extends StatelessWidget {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.white.withValues(alpha: 0.08),
-                              Colors.black.withValues(alpha: 0.20),
+                              Colors.white.withValues(alpha: 0.04),
+                              Colors.transparent,
                             ],
                           ),
                         ),
@@ -822,17 +825,17 @@ class _PromoBannerCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 5,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFE17A),
@@ -852,20 +855,20 @@ class _PromoBannerCard extends StatelessWidget {
                       const Spacer(),
                       Text(
                         slide.title,
-                        maxLines: 3,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: titleStyle,
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 10),
                       SizedBox(
-                        height: 40,
+                        height: 36,
                         child: ElevatedButton(
                           onPressed: onTap,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1656E8),
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             minimumSize: Size.zero,
                             shape: RoundedRectangleBorder(
@@ -1092,7 +1095,7 @@ class _HeaderLocationPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: isDark
             ? const Color(0xFFEEF4FF).withValues(alpha: 0.16)
@@ -1144,8 +1147,8 @@ class _HeaderActionButton extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Container(
-              height: 40,
-              width: 40,
+              height: 38,
+              width: 38,
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.10)

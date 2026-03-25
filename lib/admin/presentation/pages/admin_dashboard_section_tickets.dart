@@ -39,10 +39,6 @@ extension on _AdminDashboardPageState {
                         pageMeta: pageMeta,
                       ),
                       const SizedBox(height: 16),
-                      if (!initialLoading) ...[
-                        _buildTicketSummaryStrip(filteredRows),
-                        const SizedBox(height: 16),
-                      ],
                       _buildTicketFilterBar(),
                       const SizedBox(height: 16),
                       if (initialLoading)
@@ -61,7 +57,11 @@ extension on _AdminDashboardPageState {
                       else
                         Column(
                           children: [
-                            for (var index = 0; index < filteredRows.length; index++) ...[
+                            for (
+                              var index = 0;
+                              index < filteredRows.length;
+                              index++
+                            ) ...[
                               _buildTicketRequestCard(filteredRows[index]),
                               if (index < filteredRows.length - 1)
                                 const SizedBox(height: 14),
@@ -137,7 +137,7 @@ extension on _AdminDashboardPageState {
               ),
               const SizedBox(height: 6),
               Text(
-                'Review urgent requests, identify who is waiting, and move each support conversation forward without losing context.',
+                'Review support requests, open the right conversation quickly, and move each case forward with clear context.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                   height: 1.5,
@@ -252,128 +252,6 @@ extension on _AdminDashboardPageState {
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildTicketSummaryStrip(List<AdminTicketRow> items) {
-    final needsReply = items.where(_ticketNeedsAdminReply).length;
-    final waitingOnUser = items.where((item) {
-      return item.status.trim().toLowerCase() == 'waiting_on_user';
-    }).length;
-    final resolved = items.where((item) {
-      final status = item.status.trim().toLowerCase();
-      return status == 'resolved' || status == 'closed';
-    }).length;
-    final providers = items.where((item) {
-      return item.userRole.trim().toLowerCase() == 'provider';
-    }).length;
-
-    final cards = <_TicketSummaryData>[
-      _TicketSummaryData(
-        label: 'Needs reply',
-        value: '$needsReply',
-        caption: 'Latest message from requester',
-        color: const Color(0xFF0EA5E9),
-        icon: Icons.mark_email_unread_rounded,
-      ),
-      _TicketSummaryData(
-        label: 'Waiting on user',
-        value: '$waitingOnUser',
-        caption: 'Admin already responded',
-        color: AppColors.primary,
-        icon: Icons.schedule_send_rounded,
-      ),
-      _TicketSummaryData(
-        label: 'Resolved',
-        value: '$resolved',
-        caption: 'Resolved or closed on this page',
-        color: AppColors.success,
-        icon: Icons.task_alt_rounded,
-      ),
-      _TicketSummaryData(
-        label: 'Provider cases',
-        value: '$providers',
-        caption: 'Requests from provider accounts',
-        color: const Color(0xFF7C3AED),
-        icon: Icons.verified_user_outlined,
-      ),
-    ];
-
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: cards
-          .map((item) => _buildTicketSummaryCard(item))
-          .toList(growable: false),
-    );
-  }
-
-  Widget _buildTicketSummaryCard(_TicketSummaryData item) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 180, maxWidth: 240),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFDCE6F7)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0A0F172A),
-              blurRadius: 12,
-              offset: Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 42,
-              width: 42,
-              decoration: BoxDecoration(
-                color: item.color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(item.icon, color: item.color, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.label,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    item.value,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.caption,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -510,10 +388,7 @@ extension on _AdminDashboardPageState {
             const Text(
               'Try another status, category, or search term to refine the queue.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                height: 1.45,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, height: 1.45),
             ),
           ],
         ),
@@ -546,21 +421,23 @@ extension on _AdminDashboardPageState {
 
   List<AdminTicketRow> _filterTicketRows(List<AdminTicketRow> items) {
     final query = _searchQuery.trim().toLowerCase();
-    return items.where((item) {
-      final status = item.status.toLowerCase();
-      final statusMatch =
-          _ticketStatusFilter == 'all' || status == _ticketStatusFilter;
-      if (!statusMatch) return false;
-      final categoryMatch =
-          _ticketCategoryFilter == 'all' ||
-          item.category.toLowerCase() == _ticketCategoryFilter;
-      if (!categoryMatch) return false;
-      if (query.isEmpty) return true;
-      final haystack =
-          '${item.title} ${item.message} ${item.userUid} ${item.userName} ${item.userEmail} ${item.status} ${item.category} ${item.subcategory} ${item.priority}'
-              .toLowerCase();
-      return haystack.contains(query);
-    }).toList(growable: false);
+    return items
+        .where((item) {
+          final status = item.status.toLowerCase();
+          final statusMatch =
+              _ticketStatusFilter == 'all' || status == _ticketStatusFilter;
+          if (!statusMatch) return false;
+          final categoryMatch =
+              _ticketCategoryFilter == 'all' ||
+              item.category.toLowerCase() == _ticketCategoryFilter;
+          if (!categoryMatch) return false;
+          if (query.isEmpty) return true;
+          final haystack =
+              '${item.title} ${item.message} ${item.userUid} ${item.userName} ${item.userEmail} ${item.status} ${item.category} ${item.subcategory} ${item.priority}'
+                  .toLowerCase();
+          return haystack.contains(query);
+        })
+        .toList(growable: false);
   }
 
   Widget _buildTicketRequestCard(AdminTicketRow item) {
@@ -570,6 +447,17 @@ extension on _AdminDashboardPageState {
         ? const Color(0xFF7C3AED)
         : AppColors.primary;
     final latestAt = item.lastMessageAt ?? item.createdAt;
+    final categoryLabel = supportTicketCategoryLabel(item.category);
+    final subcategoryLabel = supportTicketSubcategoryLabel(
+      categoryId: item.category,
+      subcategoryId: item.subcategory,
+    );
+    final displayTitle = item.title.trim().isEmpty
+        ? subcategoryLabel
+        : item.title;
+    final previewText = item.message.trim().isEmpty
+        ? 'Support request created for $categoryLabel / $subcategoryLabel.'
+        : item.message;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -601,6 +489,7 @@ extension on _AdminDashboardPageState {
           LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 940;
+              final narrowHeader = constraints.maxWidth < 760;
               final info = Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,8 +499,12 @@ extension on _AdminDashboardPageState {
                       runSpacing: 8,
                       children: [
                         _Pill(
-                          text: supportTicketCategoryLabel(item.category),
+                          text: categoryLabel,
                           color: const Color(0xFF2563EB),
+                        ),
+                        _Pill(
+                          text: subcategoryLabel,
+                          color: const Color(0xFF0EA5E9),
                         ),
                         _Pill(
                           text: _prettyTicketPriority(item.priority),
@@ -630,7 +523,9 @@ extension on _AdminDashboardPageState {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      item.title,
+                      displayTitle,
+                      maxLines: narrowHeader ? 3 : 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 19,
@@ -638,20 +533,6 @@ extension on _AdminDashboardPageState {
                         height: 1.2,
                       ),
                     ),
-                    if (item.subcategory.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        supportTicketSubcategoryLabel(
-                          categoryId: item.category,
-                          subcategoryId: item.subcategory,
-                        ),
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 10),
                     Container(
                       width: double.infinity,
@@ -662,9 +543,7 @@ extension on _AdminDashboardPageState {
                         border: Border.all(color: const Color(0xFFE2E8F4)),
                       ),
                       child: Text(
-                        item.message.isEmpty
-                            ? 'No message preview available yet.'
-                            : item.message,
+                        previewText,
                         maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -714,35 +593,66 @@ extension on _AdminDashboardPageState {
             },
           ),
           const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FBFF),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFDCE6F7)),
-            ),
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                _ticketDetailLine(
-                  icon: Icons.schedule_rounded,
-                  label: 'Latest activity',
-                  value: _formatDateTime(latestAt),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compactMeta = constraints.maxWidth < 760;
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FBFF),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFDCE6F7)),
                 ),
-                _ticketDetailLine(
-                  icon: Icons.person_outline_rounded,
-                  label: 'Last sender',
-                  value: _ticketLatestActorLabel(item),
-                ),
-                _ticketDetailLine(
-                  icon: Icons.confirmation_number_outlined,
-                  label: 'Ticket ID',
-                  value: item.id,
-                ),
-              ],
-            ),
+                child: compactMeta
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _ticketDetailLine(
+                            icon: Icons.schedule_rounded,
+                            label: 'Latest activity',
+                            value: _formatDateTime(latestAt),
+                            compact: true,
+                          ),
+                          const SizedBox(height: 10),
+                          _ticketDetailLine(
+                            icon: Icons.person_outline_rounded,
+                            label: 'Last sender',
+                            value: _ticketLatestActorLabel(item),
+                            compact: true,
+                          ),
+                          const SizedBox(height: 10),
+                          _ticketDetailLine(
+                            icon: Icons.confirmation_number_outlined,
+                            label: 'Ticket ID',
+                            value: item.id,
+                            compact: true,
+                          ),
+                        ],
+                      )
+                    : Wrap(
+                        spacing: 16,
+                        runSpacing: 8,
+                        children: [
+                          _ticketDetailLine(
+                            icon: Icons.schedule_rounded,
+                            label: 'Latest activity',
+                            value: _formatDateTime(latestAt),
+                          ),
+                          _ticketDetailLine(
+                            icon: Icons.person_outline_rounded,
+                            label: 'Last sender',
+                            value: _ticketLatestActorLabel(item),
+                          ),
+                          _ticketDetailLine(
+                            icon: Icons.confirmation_number_outlined,
+                            label: 'Ticket ID',
+                            value: item.id,
+                          ),
+                        ],
+                      ),
+              );
+            },
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -780,6 +690,7 @@ extension on _AdminDashboardPageState {
                   onTap: () => _runSafeAction(
                     dialogTitle: 'Close ticket ${item.id}?',
                     actionLabel: 'Close',
+                    reasonRequired: true,
                     run: (reason) => AdminDashboardState.updateTicketStatus(
                       userUid: item.userUid,
                       ticketId: item.id,
@@ -833,7 +744,10 @@ extension on _AdminDashboardPageState {
                 children: [
                   _Pill(text: _prettyRole(item.userRole), color: roleColor),
                   if (item.userEmail.isNotEmpty)
-                    _Pill(text: 'Verified contact', color: const Color(0xFF64748B)),
+                    _Pill(
+                      text: 'Verified contact',
+                      color: const Color(0xFF64748B),
+                    ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -899,9 +813,7 @@ extension on _AdminDashboardPageState {
       height: 54,
       width: 54,
       decoration: BoxDecoration(
-        color: hasNewReply
-            ? const Color(0xFFE0F2FE)
-            : const Color(0xFFEFF4FF),
+        color: hasNewReply ? const Color(0xFFE0F2FE) : const Color(0xFFEFF4FF),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Icon(
@@ -939,7 +851,43 @@ extension on _AdminDashboardPageState {
     required IconData icon,
     required String label,
     required String value,
+    bool compact = false,
   }) {
+    if (compact) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -965,10 +913,7 @@ extension on _AdminDashboardPageState {
     );
   }
 
-  Widget _ticketTimelineRow({
-    required String label,
-    required String value,
-  }) {
+  Widget _ticketTimelineRow({required String label, required String value}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1081,20 +1026,4 @@ extension on _AdminDashboardPageState {
         ];
     }
   }
-}
-
-class _TicketSummaryData {
-  final String label;
-  final String value;
-  final String caption;
-  final Color color;
-  final IconData icon;
-
-  const _TicketSummaryData({
-    required this.label,
-    required this.value,
-    required this.caption,
-    required this.color,
-    required this.icon,
-  });
 }

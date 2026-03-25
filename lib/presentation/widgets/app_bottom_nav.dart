@@ -33,9 +33,11 @@ class AppBottomNav extends StatelessWidget {
     final isProvider = AppRoleState.isProvider;
     final navHeight = rs.dimension(68);
     final totalHeight = rs.dimension(94);
-    final fabSize = rs.dimension(76);
-    final fabDiamond = rs.dimension(62);
-    final centerGap = rs.dimension(rs.compact ? 68 : 80);
+    final fabSize = rs.dimension(isProvider ? 76 : 68);
+    final fabDiamond = rs.dimension(isProvider ? 62 : 54);
+    final centerGap = rs.dimension(
+      isProvider ? (rs.compact ? 68 : 80) : (rs.compact ? 60 : 70),
+    );
 
     return SizedBox(
       height: totalHeight + bottomPadding,
@@ -135,9 +137,11 @@ class AppBottomNav extends StatelessWidget {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: accentColor.withValues(alpha: 0.3),
-                              blurRadius: rs.space(18),
-                              offset: Offset(0, rs.space(9)),
+                              color: accentColor.withValues(
+                                alpha: isProvider ? 0.30 : 0.22,
+                              ),
+                              blurRadius: rs.space(isProvider ? 18 : 12),
+                              offset: Offset(0, rs.space(isProvider ? 9 : 6)),
                             ),
                           ],
                         ),
@@ -146,7 +150,7 @@ class AppBottomNav extends StatelessWidget {
                     Icon(
                       isProvider ? Icons.post_add_rounded : Icons.add_rounded,
                       color: Colors.white,
-                      size: rs.icon(isProvider ? 30 : 34),
+                      size: rs.icon(isProvider ? 30 : 30),
                     ),
                   ],
                 ),

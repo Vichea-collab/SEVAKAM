@@ -24,6 +24,13 @@ class ProviderPostRepositoryImpl implements ProviderPostRepository {
   }
 
   @override
+  Future<List<DateTime>> loadProviderBlockedDates({
+    required String providerUid,
+  }) {
+    return _remoteDataSource.fetchProviderBlockedDates(providerUid: providerUid);
+  }
+
+  @override
   Future<ProviderPostItem> createProviderPost({
     required String category,
     required List<String> services,

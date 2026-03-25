@@ -7,18 +7,11 @@ class _OverviewKpiGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final adminCount = _overviewAdminCount(kpis);
     final cards = [
       _KpiData(
         label: 'Users',
         value: '${_intValue(kpis['users'])}',
         icon: Icons.group_rounded,
-      ),
-      _KpiData(
-        label: 'Admins',
-        value: '$adminCount',
-        icon: Icons.admin_panel_settings_rounded,
-        color: const Color(0xFF7C3AED),
       ),
       _KpiData(
         label: 'Finders',
@@ -60,16 +53,6 @@ class _OverviewKpiGrid extends StatelessWidget {
         label: 'KYC Approved',
         value: '${_intValue(kpis['verifiedProviders'])}',
         icon: Icons.verified_user_rounded,
-      ),
-      _KpiData(
-        label: 'Plus',
-        value: '${_intValue(kpis['professionalProviders'])}',
-        icon: Icons.workspace_premium_rounded,
-      ),
-      _KpiData(
-        label: 'Pro',
-        value: '${_intValue(kpis['eliteProviders'])}',
-        icon: Icons.diamond_rounded,
       ),
       _KpiData(
         label: 'Total Revenue',
@@ -142,45 +125,6 @@ class _OverviewKpiGrid extends StatelessWidget {
       },
     );
   }
-}
-
-int _overviewAdminCount(Map<String, num> kpis) {
-  final explicit = _firstAvailableKpiInt(
-    kpis,
-    const ['admins', 'adminsCount', 'adminUsers', 'totalAdmins'],
-  );
-  if (explicit != null) return explicit;
-
-  final totalUsers = _firstAvailableKpiInt(
-    kpis,
-    const ['users', 'totalUsers'],
-  );
-  final finders = _firstAvailableKpiInt(
-    kpis,
-    const ['finders', 'finderUsers'],
-  );
-  final providers = _firstAvailableKpiInt(
-    kpis,
-    const ['providers', 'providerUsers'],
-  );
-  final legacyUsers = _firstAvailableKpiInt(
-    kpis,
-    const ['legacyUsers', 'usersLegacy'],
-  );
-
-  if (totalUsers == null) return 0;
-  final inferred = totalUsers - (finders ?? 0) - (providers ?? 0) - (legacyUsers ?? 0);
-  if (inferred < 0) return 0;
-  return inferred;
-}
-
-int? _firstAvailableKpiInt(Map<String, num> kpis, List<String> keys) {
-  for (final key in keys) {
-    final value = kpis[key];
-    if (value == null) continue;
-    return _intValue(value);
-  }
-  return null;
 }
 
 class _StatusBoard extends StatelessWidget {

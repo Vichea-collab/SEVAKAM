@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
 import 'package:servicefinder/core/constants/location_options.dart';
 import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/theme/app_theme_tokens.dart';
 import 'package:servicefinder/core/utils/app_toast.dart';
 import 'package:servicefinder/domain/entities/provider_portal.dart';
 import 'package:servicefinder/presentation/state/auth_state.dart';
@@ -14,6 +15,7 @@ import 'package:servicefinder/presentation/widgets/app_top_bar.dart';
 import 'package:servicefinder/presentation/widgets/primary_button.dart';
 import 'package:servicefinder/presentation/pages/main_shell_page.dart';
 import 'package:servicefinder/presentation/widgets/app_bottom_nav.dart';
+import 'package:servicefinder/presentation/widgets/post_composer_ui.dart';
 
 class ProviderPostPage extends StatefulWidget {
   static const String routeName = '/provider/post';
@@ -44,12 +46,12 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
     return InputDecoration(
       hintText: hintText,
       filled: true,
-      fillColor: const Color(0xFFF8FAFF),
+      fillColor: AppThemeTokens.mutedSurface(context),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFD3DDEF)),
+        borderSide: BorderSide(color: AppThemeTokens.outline(context)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -141,13 +143,14 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppThemeTokens.pageBackground(context),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             children: [
               AppTopBar(
-                title: 'Post',
+                title: 'Offer Service',
                 showBack: true,
                 onBack: _handleBackNavigation,
                 actions: [
@@ -173,72 +176,147 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                           width: double.infinity,
                           padding: const EdgeInsets.fromLTRB(14, 16, 14, 18),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppThemeTokens.surface(context),
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: AppColors.divider),
+                            border: Border.all(
+                              color: AppThemeTokens.outline(context),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'What service can you offer?',
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.w600,
+                              const PostComposerHeaderCard(
+                                icon: Icons.storefront_rounded,
+                                accentColor: Color(0xFF117A5A),
+                                eyebrow: 'Provider offer',
+                                title: 'Publish a clear service offer',
+                                subtitle:
+                                    'Show your service, district, and readiness so finders can understand your offer at a glance.',
+                                highlights: [
+                                  'Multi-service support',
+                                  'Service district',
+                                  'Availability status',
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              if (_editingPostId != null) ...[
+                                PostComposerEditingBanner(
+                                  message: 'You are editing an active offer.',
+                                  onCancel: _cancelEdit,
+                                  enabled: !_posting,
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                              const PostComposerSectionHeader(
+                                title: 'Service setup',
+                                subtitle:
+                                    'Choose the category and the services you can take on.',
+                              ),
+                              PostComposerSectionCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const PostComposerFieldLabel(
+                                      label: 'Category*',
                                     ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Create a provider post so clients can find you faster.',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              const SizedBox(height: 12),
-                              _FieldLabel(label: 'Category*'),
-                              _PickerField(
-                                label: _selectedCategory,
-                                onTap: _pickCategory,
-                              ),
-                              const SizedBox(height: 8),
-                              _FieldLabel(label: 'Service*'),
-                              _PickerField(
-                                label: _selectedServiceLabel,
-                                onTap: _pickService,
-                              ),
-                              const SizedBox(height: 8),
-                              _FieldLabel(label: 'Service area*'),
-                              _PickerField(
-                                label: _selectedDistrictLabel,
-                                onTap: _pickDistrict,
-                              ),
-                              const SizedBox(height: 8),
-                              SwitchListTile(
-                                contentPadding: EdgeInsets.zero,
-                                value: _availableNow,
-                                activeThumbColor: AppColors.primary,
-                                title: const Text('Available now'),
-                                onChanged: (value) =>
-                                    setState(() => _availableNow = value),
-                              ),
-                              _FieldLabel(label: 'Post details*'),
-                              TextField(
-                                controller: _detailsController,
-                                minLines: 4,
-                                maxLines: 6,
-                                decoration: _fieldDecoration(
-                                  hintText:
-                                      'Example: Professional team, tools included, same-day support.',
+                                    PostComposerPickerField(
+                                      label: _selectedCategory,
+                                      icon: Icons.category_rounded,
+                                      onTap: _pickCategory,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    const PostComposerFieldLabel(
+                                      label: 'Service*',
+                                    ),
+                                    PostComposerPickerField(
+                                      label: _selectedServiceLabel,
+                                      icon: Icons.design_services_rounded,
+                                      onTap: _pickService,
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              if (_editingPostId != null)
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: _posting ? null : _cancelEdit,
-                                    child: const Text('Cancel edit'),
-                                  ),
+                              const PostComposerSectionHeader(
+                                title: 'Coverage and timing',
+                                subtitle:
+                                    'Set where you work and whether you can take jobs right away.',
+                              ),
+                              PostComposerSectionCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const PostComposerFieldLabel(
+                                      label: 'Service area*',
+                                    ),
+                                    PostComposerPickerField(
+                                      label: _selectedDistrictLabel,
+                                      icon: Icons.location_on_outlined,
+                                      onTap: _pickDistrict,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: AppThemeTokens.surface(context),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: AppThemeTokens.outline(context),
+                                        ),
+                                      ),
+                                      child: SwitchListTile(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                            ),
+                                        value: _availableNow,
+                                        activeThumbColor: AppColors.primary,
+                                        title: const Text('Available now'),
+                                        subtitle: Text(
+                                          _availableNow
+                                              ? 'Clients can see you are ready for nearby work.'
+                                              : 'Clients will still see the offer, but not as immediate availability.',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color:
+                                                    AppColors.textSecondary,
+                                              ),
+                                        ),
+                                        onChanged: (value) => setState(
+                                          () => _availableNow = value,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              const SizedBox(height: 12),
+                              const PostComposerSectionHeader(
+                                title: 'Offer details',
+                                subtitle:
+                                    'Summarize your tools, strengths, or response speed.',
+                              ),
+                              PostComposerSectionCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const PostComposerFieldLabel(
+                                      label: 'Post details*',
+                                    ),
+                                    TextField(
+                                      controller: _detailsController,
+                                      minLines: 4,
+                                      maxLines: 6,
+                                      decoration: _fieldDecoration(
+                                        hintText:
+                                            'Example: Professional team, tools included, same-day support.',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
                               PrimaryButton(
                                 label: _posting
                                     ? (_editingPostId == null
@@ -296,8 +374,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
         );
       }
       if (!mounted) return;
-      _editingPostId = null;
-      _detailsController.clear();
+      setState(_resetComposer);
       final successMessage = editingPostId == null
           ? (services.length == 1
                 ? 'Your offer for ${services.first} is now live.'
@@ -364,7 +441,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppThemeTokens.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -384,11 +461,10 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Manage my posts',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    const PostManageSheetHeader(
+                      title: 'Manage my offers',
+                      subtitle:
+                          'Review your active offers and update them when your services change.',
                     ),
                     const SizedBox(height: 8),
                     Expanded(
@@ -400,49 +476,33 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                               itemCount: ownPosts.length,
                               separatorBuilder: (_, _) =>
                                   const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                final post = ownPosts[index];
-                                return ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: const BorderSide(
-                                      color: AppColors.divider,
-                                    ),
-                                  ),
-                                  title: Text(post.serviceLabel),
-                                  subtitle: Text(
-                                    '${post.category} • ${post.area}',
-                                  ),
-                                  trailing: PopupMenuButton<String>(
-                                    onSelected: (action) async {
-                                      if (action == 'edit') {
-                                        Navigator.pop(sheetContext);
-                                        _beginEdit(post);
-                                        return;
-                                      }
-                                      if (action == 'delete') {
-                                        final deleted = await _deletePost(post);
-                                        if (!deleted) return;
-                                      }
-                                    },
-                                    itemBuilder: (_) => const [
-                                      PopupMenuItem<String>(
-                                        value: 'edit',
-                                        child: Text('Edit'),
-                                      ),
-                                      PopupMenuItem<String>(
-                                        value: 'delete',
-                                        child: Text('Delete'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
+                            itemBuilder: (context, index) {
+                              final post = ownPosts[index];
+                              final chips = <String>[
+                                post.category,
+                                post.area,
+                                post.availableNow
+                                    ? 'Available now'
+                                    : 'Scheduled availability',
+                              ];
+                              return PostManageCard(
+                                icon: Icons.storefront_rounded,
+                                accentColor: const Color(0xFF117A5A),
+                                title: post.serviceLabel,
+                                subtitle: 'Offer visible in ${post.area}',
+                                body: post.details,
+                                chips: chips,
+                                onEdit: () {
+                                  Navigator.pop(sheetContext);
+                                  _beginEdit(post);
+                                },
+                                onDelete: () async {
+                                  final deleted = await _deletePost(post);
+                                  if (!deleted) return;
+                                },
+                              );
+                            },
+                          ),
                     ),
                   ],
                 ),
@@ -470,7 +530,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
   }
 
   void _cancelEdit() {
-    setState(() => _editingPostId = null);
+    setState(_resetComposer);
   }
 
   Future<bool> _deletePost(ProviderPostItem post) async {
@@ -496,7 +556,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
       await ProviderPostState.deleteProviderPost(postId: post.id);
       if (!mounted) return false;
       if (_editingPostId == post.id) {
-        setState(() => _editingPostId = null);
+        setState(_resetComposer);
       }
       AppToast.success(context, 'Post deleted.');
       return true;
@@ -505,6 +565,20 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
       AppToast.error(context, error.toString());
       return false;
     }
+  }
+
+  void _resetComposer() {
+    _editingPostId = null;
+    _selectedCategory = 'Cleaner';
+    _selectedServices
+      ..clear()
+      ..add('House Cleaning');
+    _cityController.text = LocationOptions.defaultCity;
+    _districtController.clear();
+    _areaController.clear();
+    _detailsController.clear();
+    _availableNow = true;
+    _syncSelectionFromCatalog();
   }
 
   Future<void> _pickCategory() async {
@@ -604,7 +678,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
     return showModalBottomSheet<T>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppThemeTokens.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -621,7 +695,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: AppThemeTokens.textPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -645,12 +719,12 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                               decoration: BoxDecoration(
                                 color: active
                                     ? const Color(0xFFEAF1FF)
-                                    : Colors.white,
+                                    : AppThemeTokens.surface(context),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
                                   color: active
                                       ? AppColors.primary
-                                      : AppColors.divider,
+                                      : AppThemeTokens.outline(context),
                                   width: active ? 1.6 : 1,
                                 ),
                               ),
@@ -669,7 +743,9 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                                           .textTheme
                                           .bodyLarge
                                           ?.copyWith(
-                                            color: AppColors.textPrimary,
+                                            color: AppThemeTokens.textPrimary(
+                                              context,
+                                            ),
                                           ),
                                     ),
                                   ),
@@ -713,7 +789,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
     return showModalBottomSheet<Set<String>>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppThemeTokens.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -730,7 +806,7 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: AppThemeTokens.textPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -760,12 +836,12 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                               decoration: BoxDecoration(
                                 color: active
                                     ? const Color(0xFFEAF1FF)
-                                    : Colors.white,
+                                    : AppThemeTokens.surface(context),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
                                   color: active
                                       ? AppColors.primary
-                                      : AppColors.divider,
+                                      : AppThemeTokens.outline(context),
                                   width: active ? 1.6 : 1,
                                 ),
                               ),
@@ -784,7 +860,9 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
                                           .textTheme
                                           .bodyLarge
                                           ?.copyWith(
-                                            color: AppColors.textPrimary,
+                                            color: AppThemeTokens.textPrimary(
+                                              context,
+                                            ),
                                           ),
                                     ),
                                   ),
@@ -822,66 +900,6 @@ class _ProviderPostPageState extends State<ProviderPostPage> {
   }
 }
 
-class _FieldLabel extends StatelessWidget {
-  final String label;
-
-  const _FieldLabel({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        label,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
-      ),
-    );
-  }
-}
-
-class _PickerField extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const _PickerField({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.tune_rounded, size: 17, color: AppColors.primary),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
-              ),
-            ),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: AppColors.textSecondary,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _PostSubmitResultSheet extends StatelessWidget {
   final bool success;
   final String title;
@@ -910,15 +928,9 @@ class _PostSubmitResultSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppThemeTokens.surface(context),
             borderRadius: BorderRadius.circular(22),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x29000000),
-                blurRadius: 24,
-                offset: Offset(0, 14),
-              ),
-            ],
+            boxShadow: AppThemeTokens.cardShadow(context),
           ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
@@ -941,7 +953,7 @@ class _PostSubmitResultSheet extends StatelessWidget {
                   title,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: AppThemeTokens.textPrimary(context),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -950,7 +962,7 @@ class _PostSubmitResultSheet extends StatelessWidget {
                   message,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppThemeTokens.textSecondary(context),
                     height: 1.35,
                   ),
                 ),

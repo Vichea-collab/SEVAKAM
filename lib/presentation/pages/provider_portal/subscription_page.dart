@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../domain/entities/subscription.dart';
 import '../../state/subscription_state.dart';
@@ -133,7 +134,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       }
 
       if (result.isBakong) {
-        if ((result.qrPayload ?? '').isEmpty && (result.qrImageUrl ?? '').isEmpty) {
+        if ((result.qrPayload ?? '').isEmpty &&
+            (result.qrImageUrl ?? '').isEmpty) {
           if (mounted) {
             AppToast.error(context, 'Could not generate KHQR payment.');
           }
@@ -201,20 +203,17 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       builder: (dialogContext) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 420),
             padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppThemeTokens.surface(context),
               borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.16),
-                  blurRadius: 36,
-                  offset: const Offset(0, 16),
-                ),
-              ],
+              boxShadow: AppThemeTokens.cardShadow(context),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -248,13 +247,17 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                           Text(
                             '${plan.name} • ${checkout.currency ?? 'USD'} ${checkout.amount?.toStringAsFixed(2) ?? plan.monthlyPrice.toStringAsFixed(2)}',
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: AppColors.textSecondary),
+                                ?.copyWith(
+                                  color: AppThemeTokens.textSecondary(context),
+                                ),
                           ),
                         ],
                       ),
                     ),
                     IconButton(
-                      onPressed: _loading ? null : () => Navigator.of(dialogContext).pop(),
+                      onPressed: _loading
+                          ? null
+                          : () => Navigator.of(dialogContext).pop(),
                       icon: const Icon(Icons.close_rounded),
                     ),
                   ],
@@ -264,20 +267,23 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   width: double.infinity,
                   clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FBFF),
+                    color: AppThemeTokens.mutedSurface(context),
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: const Color(0xFFDCE6F8)),
+                    border: Border.all(color: AppThemeTokens.outline(context)),
                   ),
                   child: Column(
                     children: [
                       if ((checkout.qrPayload ?? '').isNotEmpty)
                         KhqrCardWidget(
                           width: 300.0,
-                          receiverName: plan.name, // Displaying plan name as receiver, or 'Sevakam'
+                          receiverName: plan
+                              .name, // Displaying plan name as receiver, or 'Sevakam'
                           amount: checkout.amount ?? plan.monthlyPrice,
                           keepIntegerDecimal: true,
-                          currency: (checkout.currency ?? 'USD').toUpperCase() == 'KHR' 
-                              ? KhqrCurrency.khr 
+                          currency:
+                              (checkout.currency ?? 'USD').toUpperCase() ==
+                                  'KHR'
+                              ? KhqrCurrency.khr
                               : KhqrCurrency.usd,
                           qr: checkout.qrPayload!,
                         )
@@ -299,10 +305,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                         child: Text(
                           'Scan this KHQR with your banking app, complete the payment, then confirm below.',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                            height: 1.45,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: AppThemeTokens.textSecondary(context),
+                                height: 1.45,
+                              ),
                         ),
                       ),
                     ],
@@ -370,15 +377,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             child: Container(
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppThemeTokens.surface(sheetContext),
                 borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 28,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
+                boxShadow: AppThemeTokens.cardShadow(sheetContext),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -389,7 +390,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                       width: 44,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD6DCE8),
+                        color: AppThemeTokens.outline(sheetContext),
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
@@ -404,7 +405,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   Text(
                     'Upgrade to ${plan.name} and select how you want to pay.',
                     style: Theme.of(sheetContext).textTheme.bodyMedium
-                        ?.copyWith(color: AppColors.textSecondary),
+                        ?.copyWith(
+                          color: AppThemeTokens.textSecondary(sheetContext),
+                        ),
                   ),
                   const SizedBox(height: 18),
                   _PaymentMethodTile(
@@ -474,7 +477,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F6FB),
+      backgroundColor: AppThemeTokens.pageBackground(context),
       body: SafeArea(
         child: ValueListenableBuilder<SubscriptionStatus>(
           valueListenable: SubscriptionState.status,
@@ -657,12 +660,27 @@ class _CurrentPlanCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          Text(
-            'Booking usage',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.82),
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Booking usage',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                status.bookingLimit < 0
+                    ? '${status.bookingsUsed} bookings used'
+                    : '${status.bookingsUsed} / ${status.bookingLimit} bookings',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           ClipRRect(
@@ -704,8 +722,8 @@ class _CurrentPlanCard extends StatelessWidget {
                           status.isCanceling
                               ? 'Access ends at period close'
                               : (status.autoRenews
-                                  ? 'Current billing period'
-                                  : 'Access period'),
+                                    ? 'Current billing period'
+                                    : 'Access period'),
                           style: Theme.of(context).textTheme.labelMedium
                               ?.copyWith(
                                 color: Colors.white.withValues(alpha: 0.82),
@@ -744,7 +762,7 @@ class _CurrentPlanCard extends StatelessWidget {
 
   String? _periodLabel() {
     final start = status.currentPeriodStart;
-    final end = status.currentPeriodEnd;
+    final end = _normalizedPeriodEnd(start, status.currentPeriodEnd);
     if (start != null && end != null) {
       return '${_formatShortDate(start)} - ${_formatShortDate(end)}';
     }
@@ -754,6 +772,21 @@ class _CurrentPlanCard extends StatelessWidget {
           : 'Renews ${_formatShortDate(end)}';
     }
     return null;
+  }
+
+  DateTime? _normalizedPeriodEnd(DateTime? start, DateTime? end) {
+    if (start == null || end == null) return end;
+    if (end.isAfter(start)) return end;
+    return DateTime(
+      start.year,
+      start.month + 1,
+      start.day,
+      start.hour,
+      start.minute,
+      start.second,
+      start.millisecond,
+      start.microsecond,
+    );
   }
 
   String _prettyStatus(String status) {
@@ -847,16 +880,7 @@ class _PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFree = plan.tier == SubscriptionTier.basic;
-    final visibleFeatures = plan.features.take(3).toList(growable: false);
-    final highlightStats = <String>[
-      plan.bookingLimit < 0
-          ? 'Unlimited bookings'
-          : '${plan.bookingLimit} bookings/mo',
-      '${plan.searchRankMultiplier}x ranking',
-      plan.maxPhotos < 0
-          ? 'Unlimited portfolio'
-          : '${plan.maxPhotos} portfolio photos',
-    ];
+    final extraBenefits = _extraBenefits();
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       decoration: BoxDecoration(
@@ -981,34 +1005,52 @@ class _PlanCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: highlightStats
-                      .map(
-                        (item) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: plan.badgeColor.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            item,
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: plan.badgeColor,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: plan.badgeColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _PlanMetric(
+                          label: 'Bookings',
+                          value: plan.bookingLimit < 0
+                              ? 'Unlimited'
+                              : '${plan.bookingLimit}/mo',
+                          accent: plan.badgeColor,
                         ),
-                      )
-                      .toList(growable: false),
+                      ),
+                      Expanded(
+                        child: _PlanMetric(
+                          label: 'Search rank',
+                          value: '${plan.searchRankMultiplier}x boost',
+                          accent: plan.badgeColor,
+                        ),
+                      ),
+                      Expanded(
+                        child: _PlanMetric(
+                          label: 'Portfolio',
+                          value: plan.maxPhotos < 0
+                              ? 'Unlimited'
+                              : '${plan.maxPhotos} photos',
+                          accent: plan.badgeColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 10),
-                ...visibleFeatures.map((feature) {
+                Text(
+                  'Included',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...extraBenefits.map((feature) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Row(
@@ -1035,18 +1077,8 @@ class _PlanCard extends StatelessWidget {
                     ),
                   );
                 }),
-                if (plan.features.length > visibleFeatures.length) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    '+${plan.features.length - visibleFeatures.length} more benefits',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
                 if (plan.qualityGate != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -1070,9 +1102,7 @@ class _PlanCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            plan.qualityGate!,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            _eligibilityText(plan.qualityGate!),
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
                                   color: const Color(0xFF92400E),
@@ -1098,7 +1128,7 @@ class _PlanCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Best for: ${plan.bestFor}',
+                          'Best for ${plan.bestFor}',
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: AppColors.textSecondary,
@@ -1151,6 +1181,65 @@ class _PlanCard extends StatelessWidget {
       ),
     );
   }
+
+  List<String> _extraBenefits() {
+    final normalized = plan.features
+        .where((feature) => !_isSummaryDuplicate(feature))
+        .toList(growable: false);
+    return normalized.take(3).toList(growable: false);
+  }
+
+  bool _isSummaryDuplicate(String feature) {
+    final text = feature.toLowerCase();
+    return text.contains('booking') ||
+        text.contains('rank') ||
+        text.contains('portfolio') ||
+        text.contains('photo');
+  }
+
+  String _eligibilityText(String raw) {
+    final value = raw.trim();
+    if (value.toLowerCase().startsWith('target requirement:')) {
+      return 'Eligibility: ${value.substring('Target requirement:'.length).trim()}';
+    }
+    return value;
+  }
+}
+
+class _PlanMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color accent;
+
+  const _PlanMetric({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            color: accent,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _PaymentMethodTile extends StatelessWidget {
@@ -1179,7 +1268,7 @@ class _PaymentMethodTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFF8FAFC),
+      color: AppThemeTokens.mutedSurface(context),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,

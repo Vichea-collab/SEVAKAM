@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/support_ticket_options.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../../domain/entities/profile_settings.dart';
@@ -35,12 +36,7 @@ class _HelpSupportChatPageState extends State<HelpSupportChatPage> {
   void initState() {
     super.initState();
     if (widget.ticket.id.isNotEmpty) {
-      unawaited(
-        ProfileSettingsState.refreshCurrentHelpTicketMessages(
-          ticketId: widget.ticket.id,
-          page: _currentPage,
-        ),
-      );
+      unawaited(_loadInitialMessages());
       _startPolling();
     }
   }
@@ -64,13 +60,27 @@ class _HelpSupportChatPageState extends State<HelpSupportChatPage> {
         ? ProfileSettingsState.providerHelpTicketMessagesLoading
         : ProfileSettingsState.finderHelpTicketMessagesLoading;
     final statusColor = _statusColor(widget.ticket.status);
+    final displayTitle = widget.ticket.title.trim().isEmpty
+        ? supportTicketSubcategoryLabel(
+            categoryId: widget.ticket.category,
+            subcategoryId: widget.ticket.subcategory,
+          )
+        : widget.ticket.title;
+    final ticketType = supportTicketRequestTypeFromId(widget.ticket.ticketType);
+    final topicLabel = supportTicketSubcategoryLabel(
+      categoryId: widget.ticket.category,
+      subcategoryId: widget.ticket.subcategory,
+    );
+    final canSend = !_sending && _composerController.text.trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FC),
+      backgroundColor: AppThemeTokens.pageBackground(context),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFF8FBFF), Color(0xFFF1F5FC)],
+            colors: AppThemeTokens.isDark(context)
+                ? const [Color(0xFF0E1728), Color(0xFF142238)]
+                : const [Color(0xFFF8FBFF), Color(0xFFF1F5FC)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -98,274 +108,319 @@ class _HelpSupportChatPageState extends State<HelpSupportChatPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const AppTopBar(title: 'Support chat'),
-                        const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(26),
-                            border: Border.all(color: const Color(0xFFDCE4F2)),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x0F0F172A),
-                                blurRadius: 18,
-                                offset: Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEAF1FF),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: const Text(
-                                  'Conversation',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    height: 52,
-                                    width: 52,
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Icon(
-                                      Icons.support_agent_rounded,
-                                      color: statusColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          widget.ticket.title,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.copyWith(
-                                                color: AppColors.textPrimary,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Wrap(
-                                          spacing: 8,
-                                          runSpacing: 8,
-                                          children: [
-                                            _MetaPill(
-                                              text: _prettyStatus(
-                                                widget.ticket.status,
-                                              ),
-                                              color: statusColor,
-                                            ),
-                                            _MetaPill(
-                                              text: supportTicketCategoryLabel(
-                                                widget.ticket.category,
-                                              ),
-                                              color: AppColors.primary,
-                                            ),
-                                            if (widget.ticket.priority.isNotEmpty)
-                                              _MetaPill(
-                                                text: _prettyPriority(
-                                                  widget.ticket.priority,
-                                                ),
-                                                color: _priorityColor(
-                                                  widget.ticket.priority,
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF7FAFF),
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(
-                                    color: const Color(0xFFDCE6F7),
-                                  ),
-                                ),
-                                child: Text(
-                                  widget.ticket.message,
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        AppTopBar(
+                          title:
+                              '${supportTicketRequestTypeLabel(ticketType)} chat',
                         ),
                       ],
                     ),
                   ),
                   Expanded(
                     child: Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
+                      margin: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        8,
+                        AppSpacing.lg,
+                        AppSpacing.lg,
                       ),
-                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFFFFFF), Color(0xFFF7FAFF)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: const Color(0xFFDCE4F2)),
-                      ),
-                      child: ValueListenableBuilder<List<HelpTicketMessage>>(
-                        valueListenable: messageListenable,
-                        builder: (context, messages, _) {
-                          return ValueListenableBuilder<bool>(
-                            valueListenable: loadingListenable,
-                            builder: (context, loading, _) {
-                              return ValueListenableBuilder<PaginationMeta>(
-                                valueListenable: paginationListenable,
-                                builder: (context, pagination, _) {
-                                  if (widget.ticket.id.isEmpty) {
-                                    return const AppStatePanel.empty(
-                                      title: 'Ticket is syncing',
-                                      message:
-                                          'Please reopen this chat in a moment.',
-                                    );
-                                  }
-                                  if (loading && messages.isEmpty) {
-                                    return const Center(
-                                      child: AppStatePanel.loading(
-                                        title: 'Loading support messages',
-                                      ),
-                                    );
-                                  }
-                                  if (messages.isEmpty) {
-                                    return const AppStatePanel.empty(
-                                      title: 'No messages yet',
-                                      message: 'Start chatting with support.',
-                                    );
-                                  }
-                                  return Column(
-                                    children: [
-                                      Expanded(
-                                        child: ListView.separated(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 4,
-                                          ),
-                                          itemCount: messages.length,
-                                          separatorBuilder: (_, _) =>
-                                              const SizedBox(height: 12),
-                                          itemBuilder: (context, index) {
-                                            final item = messages[index];
-                                            final fromAdmin =
-                                                item.senderRole.toLowerCase() ==
-                                                'admin';
-                                            final isAutoReply =
-                                                item.type.toLowerCase() ==
-                                                'auto_reply';
-                                            return _ChatBubble(
-                                              message: item,
-                                              fromAdmin: fromAdmin,
-                                              isAutoReply: isAutoReply,
-                                              timeLabel: _formatDate(
-                                                item.createdAt,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                      if (pagination.totalPages > 1)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 12,
-                                          ),
-                                          child: PaginationBar(
-                                            currentPage: _normalizedPage(
-                                              pagination.page,
-                                            ),
-                                            totalPages: pagination.totalPages,
-                                            loading: _paging,
-                                            onPageSelected: _goToPage,
-                                          ),
-                                        ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      10,
-                      AppSpacing.lg,
-                      AppSpacing.lg,
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFDCE4F2)),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x0A0F172A),
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
+                        color: AppThemeTokens.surface(context),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: AppThemeTokens.outline(context)),
+                        boxShadow: AppThemeTokens.cardShadow(context),
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Reply to support',
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  height: 48,
+                                  width: 48,
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(
+                                    Icons.support_agent_rounded,
+                                    color: statusColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              displayTitle,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium
+                                                  ?.copyWith(
+                                                    color: AppThemeTokens
+                                                        .textPrimary(context),
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          _MetaPill(
+                                            text: _prettyStatus(
+                                              widget.ticket.status,
+                                            ),
+                                            color: statusColor,
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: AppThemeTokens.mutedSurface(
+                                            context,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          border: Border.all(
+                                            color: AppThemeTokens.outline(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            _HeaderInfoLine(
+                                              label: 'Category',
+                                              value: supportTicketCategoryLabel(
+                                                widget.ticket.category,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            _HeaderInfoLine(
+                                              label: 'Subcategory',
+                                              value: topicLabel,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          AppTextField(
-                            hint: 'Type your message to support...',
-                            controller: _composerController,
-                            minLines: 1,
-                            maxLines: 4,
+                          Divider(
+                            height: 1,
+                            color: AppThemeTokens.outline(context),
                           ),
-                          const SizedBox(height: 10),
-                          PrimaryButton(
-                            label: _sending ? 'Sending...' : 'Send message',
-                            onPressed: _sending ? null : _send,
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                14,
+                                14,
+                                14,
+                                10,
+                              ),
+                              child: ValueListenableBuilder<List<HelpTicketMessage>>(
+                                valueListenable: messageListenable,
+                                builder: (context, messages, _) {
+                                  return ValueListenableBuilder<bool>(
+                                    valueListenable: loadingListenable,
+                                    builder: (context, loading, _) {
+                                      return ValueListenableBuilder<
+                                        PaginationMeta
+                                      >(
+                                        valueListenable: paginationListenable,
+                                        builder: (context, pagination, _) {
+                                          if (widget.ticket.id.isEmpty) {
+                                            return const AppStatePanel.empty(
+                                              title: 'Ticket is syncing',
+                                              message:
+                                                  'Please reopen this chat in a moment.',
+                                            );
+                                          }
+                                          if (loading && messages.isEmpty) {
+                                            return const Center(
+                                              child: AppStatePanel.loading(
+                                                title:
+                                                    'Loading support messages',
+                                              ),
+                                            );
+                                          }
+                                          if (messages.isEmpty) {
+                                            return const AppStatePanel.empty(
+                                              title: 'Conversation is syncing',
+                                              message:
+                                                  'The support thread is being prepared. Pull to refresh in a moment.',
+                                            );
+                                          }
+                                          return Column(
+                                            children: [
+                                              Expanded(
+                                                child: ListView.separated(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 4,
+                                                      ),
+                                                  itemCount: messages.length,
+                                                  separatorBuilder: (_, _) =>
+                                                      const SizedBox(
+                                                        height: 12,
+                                                      ),
+                                                  itemBuilder: (context, index) {
+                                                    final item =
+                                                        messages[index];
+                                                    final fromAdmin =
+                                                        item.senderRole
+                                                            .toLowerCase() ==
+                                                        'admin';
+                                                    final isAutoReply =
+                                                        item.type
+                                                            .toLowerCase() ==
+                                                        'auto_reply';
+                                                    return _ChatBubble(
+                                                      message: item,
+                                                      fromAdmin: fromAdmin,
+                                                      isAutoReply: isAutoReply,
+                                                      timeLabel: _formatDate(
+                                                        item.createdAt,
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                              if (pagination.totalPages > 1)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        top: 12,
+                                                      ),
+                                                  child: PaginationBar(
+                                                    currentPage:
+                                                        _normalizedPage(
+                                                          pagination.page,
+                                                        ),
+                                                    totalPages:
+                                                        pagination.totalPages,
+                                                    loading: _paging,
+                                                    onPageSelected: _goToPage,
+                                                  ),
+                                                ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          Divider(
+                            height: 1,
+                            color: AppThemeTokens.outline(context),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: AppThemeTokens.mutedSurface(context),
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: AppThemeTokens.outline(context),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Reply to support',
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  AppTextField(
+                                    hint: 'Type your message to support...',
+                                    controller: _composerController,
+                                    onChanged: (_) => setState(() {}),
+                                    minLines: 1,
+                                    maxLines: 4,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      final compactComposer =
+                                          constraints.maxWidth < 360;
+                                      if (compactComposer) {
+                                        return Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              _sending
+                                                  ? 'Sending your reply...'
+                                                  : 'Support replies appear here automatically.',
+                                              style: TextStyle(
+                                                color: AppThemeTokens
+                                                    .textSecondary(context),
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            PrimaryButton(
+                                              label: _sending
+                                                  ? 'Sending...'
+                                                  : 'Send message',
+                                              onPressed: canSend ? _send : null,
+                                            ),
+                                          ],
+                                        );
+                                      }
+                                      return Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              _sending
+                                                  ? 'Sending your reply...'
+                                                  : 'Support replies appear here automatically.',
+                                              style: TextStyle(
+                                                color: AppThemeTokens
+                                                    .textSecondary(context),
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          FilledButton.icon(
+                                            onPressed: canSend ? _send : null,
+                                            icon: const Icon(
+                                              Icons.send_rounded,
+                                            ),
+                                            label: Text(
+                                              _sending
+                                                  ? 'Sending...'
+                                                  : 'Send message',
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -393,6 +448,21 @@ class _HelpSupportChatPageState extends State<HelpSupportChatPage> {
     } finally {
       if (mounted) {
         setState(() => _paging = false);
+      }
+    }
+  }
+
+  Future<void> _loadInitialMessages() async {
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        await ProfileSettingsState.refreshCurrentHelpTicketMessages(
+          ticketId: widget.ticket.id,
+          page: _currentPage,
+        );
+        return;
+      } catch (_) {
+        if (attempt == 2) return;
+        await Future<void>.delayed(const Duration(milliseconds: 350));
       }
     }
   }
@@ -456,28 +526,6 @@ class _HelpSupportChatPageState extends State<HelpSupportChatPage> {
     return '${local.year}-${two(local.month)}-${two(local.day)} ${two(local.hour)}:${two(local.minute)}';
   }
 
-  String _prettyPriority(String value) {
-    switch (value.toLowerCase()) {
-      case 'high':
-        return 'High priority';
-      case 'low':
-        return 'Low priority';
-      default:
-        return 'Normal priority';
-    }
-  }
-
-  Color _priorityColor(String value) {
-    switch (value.toLowerCase()) {
-      case 'high':
-        return const Color(0xFFDC2626);
-      case 'low':
-        return const Color(0xFF64748B);
-      default:
-        return const Color(0xFF0EA5E9);
-    }
-  }
-
   Color _statusColor(String value) {
     switch (value.toLowerCase()) {
       case 'resolved':
@@ -522,59 +570,80 @@ class _ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppThemeTokens.isDark(context);
     final alignment = isAutoReply
         ? Alignment.centerLeft
         : (fromAdmin ? Alignment.centerLeft : Alignment.centerRight);
     final background = isAutoReply
-        ? const Color(0xFFF7FAFF)
+        ? (isDark ? const Color(0xFF172335) : const Color(0xFFF8FAFD))
         : (fromAdmin
-              ? const Color(0xFFF2F6FC)
-              : AppColors.primary.withValues(alpha: 0.12));
+              ? (isDark ? const Color(0xFF121F31) : const Color(0xFFF4F7FB))
+              : (isDark ? const Color(0xFF162846) : const Color(0xFFEEF4FF)));
     final border = isAutoReply
-        ? const Color(0xFFBFDBFE)
+        ? (isDark ? const Color(0xFF304768) : const Color(0xFFD8E7FF))
         : (fromAdmin
-              ? const Color(0xFFD8E2F3)
-              : AppColors.primary.withValues(alpha: 0.28));
+              ? (isDark ? const Color(0xFF27364D) : const Color(0xFFDCE4F2))
+              : AppColors.primary.withValues(alpha: 0.22));
     final nameColor = isAutoReply
-        ? AppColors.primary
+        ? const Color(0xFF2563EB)
         : (fromAdmin ? AppColors.textSecondary : AppColors.primaryDark);
+    final label = isAutoReply
+        ? 'Support assistant'
+        : (fromAdmin ? 'Admin support' : 'You');
 
     return Align(
       alignment: alignment,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 340),
-        padding: const EdgeInsets.fromLTRB(13, 11, 13, 11),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(20),
+          boxShadow: AppThemeTokens.cardShadow(context),
           border: Border.all(color: border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              isAutoReply ? 'Support assistant' : message.senderName,
-              style: TextStyle(
-                color: nameColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: nameColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Text(
+                  timeLabel,
+                  style: TextStyle(
+                    color: AppThemeTokens.textSecondary(context),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
+            if (!isAutoReply && message.senderName.trim().isNotEmpty) ...[
+              const SizedBox(height: 3),
+              Text(
+                message.senderName,
+                style: TextStyle(
+                  color: AppThemeTokens.textSecondary(context),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
             const SizedBox(height: 6),
             Text(
               message.text,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: AppThemeTokens.textPrimary(context),
                 height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              timeLabel,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -598,9 +667,7 @@ class _ChatBackgroundGlow extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, color.withValues(alpha: 0)],
-          ),
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
         ),
       ),
     );
@@ -631,6 +698,45 @@ class _MetaPill extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
+    );
+  }
+}
+
+class _HeaderInfoLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _HeaderInfoLine({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 84,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: AppThemeTokens.textSecondary(context),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: AppThemeTokens.textPrimary(context),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

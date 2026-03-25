@@ -84,7 +84,7 @@ class OrderState {
     await refreshCurrentRole();
   }
 
-  static void setBackendToken(String token) {
+  static void setBackendToken(String token, {bool refresh = true}) {
     _backendToken = token.trim();
     _repository.setBearerToken(_backendToken);
     if (_backendToken.isEmpty) {
@@ -97,7 +97,9 @@ class OrderState {
       providerPagination.value = const PaginationMeta.initial(limit: _pageSize);
       return;
     }
-    unawaited(refreshCurrentRole());
+    if (refresh) {
+      unawaited(OrderState.refreshCurrentRole());
+    }
   }
 
   static Future<void> refreshCurrentRole({

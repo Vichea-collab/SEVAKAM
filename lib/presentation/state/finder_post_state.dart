@@ -44,7 +44,7 @@ class FinderPostState {
     await refresh();
   }
 
-  static void setBackendToken(String token) {
+  static void setBackendToken(String token, {bool refresh = true}) {
     _repository.setBearerToken(token);
     if (token.trim().isEmpty) {
       posts.value = const <FinderPostItem>[];
@@ -53,9 +53,11 @@ class FinderPostState {
       realtimeActive.value = false;
       return;
     }
-    unawaited(refresh(page: 1));
-    if (allPosts.value.isEmpty) {
-      unawaited(refreshAllForLookup(maxPages: 3));
+    if (refresh) {
+      unawaited(FinderPostState.refresh(page: 1));
+      if (allPosts.value.isEmpty) {
+        unawaited(FinderPostState.refreshAllForLookup(maxPages: 3));
+      }
     }
   }
 

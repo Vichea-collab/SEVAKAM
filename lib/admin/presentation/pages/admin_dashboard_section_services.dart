@@ -83,6 +83,7 @@ extension on _AdminDashboardPageState {
                     dialogTitle:
                         '${item.active ? 'Deactivate' : 'Activate'} service ${item.name}?',
                     actionLabel: item.active ? 'Deactivate' : 'Activate',
+                    reasonRequired: item.active,
                     run: (reason) => AdminDashboardState.updateServiceActive(
                       serviceId: item.id,
                       active: !item.active,

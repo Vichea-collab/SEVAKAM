@@ -205,14 +205,12 @@ class ProfileRemoteDataSource {
   }
 
   Future<Map<String, dynamic>> createHelpTicket({
-    required String title,
-    required String message,
+    required String ticketType,
     required String category,
     required String subcategory,
   }) async {
     final response = await _apiClient.postJson('/api/users/help-tickets', {
-      'title': title,
-      'message': message,
+      'ticketType': ticketType,
       'category': category,
       'subcategory': subcategory,
     });

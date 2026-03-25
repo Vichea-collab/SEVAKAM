@@ -108,13 +108,10 @@ class ProfileSettingsRepositoryImpl implements ProfileSettingsRepository {
 
   @override
   Future<void> saveProviderProfession(ProviderProfessionData profession) async {
-    await _localDataSource.saveProviderProfession(profession: profession);
-    try {
-      final remote = await _remoteDataSource.updateProviderProfession(
-        profession: profession,
-      );
-      await _localDataSource.saveProviderProfession(profession: remote);
-    } catch (_) {}
+    final remote = await _remoteDataSource.updateProviderProfession(
+      profession: profession,
+    );
+    await _localDataSource.saveProviderProfession(profession: remote);
   }
 
   @override
@@ -299,35 +296,17 @@ class ProfileSettingsRepositoryImpl implements ProfileSettingsRepository {
     required bool isProvider,
     required HelpSupportTicket ticket,
   }) async {
-    final localTicket = ticket.id.isEmpty
-        ? HelpSupportTicket(
-            id: 'local-${ticket.createdAt.microsecondsSinceEpoch}',
-            title: ticket.title,
-            message: ticket.message,
-            category: ticket.category,
-            subcategory: ticket.subcategory,
-            priority: ticket.priority,
-            status: ticket.status,
-            createdAt: ticket.createdAt,
-            updatedAt: ticket.updatedAt,
-            lastMessageText: ticket.lastMessageText,
-            lastMessageAt: ticket.lastMessageAt,
-          )
-        : ticket;
+    final created = await _remoteDataSource.createHelpTicket(
+      ticketType: ticket.ticketType,
+      category: ticket.category,
+      subcategory: ticket.subcategory,
+    );
+    final createdTicket = HelpSupportTicket.fromMap(created);
     await _localDataSource.addHelpTicket(
       isProvider: isProvider,
-      ticket: localTicket,
+      ticket: createdTicket,
     );
-    try {
-      final created = await _remoteDataSource.createHelpTicket(
-        title: ticket.title,
-        message: ticket.message,
-        category: ticket.category,
-        subcategory: ticket.subcategory,
-      );
-      return HelpSupportTicket.fromMap(created);
-    } catch (_) {}
-    return localTicket;
+    return createdTicket;
   }
 
   List<HelpSupportTicket> _sortHelpTickets(List<HelpSupportTicket> source) {

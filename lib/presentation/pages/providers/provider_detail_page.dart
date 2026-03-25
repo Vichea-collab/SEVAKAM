@@ -13,6 +13,7 @@ import '../../../domain/entities/provider_profile.dart';
 import '../../state/favorite_state.dart';
 import '../../state/chat_state.dart';
 import '../../state/booking_catalog_state.dart';
+import '../../state/auth_state.dart';
 import '../../state/order_state.dart';
 import '../../state/provider_post_state.dart';
 import '../../widgets/app_state_panel.dart';
@@ -87,6 +88,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
   @override
   Widget build(BuildContext context) {
     final rs = context.rs;
+    final currentUid = AuthState.currentUser.value?.uid.trim() ?? '';
     final profile = _buildProfile(
       widget.provider,
       summary: _reviewSummary,
@@ -160,21 +162,33 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
                           ),
                           rs.gapH(12),
                           _ContactSwitcher(
-                            onBookTap: () => Navigator.push(
-                              context,
-                              slideFadeRoute(
-                                BookingAddressPage(
-                                  draft:
-                                      BookingCatalogState.defaultBookingDraft(
-                                        provider: profile.provider,
-                                        serviceName:
-                                            profile.provider.services.isNotEmpty
-                                            ? profile.provider.services.first
-                                            : null,
-                                      ),
+                            onBookTap: () {
+                              if (currentUid.isNotEmpty &&
+                                  currentUid == profile.provider.uid.trim()) {
+                                AppToast.error(
+                                  context,
+                                  'You cannot book your own provider profile.',
+                                );
+                                return;
+                              }
+
+                              Navigator.push(
+                                context,
+                                slideFadeRoute(
+                                  BookingAddressPage(
+                                    draft:
+                                        BookingCatalogState.defaultBookingDraft(
+                                          provider: profile.provider,
+                                          serviceName:
+                                              profile.provider.services
+                                                  .isNotEmpty
+                                              ? profile.provider.services.first
+                                              : null,
+                                        ),
+                                  ),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
                             onChatTap: () {
                               _openProviderChat();
                             },

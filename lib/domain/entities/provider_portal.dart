@@ -1,5 +1,28 @@
 import 'order.dart';
 
+DateTime _parseBlockedDate(dynamic value) {
+  final raw = (value ?? '').toString().trim();
+  if (raw.isEmpty) return DateTime.now();
+  final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(raw);
+  if (match != null) {
+    return DateTime(
+      int.parse(match.group(1)!),
+      int.parse(match.group(2)!),
+      int.parse(match.group(3)!),
+    );
+  }
+  final parsed = DateTime.tryParse(raw);
+  if (parsed == null) return DateTime.now();
+  return DateTime(parsed.year, parsed.month, parsed.day);
+}
+
+String _formatBlockedDate(DateTime value) {
+  final normalized = DateTime(value.year, value.month, value.day);
+  final month = normalized.month.toString().padLeft(2, '0');
+  final day = normalized.day.toString().padLeft(2, '0');
+  return '${normalized.year}-$month-$day';
+}
+
 enum ProviderOrderState { incoming, booked, onTheWay, started, completed, declined }
 
 class FinderPostItem {
@@ -112,7 +135,7 @@ class ProviderPostItem {
       createdAt: map['createdAt'] != null ? DateTime.tryParse(map['createdAt'].toString()) : null,
       updatedAt: map['updatedAt'] != null ? DateTime.tryParse(map['updatedAt'].toString()) : null,
       blockedDates: (map['blockedDates'] as List? ?? [])
-          .map((e) => DateTime.parse(e.toString()))
+          .map(_parseBlockedDate)
           .toList(),
       portfolioPhotos: (map['portfolioPhotos'] as List? ?? [])
           .map((e) => e.toString())
@@ -140,7 +163,7 @@ class ProviderPostItem {
       'longitude': longitude,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
-      'blockedDates': blockedDates.map((e) => e.toIso8601String()).toList(),
+      'blockedDates': blockedDates.map(_formatBlockedDate).toList(),
       'portfolioPhotos': portfolioPhotos,
     };
   }

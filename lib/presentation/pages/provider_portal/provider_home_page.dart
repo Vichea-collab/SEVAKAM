@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
 import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/theme/app_theme_tokens.dart';
 import 'package:servicefinder/core/utils/app_toast.dart';
 import 'package:servicefinder/core/utils/page_transition.dart';
 import 'package:servicefinder/core/utils/responsive.dart';
@@ -254,10 +255,11 @@ class _PreferredDatePill extends StatelessWidget {
     final label = MaterialLocalizations.of(
       context,
     ).formatMediumDate(preferredDate);
+    final isDark = AppThemeTokens.isDark(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF7F0),
+        color: isDark ? const Color(0xFF163024) : const Color(0xFFEFF7F0),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -497,7 +499,9 @@ class _ProviderSearchBar extends StatelessWidget {
             height: rs.dimension(36),
             width: rs.dimension(36),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 20),
+              color: isDark
+                  ? const Color(0xFF1B3A73)
+                  : AppColors.primary.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(rs.radius(12)),
             ),
             child: Icon(Icons.search, color: Colors.white, size: rs.icon(20)),
@@ -534,10 +538,14 @@ class _ProviderSearchBar extends StatelessWidget {
             height: rs.dimension(34),
             width: rs.dimension(34),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 20),
+              color: isDark
+                  ? const Color(0xFF1B3A73)
+                  : AppColors.primary.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(rs.radius(10)),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 40),
+                color: isDark
+                    ? const Color(0xFF345D9D)
+                    : AppColors.primary.withValues(alpha: 0.28),
               ),
             ),
             child: Icon(Icons.tune, color: Colors.white, size: rs.icon(18)),
@@ -755,7 +763,7 @@ class _FinderPostTile extends StatelessWidget {
                 width: rs.dimension(80),
                 height: rs.dimension(80),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: AppThemeTokens.mutedSurface(context),
                   borderRadius: BorderRadius.circular(rs.radius(12)),
                   boxShadow: [
                     BoxShadow(

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/entities/profile_settings.dart';
@@ -12,8 +13,12 @@ class ProfileSettingsLocalDataSource {
   String _notificationKey(bool isProvider) =>
       'profile.notification.${isProvider ? 'provider' : 'finder'}';
   String _helpKey(bool isProvider) =>
-      'profile.help.${isProvider ? 'provider' : 'finder'}';
-  String _professionKey() => 'profile.profession.provider';
+      'profile.help.${isProvider ? 'provider' : 'finder'}.${_userScope()}';
+  String _professionKey() => 'profile.profession.provider.${_userScope()}';
+  String _userScope() =>
+      FirebaseAuth.instance.currentUser?.uid.trim().isNotEmpty == true
+      ? FirebaseAuth.instance.currentUser!.uid.trim()
+      : 'guest';
 
   Future<ProfileFormData> loadProfile({required bool isProvider}) async {
     final raw = (await _prefs).getString(_profileKey(isProvider));

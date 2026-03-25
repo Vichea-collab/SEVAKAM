@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
 import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/theme/app_theme_tokens.dart';
 import 'package:servicefinder/core/utils/app_toast.dart';
 import 'package:servicefinder/data/network/backend_api_client.dart';
 import 'package:servicefinder/domain/entities/provider_portal.dart';
@@ -27,6 +28,7 @@ class ProviderOrderDetailPage extends StatefulWidget {
 class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
   late ProviderOrderItem _order;
   bool _updatingStatus = false;
+  final Map<String, Uint8List> _imageCache = {};
 
   @override
   void initState() {
@@ -76,6 +78,7 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppThemeTokens.pageBackground(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -91,7 +94,7 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
               Text(
                 _order.serviceName,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: AppThemeTokens.textPrimary(context),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -106,9 +109,9 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppThemeTokens.surface(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: AppThemeTokens.outline(context)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,9 +158,9 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppThemeTokens.surface(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: AppThemeTokens.outline(context)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,10 +335,13 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
   }
 
   Uint8List? _decodeDataUrlImage(String dataUrl) {
+    if (_imageCache.containsKey(dataUrl)) return _imageCache[dataUrl];
     final comma = dataUrl.indexOf(',');
     if (comma <= 0 || comma >= dataUrl.length - 1) return null;
     try {
-      return base64Decode(dataUrl.substring(comma + 1));
+      final bytes = base64Decode(dataUrl.substring(comma + 1));
+      _imageCache[dataUrl] = bytes;
+      return bytes;
     } catch (_) {
       return null;
     }
@@ -347,7 +353,7 @@ class _ProviderOrderDetailPageState extends State<ProviderOrderDetailPage> {
     if (timeline.bookedAt != null) {
       entries.add(
         StatusTimelineEntry(
-          label: 'Booked',
+          label: 'Upcoming',
           at: timeline.bookedAt!,
           icon: Icons.fact_check_outlined,
           color: const Color(0xFFD97706),
@@ -460,9 +466,9 @@ class _ActionPanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppThemeTokens.surface(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: AppThemeTokens.outline(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,7 +476,7 @@ class _ActionPanel extends StatelessWidget {
           Text(
             'Update order status',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.textPrimary,
+              color: AppThemeTokens.textPrimary(context),
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -480,7 +486,7 @@ class _ActionPanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: PrimaryButton(
-                    label: 'Confirm',
+                    label: 'Accept',
                     icon: Icons.check_circle_outline_rounded,
                     tone: PrimaryButtonTone.success,
                     onPressed: busy ? null : onAccept,
@@ -510,9 +516,15 @@ class _ActionPanel extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1ECFF),
+                color: AppThemeTokens.isDark(context)
+                    ? const Color(0xFF221B38)
+                    : const Color(0xFFF1ECFF),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFDED4FF)),
+                border: Border.all(
+                  color: AppThemeTokens.isDark(context)
+                      ? const Color(0xFF4B3D78)
+                      : const Color(0xFFDED4FF),
+                ),
               ),
               child: Column(
                 children: [
@@ -557,7 +569,7 @@ class _StatusStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final steps = ['Booked', 'Confirmed', 'Started', 'Completed'];
+    final steps = ['Upcoming', 'Confirmed', 'Started', 'Completed'];
     final index = _statusIndex(status);
     return Row(
       children: List.generate(steps.length, (i) {
@@ -653,13 +665,13 @@ class _ProviderStatusBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, icon, bg, fg) = switch (status) {
       ProviderOrderState.incoming => (
-        'New request waiting for your action',
+        'Upcoming booking waiting for your action',
         Icons.inbox_rounded,
         const Color(0xFFFFF4E5),
         const Color(0xFFD97706),
       ),
       ProviderOrderState.booked => (
-        'Booking confirmed',
+        'Upcoming booking',
         Icons.fact_check_rounded,
         const Color(0xFFEAF1FF),
         AppColors.primary,
@@ -723,8 +735,8 @@ class _ProviderStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      ProviderOrderState.incoming => ('Booked', const Color(0xFFD97706)),
-      ProviderOrderState.booked => ('Confirm', AppColors.primary),
+      ProviderOrderState.incoming => ('Upcoming', const Color(0xFFD97706)),
+      ProviderOrderState.booked => ('Upcoming', const Color(0xFFD97706)),
       ProviderOrderState.onTheWay => ('Confirmed', AppColors.primary),
       ProviderOrderState.started => ('Started', const Color(0xFF7C6EF2)),
       ProviderOrderState.completed => ('Completed', AppColors.success),
@@ -763,16 +775,16 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppThemeTokens.textPrimary(context),
+              fontWeight: FontWeight.w600,
             ),
           ),
+        ),
         ],
       ),
     );
@@ -804,9 +816,9 @@ class _ServiceInputImageRow extends StatelessWidget {
               width: double.infinity,
               constraints: const BoxConstraints(maxHeight: 400),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFF),
+                color: AppThemeTokens.mutedSurface(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: AppThemeTokens.outline(context)),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -822,14 +834,14 @@ class _ServiceInputImageRow extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFF),
+                color: AppThemeTokens.mutedSurface(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: AppThemeTokens.outline(context)),
               ),
               child: Text(
                 fallbackText ?? 'Image attached',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: AppThemeTokens.textSecondary(context),
                 ),
               ),
             ),

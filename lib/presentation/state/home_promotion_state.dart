@@ -19,13 +19,15 @@ class HomePromotionState {
 
   static bool _refreshing = false;
 
-  static void setBackendToken(String token) {
+  static void setBackendToken(String token, {bool refresh = true}) {
     _apiClient.setBearerToken(token);
     if (token.trim().isEmpty) {
       promotions.value = const <HomePromotion>[];
       return;
     }
-    unawaited(refresh());
+    if (refresh) {
+      unawaited(HomePromotionState.refresh());
+    }
   }
 
   static Future<void> refresh({String city = ''}) async {
@@ -35,7 +37,8 @@ class HomePromotionState {
     try {
       final query = <String>[
         'placement=finder_home',
-        if (city.trim().isNotEmpty) 'city=${Uri.encodeQueryComponent(city.trim())}',
+        if (city.trim().isNotEmpty)
+          'city=${Uri.encodeQueryComponent(city.trim())}',
       ].join('&');
       final path = query.isEmpty
           ? '/api/users/promotions'
@@ -48,7 +51,9 @@ class HomePromotionState {
       }
       promotions.value = data
           .whereType<Map>()
-          .map((item) => item.map((key, value) => MapEntry(key.toString(), value)))
+          .map(
+            (item) => item.map((key, value) => MapEntry(key.toString(), value)),
+          )
           .map(HomePromotion.fromMap)
           .toList(growable: false);
     } catch (_) {

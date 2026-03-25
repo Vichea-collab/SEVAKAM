@@ -118,6 +118,7 @@ extension on _AdminDashboardPageState {
                     dialogTitle:
                         '${item.active ? 'Suspend' : 'Activate'} user ${item.name}?',
                     actionLabel: item.active ? 'Suspend' : 'Activate',
+                    reasonRequired: item.active,
                     run: (reason) => AdminDashboardState.updateUserStatus(
                       userId: item.id,
                       active: !item.active,

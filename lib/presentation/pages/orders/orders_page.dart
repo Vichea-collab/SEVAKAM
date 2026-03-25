@@ -448,7 +448,7 @@ class _TabChip extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: active
-                  ? AppColors.primaryLight
+                  ? (isDark ? Colors.white : AppColors.primaryLight)
                   : theme.textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w600,
             ),

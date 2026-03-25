@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/support_ticket_options.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../domain/entities/pagination.dart';
 import '../../../domain/entities/profile_settings.dart';
 import '../../state/profile_settings_state.dart';
 import '../../widgets/app_state_panel.dart';
-import '../../widgets/app_text_field.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/pagination_bar.dart';
 import '../../widgets/primary_button.dart';
@@ -73,18 +73,12 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
             Positioned(
               top: -70,
               right: -40,
-              child: _BackgroundGlow(
-                size: 200,
-                color: const Color(0x332563EB),
-              ),
+              child: _BackgroundGlow(size: 200, color: const Color(0x332563EB)),
             ),
             Positioned(
               top: 260,
               left: -50,
-              child: _BackgroundGlow(
-                size: 150,
-                color: const Color(0x1A14B8A6),
-              ),
+              child: _BackgroundGlow(size: 150, color: const Color(0x1A14B8A6)),
             ),
             SafeArea(
               child: ValueListenableBuilder<List<HelpSupportTicket>>(
@@ -221,24 +215,18 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppThemeTokens.surface(context),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFDCE4F2)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F0F172A),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: AppThemeTokens.outline(context)),
+        boxShadow: AppThemeTokens.cardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionLabel('Request form'),
-          const SizedBox(height: 10),
+          _sectionLabel('New request'),
+          const SizedBox(height: 12),
           Text(
-            'Create a support request',
+            'Start a support thread',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
@@ -246,73 +234,42 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Keep the main screen focused. Open the request form only when you need it.',
+            'Choose a category and subcategory, then continue the conversation directly with admin support.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
               height: 1.45,
             ),
           ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7FAFF),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFDCE6F7)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      height: 46,
-                      width: 46,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F0FF),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.edit_note_rounded,
-                        color: AppColors.primary,
-                      ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: const [
+                    _SupportFeaturePill(
+                      icon: Icons.category_outlined,
+                      label: 'Topic-based',
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Open support request dialog',
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Choose a topic, complete the guided form, and submit without taking over the whole page.',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: AppColors.textSecondary,
-                                  height: 1.45,
-                                ),
-                          ),
-                        ],
-                      ),
+                    _SupportFeaturePill(
+                      icon: Icons.forum_outlined,
+                      label: 'Direct chat',
+                    ),
+                    _SupportFeaturePill(
+                      icon: Icons.support_agent_rounded,
+                      label: 'Admin follow-up',
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
-                FilledButton.icon(
-                  onPressed: _openCreateRequestDialog,
-                  icon: const Icon(Icons.add_comment_rounded),
-                  label: const Text('Create support request'),
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          FilledButton.icon(
+            onPressed: _openCreateRequestDialog,
+            icon: const Icon(Icons.add_comment_rounded),
+            label: const Text('Create support request'),
           ),
         ],
       ),
@@ -377,36 +334,27 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionLabel('Your tickets'),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Your support inbox',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Continue any ticket below to chat directly with admin support.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          const SizedBox(height: 12),
+          Text(
+            'Support inbox',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppThemeTokens.textPrimary(context),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Open any thread below to continue the conversation with admin support.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppThemeTokens.textSecondary(context),
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: 16),
-          AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: content),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: content,
+          ),
         ],
       ),
     );
@@ -459,141 +407,287 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
     final latestText = ticket.lastMessageText.isEmpty
         ? ticket.message
         : ticket.lastMessageText;
+    final displayTitle = ticket.title.trim().isEmpty
+        ? supportTicketSubcategoryLabel(
+            categoryId: ticket.category,
+            subcategoryId: ticket.subcategory,
+          )
+        : ticket.title;
+    final statusIcon = switch (normalized) {
+      'resolved' => Icons.check_circle_outline_rounded,
+      'closed' => Icons.lock_outline_rounded,
+      'waiting_on_user' => Icons.mark_chat_unread_rounded,
+      _ => Icons.support_agent_rounded,
+    };
+    final lastActivity = _formatDate(ticket.lastMessageAt ?? ticket.createdAt);
+    final topicLabel = ticket.subcategory.isNotEmpty
+        ? supportTicketSubcategoryLabel(
+            categoryId: ticket.category,
+            subcategoryId: ticket.subcategory,
+          )
+        : supportTicketCategoryLabel(ticket.category);
+    final ticketType = supportTicketRequestTypeFromId(ticket.ticketType);
 
     return InkWell(
       borderRadius: BorderRadius.circular(20),
       onTap: () => _openChat(ticket),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFFFFFF), Color(0xFFF9FBFF)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFD7E1F2)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0A0F172A),
-              blurRadius: 12,
-              offset: Offset(0, 4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 430;
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppThemeTokens.surface(context),
+                  AppThemeTokens.mutedSurface(context),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppThemeTokens.outline(context)),
+              boxShadow: AppThemeTokens.cardShadow(context),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 48,
-                  width: 48,
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    normalized == 'waiting_on_user'
-                        ? Icons.mark_chat_unread_rounded
-                        : Icons.chat_bubble_outline_rounded,
-                    color: statusColor,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                compact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _ticketMetaPill(
-                            supportTicketCategoryLabel(ticket.category),
-                            const Color(0xFF2563EB),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                height: 52,
+                                width: 52,
+                                decoration: BoxDecoration(
+                                  color: statusColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: Icon(statusIcon, color: statusColor),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  displayTitle,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: AppThemeTokens.textPrimary(context),
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 17,
+                                    height: 1.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              _ticketArrowButton(),
+                            ],
                           ),
-                          _ticketMetaPill(
-                            _prettyPriority(ticket.priority),
-                            _priorityColor(ticket.priority),
-                          ),
-                          _ticketMetaPill(
-                            _prettySupportStatus(normalized),
-                            statusColor,
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _ticketMetaPill(
+                                supportTicketRequestTypeLabel(ticketType),
+                                ticketType == SupportTicketRequestType.support
+                                    ? AppColors.primary
+                                    : const Color(0xFF0F766E),
+                              ),
+                              _ticketMetaPill(
+                                _prettySupportStatus(normalized),
+                                statusColor,
+                              ),
+                            ],
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        ticket.title,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                        ),
-                      ),
-                      if (ticket.subcategory.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          supportTicketSubcategoryLabel(
-                            categoryId: ticket.category,
-                            subcategoryId: ticket.subcategory,
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 52,
+                            width: 52,
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Icon(statusIcon, color: statusColor),
                           ),
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 13,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    _ticketMetaPill(
+                                      supportTicketRequestTypeLabel(ticketType),
+                                      ticketType ==
+                                              SupportTicketRequestType.support
+                                          ? AppColors.primary
+                                          : const Color(0xFF0F766E),
+                                    ),
+                                    Text(
+                                      displayTitle,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: AppThemeTokens.textPrimary(
+                                          context,
+                                        ),
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 17,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                    _ticketMetaPill(
+                                      _prettySupportStatus(normalized),
+                                      statusColor,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                _ticketMetaPanel(
+                                  ticket: ticket,
+                                  topicLabel: topicLabel,
+                                  compact: false,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          _ticketArrowButton(),
+                        ],
+                      ),
+                if (compact) ...[
+                  const SizedBox(height: 12),
+                  _ticketMetaPanel(
+                    ticket: ticket,
+                    topicLabel: topicLabel,
+                    compact: true,
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppThemeTokens.mutedSurface(context),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppThemeTokens.outline(context)),
+                  ),
+                  child: Text(
+                    latestText,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppThemeTokens.textPrimary(context),
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppThemeTokens.surface(context),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppThemeTokens.outline(context)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.schedule_rounded,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Last activity $lastActivity',
+                          style: TextStyle(
+                            color: AppThemeTokens.textSecondary(context),
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Open conversation',
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE1E8F4)),
-              ),
-              child: Text(
-                latestText,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  height: 1.45,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Last activity ${_formatDate(ticket.lastMessageAt ?? ticket.createdAt)}',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () => _openChat(ticket),
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                  label: const Text('Open thread'),
-                ),
-              ],
-            ),
-          ],
-        ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _ticketArrowButton() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppThemeTokens.mutedSurface(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppThemeTokens.outline(context)),
+      ),
+      child: const Icon(
+        Icons.arrow_forward_rounded,
+        color: AppColors.primary,
+        size: 18,
+      ),
+    );
+  }
+
+  Widget _ticketMetaPanel({
+    required HelpSupportTicket ticket,
+    required String topicLabel,
+    required bool compact,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppThemeTokens.mutedSurface(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppThemeTokens.outline(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ticketInfoLine(
+            label: 'Category',
+            value: supportTicketCategoryLabel(ticket.category),
+            compact: compact,
+          ),
+          const SizedBox(height: 8),
+          _ticketInfoLine(
+            label: 'Subcategory',
+            value: topicLabel,
+            compact: compact,
+          ),
+        ],
       ),
     );
   }
@@ -655,11 +749,72 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
     );
   }
 
+  Widget _ticketInfoLine({
+    required String label,
+    required String value,
+    bool compact = false,
+  }) {
+    if (compact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: AppThemeTokens.textSecondary(context),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: AppThemeTokens.textPrimary(context),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 84,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: AppThemeTokens.textSecondary(context),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: AppThemeTokens.textPrimary(context),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _sectionLabel(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF1FF),
+        color: AppThemeTokens.softAccent(context, AppColors.primary),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -671,28 +826,6 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
         ),
       ),
     );
-  }
-
-  String _prettyPriority(String value) {
-    switch (value.toLowerCase()) {
-      case 'high':
-        return 'High priority';
-      case 'low':
-        return 'Low priority';
-      default:
-        return 'Normal priority';
-    }
-  }
-
-  Color _priorityColor(String value) {
-    switch (value.toLowerCase()) {
-      case 'high':
-        return const Color(0xFFDC2626);
-      case 'low':
-        return const Color(0xFF64748B);
-      default:
-        return const Color(0xFF0EA5E9);
-    }
   }
 
   String _prettySupportStatus(String value) {
@@ -711,18 +844,6 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
   }
 }
 
-class _GuidedSupportField {
-  final String label;
-  final String hint;
-  final TextInputType? keyboardType;
-
-  const _GuidedSupportField({
-    required this.label,
-    required this.hint,
-    this.keyboardType,
-  });
-}
-
 class _CreateSupportRequestDialog extends StatefulWidget {
   const _CreateSupportRequestDialog();
 
@@ -731,41 +852,41 @@ class _CreateSupportRequestDialog extends StatefulWidget {
       _CreateSupportRequestDialogState();
 }
 
-class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _messageController = TextEditingController();
-  final TextEditingController _detailOneController = TextEditingController();
-  final TextEditingController _detailTwoController = TextEditingController();
+class _CreateSupportRequestDialogState
+    extends State<_CreateSupportRequestDialog> {
   bool _sending = false;
+  late SupportTicketRequestType _selectedRequestType;
   late String _selectedCategoryId;
   late String _selectedSubcategoryId;
 
   @override
   void initState() {
     super.initState();
-    _selectedCategoryId = supportTicketCategories.first.id;
-    _selectedSubcategoryId =
-        supportTicketCategories.first.subcategories.first.id;
+    _selectedRequestType = SupportTicketRequestType.help;
+    final categories = _availableCategories();
+    _selectedCategoryId = categories.first.id;
+    _selectedSubcategoryId = categories.first.subcategories.first.id;
   }
 
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _messageController.dispose();
-    _detailOneController.dispose();
-    _detailTwoController.dispose();
-    super.dispose();
+  List<SupportTicketCategoryOption> _availableCategories() {
+    final filtered = supportTicketCategoriesFor(
+      isProvider: ProfileSettingsState.isProvider,
+      requestType: _selectedRequestType,
+    );
+    return filtered.isNotEmpty ? filtered : supportTicketCategories;
   }
 
   @override
   Widget build(BuildContext context) {
-    final category = supportTicketCategoryById(_selectedCategoryId);
+    final categories = _availableCategories();
+    final category = categories.firstWhere(
+      (item) => item.id == _selectedCategoryId,
+      orElse: () => categories.first,
+    );
     final subcategory = supportTicketSubcategoryById(
       categoryId: _selectedCategoryId,
       subcategoryId: _selectedSubcategoryId,
     );
-    final guidedFields = _guidedFieldsForSelection();
 
     return Dialog(
       insetPadding: const EdgeInsets.all(20),
@@ -775,112 +896,147 @@ class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppThemeTokens.surface(context),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: const Color(0xFFDCE4F2)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x140F172A),
-                blurRadius: 24,
-                offset: Offset(0, 12),
-              ),
-            ],
+            border: Border.all(color: AppThemeTokens.outline(context)),
+            boxShadow: AppThemeTokens.cardShadow(context),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEAF1FF),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: const Text(
-                            'New request',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppThemeTokens.mutedSurface(context),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: AppThemeTokens.outline(context)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 52,
+                      width: 52,
+                      decoration: BoxDecoration(
+                        color: AppThemeTokens.softAccent(
+                          context,
+                          AppColors.primary,
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Create support request',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                color: AppColors.textPrimary,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Icon(
+                        Icons.support_agent_rounded,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppThemeTokens.surface(context),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: AppThemeTokens.outline(context),
+                              ),
+                            ),
+                            child: const Text(
+                              'New request',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w800,
                               ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Choose the issue type and send a complete request.',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppColors.textSecondary,
-                                height: 1.45,
-                              ),
-                        ),
-                      ],
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Create help or support request',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: AppThemeTokens.textPrimary(context),
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Pick a request type first, then choose a topic that matches your role.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppThemeTokens.textSecondary(context),
+                                  height: 1.45,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    onPressed: _sending ? null : () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    IconButton(
+                      onPressed: _sending ? null : () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               Expanded(
                 child: SingleChildScrollView(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      final compact = constraints.maxWidth < 840;
                       final selector = _buildTopicPanel(
                         context,
                         category: category,
                         subcategory: subcategory,
                       );
-                      final form = _buildFormPanel(
-                        context,
-                        category: category,
-                        subcategory: subcategory,
-                        guidedFields: guidedFields,
-                      );
 
-                      if (compact) {
-                        return Column(
-                          children: [
-                            selector,
-                            const SizedBox(height: 14),
-                            form,
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(width: 300, child: selector),
-                          const SizedBox(width: 14),
-                          Expanded(child: form),
-                        ],
+                      return Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 560),
+                          child: selector,
+                        ),
                       );
                     },
                   ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 560;
+                  final button = PrimaryButton(
+                    label: _sending ? 'Creating...' : 'Start support thread',
+                    onPressed: _sending ? null : _sendTicket,
+                  );
+                  final note = Text(
+                    'Support replies continue in chat after the thread is created.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.45,
+                    ),
+                  );
+
+                  if (compact) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [note, const SizedBox(height: 12), button],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(child: note),
+                      const SizedBox(width: 16),
+                      SizedBox(width: 240, child: button),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -904,46 +1060,84 @@ class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                height: 44,
-                width: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F0FF),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(category.icon, color: AppColors.primary),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: const Color(0xFFDCE6F7)),
+            ),
+            child: const Text(
+              'Choose topic',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  category.label,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildRequestTypeToggle(context),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFDCE6F7)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F0FF),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(category.icon, color: AppColors.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        category.label,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        category.description,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          height: 1.45,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            category.description,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+              ],
+            ),
           ),
           const SizedBox(height: 14),
           _buildSelectField(
             context,
             label: 'Category',
             value: _selectedCategoryId,
-            items: supportTicketCategories
+            items: _availableCategories()
                 .map(
                   (item) => DropdownMenuItem<String>(
                     value: item.id,
-                    child: Text(item.label),
+                    child: Text(
+                      item.label,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 )
                 .toList(growable: false),
@@ -953,8 +1147,6 @@ class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog
               setState(() {
                 _selectedCategoryId = value;
                 _selectedSubcategoryId = next.subcategories.first.id;
-                _detailOneController.clear();
-                _detailTwoController.clear();
               });
             },
           ),
@@ -967,7 +1159,11 @@ class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog
                 .map(
                   (item) => DropdownMenuItem<String>(
                     value: item.id,
-                    child: Text(item.label),
+                    child: Text(
+                      item.label,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 )
                 .toList(growable: false),
@@ -975,25 +1171,23 @@ class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog
               if (value == null) return;
               setState(() {
                 _selectedSubcategoryId = value;
-                _detailOneController.clear();
-                _detailTwoController.clear();
               });
             },
           ),
           const SizedBox(height: 14),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(color: const Color(0xFFD9E6FA)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Instant guidance',
+                  'Support assistant preview',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w800,
@@ -1015,174 +1209,74 @@ class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog
     );
   }
 
-  Widget _buildFormPanel(
-    BuildContext context, {
-    required SupportTicketCategoryOption category,
-    required SupportTicketSubcategoryOption subcategory,
-    required List<_GuidedSupportField> guidedFields,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE3E9F5)),
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _metaPill(category.label, const Color(0xFF2563EB)),
-                _metaPill(subcategory.label, const Color(0xFF0EA5E9)),
-                _metaPill(
-                  _prettyPriority(subcategory.priority),
-                  _priorityColor(subcategory.priority),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Subject',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            AppTextField(
-              hint: 'Briefly describe the issue',
-              controller: _titleController,
-              validator: (value) {
-                if ((value ?? '').trim().isEmpty) {
-                  return 'Subject is required';
-                }
-                return null;
-              },
-            ),
-            if (guidedFields.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 640;
-                  final fields = List.generate(guidedFields.length, (index) {
-                    return _buildGuidedInput(
-                      context,
-                      field: guidedFields[index],
-                      controller: index == 0
-                          ? _detailOneController
-                          : _detailTwoController,
-                    );
-                  });
-
-                  if (compact || fields.length == 1) {
-                    return Column(
-                      children: [
-                        for (var index = 0; index < fields.length; index++) ...[
-                          fields[index],
-                          if (index < fields.length - 1)
-                            const SizedBox(height: 12),
-                        ],
-                      ],
-                    );
-                  }
-
-                  return Row(
-                    children: [
-                      Expanded(child: fields[0]),
-                      const SizedBox(width: 12),
-                      Expanded(child: fields[1]),
-                    ],
-                  );
-                },
-              ),
-            ],
-            const SizedBox(height: 14),
-            Text(
-              'Describe the issue',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            AppTextField(
-              hint: 'Explain what happened, what you expected, and what you need from support.',
-              controller: _messageController,
-              validator: (value) {
-                if ((value ?? '').trim().isEmpty) {
-                  return 'Message is required';
-                }
-                return null;
-              },
-              minLines: 5,
-              maxLines: 6,
-            ),
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6FAF8),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFCFE6D9)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.tips_and_updates_rounded,
-                    color: AppColors.success,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Tip: include booking IDs, payment references, screenshots, or exact screen names to reduce back-and-forth.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        height: 1.45,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            PrimaryButton(
-              label: _sending ? 'Sending...' : 'Send support request',
-              onPressed: _sending ? null : _sendTicket,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGuidedInput(
-    BuildContext context, {
-    required _GuidedSupportField field,
-    required TextEditingController controller,
-  }) {
+  Widget _buildRequestTypeToggle(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          field.label,
+          'Request type',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 6),
-        AppTextField(
-          hint: field.hint,
-          controller: controller,
-          keyboardType: field.keyboardType,
+        const SizedBox(height: 8),
+        Row(
+          children: SupportTicketRequestType.values.map((type) {
+            final active = _selectedRequestType == type;
+            final label = supportTicketRequestTypeLabel(type);
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: type == SupportTicketRequestType.help ? 8 : 0,
+                ),
+                child: InkWell(
+                  onTap: () {
+                    final nextCategories = supportTicketCategoriesFor(
+                      isProvider: ProfileSettingsState.isProvider,
+                      requestType: type,
+                    );
+                    if (nextCategories.isEmpty) return;
+                    setState(() {
+                      _selectedRequestType = type;
+                      _selectedCategoryId = nextCategories.first.id;
+                      _selectedSubcategoryId =
+                          nextCategories.first.subcategories.first.id;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: active
+                          ? const Color(0xFFEAF1FF)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: active
+                            ? AppColors.primary
+                            : const Color(0xFFDCE6F7),
+                      ),
+                    ),
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: active
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(growable: false),
         ),
       ],
     );
@@ -1209,7 +1303,20 @@ class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog
         DropdownButtonFormField<String>(
           key: ValueKey<String>('dialog_select_${label}_$value'),
           initialValue: value,
+          isExpanded: true,
           items: items,
+          selectedItemBuilder: (context) => items
+              .map(
+                (item) => Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _dropdownItemLabel(item),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(growable: false),
           onChanged: onChanged,
           decoration: const InputDecoration(
             suffixIcon: Icon(Icons.keyboard_arrow_down_rounded),
@@ -1219,35 +1326,29 @@ class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog
     );
   }
 
-  Future<void> _sendTicket() async {
-    final form = _formKey.currentState;
-    if (form == null || !form.validate()) return;
-    final guidedFields = _guidedFieldsForSelection();
-    final guidedControllers = [_detailOneController, _detailTwoController];
-    for (var index = 0; index < guidedFields.length; index++) {
-      if (guidedControllers[index].text.trim().isEmpty) {
-        AppToast.error(context, '${guidedFields[index].label} is required.');
-        return;
-      }
+  String _dropdownItemLabel(DropdownMenuItem<String> item) {
+    final child = item.child;
+    if (child is Text && child.data != null) {
+      return child.data!;
     }
+    return item.value ?? '';
+  }
 
+  Future<void> _sendTicket() async {
     setState(() => _sending = true);
-    final detailLines = <String>[];
-    for (var index = 0; index < guidedFields.length; index++) {
-      final value = guidedControllers[index].text.trim();
-      if (value.isEmpty) continue;
-      detailLines.add('${guidedFields[index].label}: $value');
-    }
-    final message = _messageController.text.trim();
-    final enhancedMessage = detailLines.isEmpty
-        ? message
-        : '$message\n\nSupport details:\n${detailLines.map((item) => '- $item').join('\n')}';
 
     try {
+      final categoryLabel = supportTicketCategoryLabel(_selectedCategoryId);
+      final subcategoryLabel = supportTicketSubcategoryLabel(
+        categoryId: _selectedCategoryId,
+        subcategoryId: _selectedSubcategoryId,
+      );
       final created = await ProfileSettingsState.addCurrentHelpTicket(
         HelpSupportTicket(
-          title: _titleController.text.trim(),
-          message: enhancedMessage,
+          ticketType: supportTicketRequestTypeId(_selectedRequestType),
+          title: subcategoryLabel,
+          message:
+              '${supportTicketRequestTypeLabel(_selectedRequestType)} request created for $categoryLabel / $subcategoryLabel.',
           category: _selectedCategoryId,
           subcategory: _selectedSubcategoryId,
           priority: supportTicketPriority(
@@ -1259,6 +1360,9 @@ class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog
       );
       if (!mounted) return;
       Navigator.of(context).pop(created);
+    } catch (error) {
+      if (!mounted) return;
+      AppToast.error(context, _supportThreadErrorMessage(error));
     } finally {
       if (mounted) {
         setState(() => _sending = false);
@@ -1266,134 +1370,49 @@ class _CreateSupportRequestDialogState extends State<_CreateSupportRequestDialog
     }
   }
 
-  List<_GuidedSupportField> _guidedFieldsForSelection() {
-    switch (_selectedCategoryId) {
-      case 'payment_charge':
-        return const [
-          _GuidedSupportField(
-            label: 'Booking or payment ID',
-            hint: 'Enter the booking ID or payment reference',
-          ),
-          _GuidedSupportField(
-            label: 'Charged amount',
-            hint: 'Enter the amount charged or expected',
-            keyboardType: TextInputType.numberWithOptions(decimal: true),
-          ),
-        ];
-      case 'provider_issue':
-        return const [
-          _GuidedSupportField(
-            label: 'Booking ID',
-            hint: 'Enter the related booking ID',
-          ),
-          _GuidedSupportField(
-            label: 'Provider name',
-            hint: 'Enter the provider name',
-          ),
-        ];
-      case 'finder_issue':
-        return const [
-          _GuidedSupportField(
-            label: 'Booking ID',
-            hint: 'Enter the related booking ID',
-          ),
-          _GuidedSupportField(
-            label: 'Finder name',
-            hint: 'Enter the finder name',
-          ),
-        ];
-      case 'booking_problem':
-        return const [
-          _GuidedSupportField(
-            label: 'Booking ID',
-            hint: 'Enter the booking ID if available',
-          ),
-          _GuidedSupportField(
-            label: 'Screen or action',
-            hint: 'Which screen or action caused the issue?',
-          ),
-        ];
-      case 'subscription_upgrade':
-        return const [
-          _GuidedSupportField(
-            label: 'Plan name',
-            hint: 'Basic, Plus, or Pro',
-          ),
-          _GuidedSupportField(
-            label: 'Payment reference or email',
-            hint: 'Enter payment reference or account email',
-          ),
-        ];
-      case 'account_verification':
-        return const [
-          _GuidedSupportField(
-            label: 'Account email',
-            hint: 'Enter the email used in this account',
-          ),
-          _GuidedSupportField(
-            label: 'Current status or error',
-            hint: 'What status or error is shown?',
-          ),
-        ];
-      case 'app_bug':
-        return const [
-          _GuidedSupportField(
-            label: 'Screen name',
-            hint: 'Which screen has the issue?',
-          ),
-          _GuidedSupportField(
-            label: 'Device or steps',
-            hint: 'What device or steps reproduce the issue?',
-          ),
-        ];
-      default:
-        return const [
-          _GuidedSupportField(
-            label: 'Reference ID',
-            hint: 'Booking, payment, or account reference if any',
-          ),
-        ];
+  String _supportThreadErrorMessage(Object error) {
+    final text = error.toString().toLowerCase();
+    if (text.contains('401') || text.contains('403')) {
+      return 'Your session expired. Please sign in again and retry.';
     }
+    if (text.contains('timeout')) {
+      return 'Support is taking too long to respond. Please try again.';
+    }
+    return 'Unable to start the support thread. Please try again.';
   }
+}
 
-  Widget _metaPill(String text, Color color) {
+class _SupportFeaturePill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _SupportFeaturePill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: const Color(0xFFF4F7FE),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFDCE6F7)),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w700,
-          fontSize: 11,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
-  }
-
-  String _prettyPriority(String value) {
-    switch (value.toLowerCase()) {
-      case 'high':
-        return 'High priority';
-      case 'low':
-        return 'Low priority';
-      default:
-        return 'Normal priority';
-    }
-  }
-
-  Color _priorityColor(String value) {
-    switch (value.toLowerCase()) {
-      case 'high':
-        return const Color(0xFFDC2626);
-      case 'low':
-        return const Color(0xFF64748B);
-      default:
-        return const Color(0xFF0EA5E9);
-    }
   }
 }
 
@@ -1411,9 +1430,7 @@ class _BackgroundGlow extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, color.withValues(alpha: 0)],
-          ),
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
         ),
       ),
     );

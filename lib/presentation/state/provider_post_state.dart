@@ -44,7 +44,7 @@ class ProviderPostState {
     await refresh();
   }
 
-  static void setBackendToken(String token) {
+  static void setBackendToken(String token, {bool refresh = true}) {
     _repository.setBearerToken(token);
     if (token.trim().isEmpty) {
       posts.value = const <ProviderPostItem>[];
@@ -53,9 +53,11 @@ class ProviderPostState {
       realtimeActive.value = false;
       return;
     }
-    unawaited(refresh(page: 1));
-    if (allPosts.value.isEmpty) {
-      unawaited(refreshAllForLookup(maxPages: 3));
+    if (refresh) {
+      unawaited(ProviderPostState.refresh(page: 1));
+      if (allPosts.value.isEmpty) {
+        unawaited(ProviderPostState.refreshAllForLookup(maxPages: 3));
+      }
     }
   }
 
@@ -215,6 +217,12 @@ class ProviderPostState {
       // If refresh fails, return cached if available
       return _latestProviderPost(cached);
     }
+  }
+
+  static Future<List<DateTime>> loadProviderBlockedDates(String uid) async {
+    final targetUid = uid.trim();
+    if (targetUid.isEmpty) return const <DateTime>[];
+    return _repository.loadProviderBlockedDates(providerUid: targetUid);
   }
 
   static Future<List<ProviderPostItem>> findAllByUid(String uid) async {

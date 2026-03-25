@@ -318,7 +318,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 220),
                           curve: Curves.easeOutCubic,
-                          width: sidebarExpanded ? 318 : 112,
+                          width: sidebarExpanded ? 318 : 132,
                           child: _DashboardSidebar(
                             email: email,
                             section: _section,
@@ -701,24 +701,32 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Future<String?> _askActionReason({
     required String title,
     required String actionLabel,
+    bool reasonRequired = true,
   }) async {
     return showDialog<String>(
       context: context,
       builder: (context) =>
-          _ActionReasonDialog(title: title, actionLabel: actionLabel),
+          _ActionReasonDialog(
+            title: title,
+            actionLabel: actionLabel,
+            reasonRequired: reasonRequired,
+          ),
     );
   }
 
   Future<void> _runSafeAction({
     required String dialogTitle,
     required String actionLabel,
+    bool reasonRequired = false,
     required Future<AdminActionResult> Function(String reason) run,
   }) async {
     final reason = await _askActionReason(
       title: dialogTitle,
       actionLabel: actionLabel,
+      reasonRequired: reasonRequired,
     );
-    if (reason == null || reason.trim().length < 3) return;
+    if (reason == null) return;
+    if (reasonRequired && reason.trim().length < 3) return;
     try {
       final result = await _runAuthed(() async {
         final response = await run(reason.trim());
@@ -734,9 +742,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         return response;
       });
       if (!mounted) return;
+      final resultReason = result.reason.trim();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Action completed. Reason: ${result.reason}'),
+          content: Text(
+            resultReason.isEmpty
+                ? 'Action completed.'
+                : 'Action completed. Reason: $resultReason',
+          ),
           behavior: SnackBarBehavior.floating,
           action: result.undoToken.isEmpty
               ? null
@@ -960,6 +973,16 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     }
 
     final inputController = TextEditingController();
+    final displayTitle = ticket.title.trim().isEmpty
+        ? supportTicketSubcategoryLabel(
+            categoryId: ticket.category,
+            subcategoryId: ticket.subcategory,
+          )
+        : ticket.title;
+    final topicLabel = supportTicketSubcategoryLabel(
+      categoryId: ticket.category,
+      subcategoryId: ticket.subcategory,
+    );
     var currentPage = 1;
     var paging = false;
     var sending = false;
@@ -1008,45 +1031,99 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FBFF),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFDCE6F7)),
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final compactHeader = constraints.maxWidth < 560;
+                          return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                ticket.title,
-                                style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 18,
-                                ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    height: 48,
+                                    width: 48,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(alpha: 0.10),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: const Icon(
+                                      Icons.support_agent_rounded,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          displayTitle,
+                                          maxLines: compactHeader ? 3 : 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 18,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          (ticket.userEmail.isEmpty
+                                                  ? ticket.userName
+                                                  : '${ticket.userName} • ${ticket.userEmail}')
+                                              .trim(),
+                                          maxLines: compactHeader ? 2 : 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    onPressed: () => Navigator.of(context).pop(),
+                                    icon: const Icon(Icons.close_rounded),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                (ticket.userEmail.isEmpty
-                                        ? ticket.userName
-                                        : '${ticket.userName} • ${ticket.userEmail}')
-                                    .trim(),
-                                style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 13,
-                                ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  _Pill(
+                                    text: supportTicketCategoryLabel(
+                                      ticket.category,
+                                    ),
+                                    color: const Color(0xFF2563EB),
+                                  ),
+                                  _Pill(
+                                    text: topicLabel,
+                                    color: const Color(0xFF0EA5E9),
+                                  ),
+                                  _Pill(
+                                    text: _prettyStatus(ticket.status),
+                                    color: _statusColor(ticket.status),
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _Pill(
-                          text: _prettyStatus(ticket.status),
-                          color: _statusColor(ticket.status),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close_rounded),
-                        ),
-                      ],
+                          );
+                        },
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Expanded(
@@ -1055,7 +1132,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF8FAFF),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(18),
                           border: Border.all(color: const Color(0xFFDCE6F7)),
                         ),
                         child: ValueListenableBuilder<List<AdminTicketMessageRow>>(
@@ -1093,14 +1170,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                             )
                                           : messages.isEmpty
                                           ? const Center(
-                                              child: Text(
-                                                'No messages yet in this ticket.',
+                                              child: _AdminLoadingPanel(
+                                                title:
+                                                    'Conversation is syncing',
+                                                message:
+                                                    'The support thread is still preparing its first messages.',
                                               ),
                                             )
                                           : ListView.separated(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 4,
+                                                  ),
                                               itemCount: messages.length,
                                               separatorBuilder: (_, _) =>
-                                                  const SizedBox(height: 8),
+                                                  const SizedBox(height: 10),
                                               itemBuilder: (context, index) {
                                                 final message = messages[index];
                                                 final fromAdmin =
@@ -1126,32 +1210,29 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                                         ),
                                                     padding:
                                                         const EdgeInsets.fromLTRB(
+                                                          12,
                                                           10,
-                                                          8,
+                                                          12,
                                                           10,
-                                                          8,
                                                         ),
                                                     decoration: BoxDecoration(
                                                       color: isAutoReply
                                                           ? const Color(
-                                                              0xFFF7FAFF,
+                                                              0xFFF8FAFD,
                                                             )
                                                           : (fromAdmin
-                                                                ? AppColors
-                                                                      .primary
-                                                                      .withValues(
-                                                                        alpha:
-                                                                            0.14,
-                                                                      )
+                                                                ? const Color(
+                                                                    0xFFEEF4FF,
+                                                                  )
                                                                 : Colors.white),
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                            10,
+                                                            16,
                                                           ),
                                                       border: Border.all(
                                                         color: isAutoReply
                                                             ? const Color(
-                                                                0xFFBFDBFE,
+                                                                0xFFD8E7FF,
                                                               )
                                                             : (fromAdmin
                                                                   ? AppColors
@@ -1170,25 +1251,65 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                                           CrossAxisAlignment
                                                               .start,
                                                       children: [
-                                                        Text(
-                                                          isAutoReply
-                                                              ? 'Support assistant'
-                                                              : message
-                                                                    .senderName,
-                                                          style: TextStyle(
-                                                            color: isAutoReply
-                                                                ? AppColors
-                                                                      .primary
-                                                                : (fromAdmin
+                                                        Row(
+                                                          children: [
+                                                            Expanded(
+                                                              child: Text(
+                                                                isAutoReply
+                                                                    ? 'Support assistant'
+                                                                    : (fromAdmin
+                                                                          ? 'Admin'
+                                                                          : 'Requester'),
+                                                                style: TextStyle(
+                                                                  color:
+                                                                      isAutoReply
                                                                       ? AppColors
-                                                                            .primaryDark
-                                                                      : AppColors
-                                                                            .textSecondary),
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight.w700,
-                                                          ),
+                                                                            .primary
+                                                                      : (fromAdmin
+                                                                            ? AppColors.primaryDark
+                                                                            : AppColors.textSecondary),
+                                                                  fontSize: 12,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w800,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              _formatDateTime(
+                                                                message
+                                                                    .createdAt,
+                                                              ),
+                                                              style: const TextStyle(
+                                                                color: AppColors
+                                                                    .textSecondary,
+                                                                fontSize: 11,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ],
                                                         ),
+                                                        if (!isAutoReply &&
+                                                            message.senderName
+                                                                .trim()
+                                                                .isNotEmpty) ...[
+                                                          const SizedBox(
+                                                            height: 3,
+                                                          ),
+                                                          Text(
+                                                            message.senderName,
+                                                            style: const TextStyle(
+                                                              color: AppColors
+                                                                  .textSecondary,
+                                                              fontSize: 11,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
+                                                          ),
+                                                        ],
                                                         const SizedBox(
                                                           height: 4,
                                                         ),
@@ -1198,19 +1319,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                                             color: AppColors
                                                                 .textPrimary,
                                                             height: 1.4,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 4,
-                                                        ),
-                                                        Text(
-                                                          _formatDateTime(
-                                                            message.createdAt,
-                                                          ),
-                                                          style: const TextStyle(
-                                                            color: AppColors
-                                                                .textSecondary,
-                                                            fontSize: 11,
                                                           ),
                                                         ),
                                                       ],
@@ -1262,79 +1370,127 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _ticketQuickReplies(ticket)
-                          .map(
-                            (reply) => ActionChip(
-                              label: Text(reply),
-                              onPressed: sending
-                                  ? null
-                                  : () {
-                                      inputController.text = reply;
-                                      inputController.selection =
-                                          TextSelection.fromPosition(
-                                            TextPosition(
-                                              offset:
-                                                  inputController.text.length,
-                                            ),
-                                          );
-                                      setDialogState(() {});
-                                    },
-                            ),
-                          )
-                          .toList(growable: false),
-                    ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: inputController,
-                      minLines: 1,
-                      maxLines: 4,
-                      decoration: _adminFieldDecoration(
-                        hintText: 'Reply to this ticket...',
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FBFF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFDCE6F7)),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: sending
-                                ? null
-                                : () async {
-                                    final text = inputController.text.trim();
-                                    if (text.isEmpty) return;
-                                    setDialogState(() => sending = true);
-                                    try {
-                                      await _runAuthed(() async {
-                                        await AdminDashboardState.sendTicketMessage(
-                                          userUid: uid,
-                                          ticketId: ticketId,
-                                          text: text,
-                                        );
-                                        await AdminDashboardState.refreshTicketMessages(
-                                          userUid: uid,
-                                          ticketId: ticketId,
-                                          page: 1,
-                                        );
-                                        await _loadTickets(1);
-                                      });
-                                      inputController.clear();
-                                      currentPage = 1;
-                                    } catch (error) {
-                                      _showError(error);
-                                    } finally {
-                                      if (context.mounted) {
-                                        setDialogState(() => sending = false);
-                                      }
-                                    }
-                                  },
-                            icon: const Icon(Icons.send_rounded),
-                            label: Text(sending ? 'Sending...' : 'Send'),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Quick replies',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _ticketQuickReplies(ticket)
+                                .map(
+                                  (reply) => ActionChip(
+                                    backgroundColor: Colors.white,
+                                    side: const BorderSide(
+                                      color: Color(0xFFDCE6F7),
+                                    ),
+                                    labelStyle: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    label: Text(reply),
+                                    onPressed: sending
+                                        ? null
+                                        : () {
+                                            inputController.text = reply;
+                                            inputController.selection =
+                                                TextSelection.fromPosition(
+                                                  TextPosition(
+                                                    offset: inputController
+                                                        .text
+                                                        .length,
+                                                  ),
+                                                );
+                                            setDialogState(() {});
+                                          },
+                                  ),
+                                )
+                                .toList(growable: false),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: inputController,
+                            minLines: 1,
+                            maxLines: 4,
+                            onChanged: (_) => setDialogState(() {}),
+                            decoration: _adminFieldDecoration(
+                              hintText: 'Type your reply to the requester...',
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  sending
+                                      ? 'Sending reply...'
+                                      : 'Replies appear instantly for the user.',
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              FilledButton.icon(
+                                onPressed:
+                                    sending ||
+                                        inputController.text.trim().isEmpty
+                                    ? null
+                                    : () async {
+                                        final text = inputController.text
+                                            .trim();
+                                        if (text.isEmpty) return;
+                                        setDialogState(() => sending = true);
+                                        try {
+                                          await _runAuthed(() async {
+                                            await AdminDashboardState.sendTicketMessage(
+                                              userUid: uid,
+                                              ticketId: ticketId,
+                                              text: text,
+                                            );
+                                            await AdminDashboardState.refreshTicketMessages(
+                                              userUid: uid,
+                                              ticketId: ticketId,
+                                              page: 1,
+                                            );
+                                            await _loadTickets(1);
+                                          });
+                                          inputController.clear();
+                                          currentPage = 1;
+                                        } catch (error) {
+                                          _showError(error);
+                                        } finally {
+                                          if (context.mounted) {
+                                            setDialogState(
+                                              () => sending = false,
+                                            );
+                                          }
+                                        }
+                                      },
+                                icon: const Icon(Icons.send_rounded),
+                                label: Text(sending ? 'Sending...' : 'Send'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -1345,7 +1501,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       },
     );
     pollTimer.cancel();
-    inputController.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future<void>.delayed(const Duration(milliseconds: 250), () {
+        inputController.dispose();
+      });
+    });
   }
 
   Widget _buildMainContent({required bool desktop}) {
@@ -1555,6 +1715,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         return _buildBroadcastsSection();
     }
   }
+
   Widget _actionMenu({required List<_ActionMenuItem> actions}) {
     if (actions.isEmpty) {
       return const SizedBox.shrink();
@@ -1579,8 +1740,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 class _ActionReasonDialog extends StatefulWidget {
   final String title;
   final String actionLabel;
+  final bool reasonRequired;
 
-  const _ActionReasonDialog({required this.title, required this.actionLabel});
+  const _ActionReasonDialog({
+    required this.title,
+    required this.actionLabel,
+    required this.reasonRequired,
+  });
 
   @override
   State<_ActionReasonDialog> createState() => _ActionReasonDialogState();
@@ -1605,19 +1771,26 @@ class _ActionReasonDialogState extends State<_ActionReasonDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.title),
-      content: TextField(
-        controller: _controller,
-        minLines: 2,
-        maxLines: 4,
-        decoration: _adminFieldDecoration(hintText: 'Reason (required)'),
-      ),
+      content: widget.reasonRequired
+          ? TextField(
+              controller: _controller,
+              minLines: 2,
+              maxLines: 4,
+              decoration: _adminFieldDecoration(
+                hintText: 'Reason (required)',
+              ),
+            )
+          : const Text('This action will be applied immediately.'),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          onPressed: () => Navigator.pop(
+            context,
+            widget.reasonRequired ? _controller.text.trim() : '',
+          ),
           child: Text(widget.actionLabel),
         ),
       ],

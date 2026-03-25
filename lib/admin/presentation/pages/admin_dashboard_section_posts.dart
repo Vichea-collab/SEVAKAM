@@ -123,6 +123,7 @@ extension on _AdminDashboardPageState {
                   onTap: () => _runSafeAction(
                     dialogTitle: 'Close this post?',
                     actionLabel: 'Close',
+                    reasonRequired: true,
                     run: (reason) => AdminDashboardState.updatePostStatus(
                       sourceCollection: item.sourceCollection,
                       postId: item.id,

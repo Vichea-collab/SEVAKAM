@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_tokens.dart';
 import '../../core/utils/page_transition.dart';
 import '../../core/utils/safe_image_provider.dart';
 import '../../domain/entities/chat.dart';
@@ -73,11 +74,12 @@ class _NotificationMessengerSheetState
 
   @override
   Widget build(BuildContext context) {
+    final background = AppThemeTokens.pageBackground(context);
     return FractionallySizedBox(
       heightFactor: 0.96,
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.background,
+        decoration: BoxDecoration(
+          color: background,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: _buildThreadList(),
@@ -86,6 +88,8 @@ class _NotificationMessengerSheetState
   }
 
   Widget _buildThreadList() {
+    final primaryText = AppThemeTokens.textPrimary(context);
+    final secondaryText = AppThemeTokens.textSecondary(context);
     final query = _query.trim().toLowerCase();
     final visible = query.isEmpty
         ? _threads
@@ -110,7 +114,7 @@ class _NotificationMessengerSheetState
                     Text(
                       widget.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: primaryText,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -118,7 +122,7 @@ class _NotificationMessengerSheetState
                     Text(
                       widget.subtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: secondaryText,
                       ),
                     ),
                   ],
@@ -149,7 +153,7 @@ class _NotificationMessengerSheetState
                   child: Text(
                     'No conversations found',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: secondaryText,
                     ),
                   ),
                 )
@@ -207,6 +211,12 @@ class _MessengerThreadTile extends StatelessWidget {
     final hasUnread = thread.unreadCount > 0;
     final isActive =
         DateTime.now().difference(thread.lastActiveAt.toLocal()).inMinutes < 2;
+    final primaryText = AppThemeTokens.textPrimary(context);
+    final secondaryText = AppThemeTokens.textSecondary(context);
+    final surface = AppThemeTokens.surface(context);
+    final mutedSurface = AppThemeTokens.mutedSurface(context);
+    final outline = AppThemeTokens.outline(context);
+    final isDark = AppThemeTokens.isDark(context);
     return PressableScale(
       onTap: onTap,
       child: InkWell(
@@ -217,12 +227,12 @@ class _MessengerThreadTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: hasUnread
                 ? accentColor.withValues(alpha: 0.04)
-                : Colors.white,
+                : surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: hasUnread
                   ? accentColor.withValues(alpha: 0.12)
-                  : AppColors.divider.withValues(alpha: 0.8),
+                  : outline.withValues(alpha: 0.8),
             ),
           ),
           child: Row(
@@ -231,7 +241,7 @@ class _MessengerThreadTile extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: AppColors.background,
+                    backgroundColor: mutedSurface,
                     backgroundImage: thread.avatarPath.trim().isNotEmpty
                         ? safeImageProvider(thread.avatarPath)
                         : null,
@@ -252,9 +262,11 @@ class _MessengerThreadTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isActive
                             ? AppColors.success
-                            : const Color(0xFFCBD5E1),
+                            : (isDark
+                                  ? const Color(0xFF475569)
+                                  : const Color(0xFFCBD5E1)),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2.5),
+                        border: Border.all(color: surface, width: 2.5),
                       ),
                     ),
                   ),
@@ -274,7 +286,7 @@ class _MessengerThreadTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(
-                                  color: const Color(0xFF0F172A),
+                                  color: primaryText,
                                   fontWeight: hasUnread
                                       ? FontWeight.w800
                                       : FontWeight.w700,
@@ -290,7 +302,7 @@ class _MessengerThreadTile extends StatelessWidget {
                               ?.copyWith(
                                 color: hasUnread
                                     ? accentColor
-                                    : const Color(0xFF64748B),
+                                    : secondaryText,
                                 fontWeight: hasUnread
                                     ? FontWeight.w700
                                     : FontWeight.w500,
@@ -312,8 +324,8 @@ class _MessengerThreadTile extends StatelessWidget {
                                       ? FontWeight.w600
                                       : FontWeight.w400,
                                   color: hasUnread
-                                      ? const Color(0xFF1E293B)
-                                      : const Color(0xFF64748B),
+                                      ? primaryText
+                                      : secondaryText,
                                   fontSize: 14,
                                 ),
                           ),

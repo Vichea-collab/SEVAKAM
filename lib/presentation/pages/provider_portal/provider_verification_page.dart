@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:servicefinder/core/theme/app_theme_tokens.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/firebase/firebase_storage_service.dart';
@@ -118,7 +119,7 @@ class _ProviderVerificationPageState extends State<ProviderVerificationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F6FB),
+      backgroundColor: AppThemeTokens.pageBackground(context),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -148,7 +149,7 @@ class _ProviderVerificationPageState extends State<ProviderVerificationPage> {
                     Text(
                       'Upload your National ID or Passport so admin can review your account and unlock the verified badge.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: AppThemeTokens.textSecondary(context),
                         height: 1.45,
                       ),
                     ),
@@ -192,17 +193,10 @@ class _UploadBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppThemeTokens.surface(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.divider),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x110F172A),
-            blurRadius: 22,
-            spreadRadius: -12,
-            offset: Offset(0, 14),
-          ),
-        ],
+        border: Border.all(color: AppThemeTokens.outline(context)),
+        boxShadow: AppThemeTokens.cardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,9 +214,9 @@ class _UploadBox extends StatelessWidget {
               height: 176,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppThemeTokens.mutedSurface(context),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: AppThemeTokens.outline(context)),
               ),
               child: path != null
                   ? ClipRRect(
@@ -301,17 +295,10 @@ class _VerificationStatusCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppThemeTokens.surface(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.divider),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x110F172A),
-            blurRadius: 22,
-            spreadRadius: -12,
-            offset: Offset(0, 14),
-          ),
-        ],
+        border: Border.all(color: AppThemeTokens.outline(context)),
+        boxShadow: AppThemeTokens.cardShadow(context),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,7 +320,7 @@ class _VerificationStatusCard extends StatelessWidget {
                 Text(
                   'KYC Status',
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppThemeTokens.textSecondary(context),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -359,7 +346,7 @@ class _VerificationStatusCard extends StatelessWidget {
                 Text(
                   tone.message,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: AppThemeTokens.textPrimary(context),
                     height: 1.4,
                   ),
                 ),

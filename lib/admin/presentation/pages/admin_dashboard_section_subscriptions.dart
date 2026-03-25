@@ -17,8 +17,8 @@ extension on _AdminDashboardPageState {
           options: const [
             _DropdownOption(value: 'all', label: 'All plans'),
             _DropdownOption(value: 'basic', label: 'Basic'),
-            _DropdownOption(value: 'professional', label: 'Professional'),
-            _DropdownOption(value: 'elite', label: 'Elite'),
+            _DropdownOption(value: 'professional', label: 'Plus'),
+            _DropdownOption(value: 'elite', label: 'Pro'),
           ],
           onChanged: (value) {
             _setSectionState(() => _subscriptionPlanFilter = value);
@@ -118,18 +118,18 @@ extension on _AdminDashboardPageState {
             color: const Color(0xFF0284C7),
           ),
           _MetricChipData(
-            label: 'Professional MRR',
+            label: 'Plus MRR',
             value: _toMoney(professionalMonthlyRevenue),
             color: AppColors.primary,
           ),
           _MetricChipData(
-            label: 'Elite MRR',
+            label: 'Pro MRR',
             value: _toMoney(eliteMonthlyRevenue),
             color: const Color(0xFFF59E0B),
           ),
           _MetricChipData(label: 'Trialing', value: '$trialing'),
-          _MetricChipData(label: 'Professional', value: '$professional'),
-          _MetricChipData(label: 'Elite', value: '$elite'),
+          _MetricChipData(label: 'Plus', value: '$professional'),
+          _MetricChipData(label: 'Pro', value: '$elite'),
         ];
       },
       filterRows: (items) {
@@ -257,6 +257,8 @@ extension on _AdminDashboardPageState {
   String _titleCase(String value) {
     final safe = value.trim().toLowerCase();
     if (safe.isEmpty) return '-';
+    if (safe == 'professional') return 'Plus';
+    if (safe == 'elite') return 'Pro';
     return safe[0].toUpperCase() + safe.substring(1);
   }
 

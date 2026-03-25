@@ -60,7 +60,7 @@ class ChatState {
     unawaited(flushQueuedMessages());
   }
 
-  static void setBackendToken(String token) {
+  static void setBackendToken(String token, {bool refresh = true}) {
     _apiClient.setBearerToken(token);
     if (token.trim().isEmpty) {
       _unreadSyncTimer?.cancel();
@@ -73,9 +73,11 @@ class ChatState {
       return;
     }
     _startUnreadSyncTimer();
-    unawaited(refresh(page: 1));
-    unawaited(refreshUnreadCount());
-    unawaited(flushQueuedMessages());
+    if (refresh) {
+      unawaited(ChatState.refresh(page: 1));
+      unawaited(ChatState.refreshUnreadCount());
+      unawaited(ChatState.flushQueuedMessages());
+    }
   }
 
   static Future<void> refresh({int? page, int limit = _pageSize}) async {

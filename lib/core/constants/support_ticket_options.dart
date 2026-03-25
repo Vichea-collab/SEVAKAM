@@ -1,5 +1,35 @@
 import 'package:flutter/material.dart';
 
+enum SupportTicketRequestType { help, support }
+
+String supportTicketRequestTypeId(SupportTicketRequestType value) {
+  switch (value) {
+    case SupportTicketRequestType.help:
+      return 'help';
+    case SupportTicketRequestType.support:
+      return 'support';
+  }
+}
+
+SupportTicketRequestType supportTicketRequestTypeFromId(String value) {
+  switch (value.trim().toLowerCase()) {
+    case 'support':
+      return SupportTicketRequestType.support;
+    case 'help':
+    default:
+      return SupportTicketRequestType.help;
+  }
+}
+
+String supportTicketRequestTypeLabel(SupportTicketRequestType value) {
+  switch (value) {
+    case SupportTicketRequestType.help:
+      return 'Help';
+    case SupportTicketRequestType.support:
+      return 'Support';
+  }
+}
+
 class SupportTicketSubcategoryOption {
   final String id;
   final String label;
@@ -19,6 +49,8 @@ class SupportTicketCategoryOption {
   final String label;
   final String description;
   final IconData icon;
+  final SupportTicketRequestType requestType;
+  final Set<String> allowedRoles;
   final List<SupportTicketSubcategoryOption> subcategories;
 
   const SupportTicketCategoryOption({
@@ -26,6 +58,8 @@ class SupportTicketCategoryOption {
     required this.label,
     required this.description,
     required this.icon,
+    required this.requestType,
+    this.allowedRoles = const {'finder', 'provider'},
     required this.subcategories,
   });
 }
@@ -37,6 +71,8 @@ const List<SupportTicketCategoryOption> supportTicketCategories = [
     description:
         'Billing problems, duplicate charges, refunds, or paid plans not activating.',
     icon: Icons.payments_rounded,
+    requestType: SupportTicketRequestType.support,
+    allowedRoles: {'finder', 'provider'},
     subcategories: [
       SupportTicketSubcategoryOption(
         id: 'wrong_charge',
@@ -74,6 +110,8 @@ const List<SupportTicketCategoryOption> supportTicketCategories = [
     description:
         'No-show provider, poor service, wrong pricing, or unprofessional behavior.',
     icon: Icons.handyman_rounded,
+    requestType: SupportTicketRequestType.support,
+    allowedRoles: {'finder'},
     subcategories: [
       SupportTicketSubcategoryOption(
         id: 'no_show',
@@ -111,6 +149,8 @@ const List<SupportTicketCategoryOption> supportTicketCategories = [
     description:
         'Provider-side reports about abusive, fake, or problematic customer requests.',
     icon: Icons.person_search_rounded,
+    requestType: SupportTicketRequestType.support,
+    allowedRoles: {'provider'},
     subcategories: [
       SupportTicketSubcategoryOption(
         id: 'fake_booking',
@@ -147,6 +187,8 @@ const List<SupportTicketCategoryOption> supportTicketCategories = [
     label: 'Booking problem',
     description: 'Problems creating, updating, or tracking a booking.',
     icon: Icons.event_note_rounded,
+    requestType: SupportTicketRequestType.support,
+    allowedRoles: {'finder', 'provider'},
     subcategories: [
       SupportTicketSubcategoryOption(
         id: 'cannot_book',
@@ -183,6 +225,8 @@ const List<SupportTicketCategoryOption> supportTicketCategories = [
     label: 'Subscription / upgrade',
     description: 'Upgrade, renewal, or billing questions for provider plans.',
     icon: Icons.workspace_premium_rounded,
+    requestType: SupportTicketRequestType.support,
+    allowedRoles: {'provider'},
     subcategories: [
       SupportTicketSubcategoryOption(
         id: 'upgrade_not_active',
@@ -219,6 +263,8 @@ const List<SupportTicketCategoryOption> supportTicketCategories = [
     label: 'Account / verification',
     description: 'Problems with login, access, KYC, or verification review.',
     icon: Icons.verified_user_rounded,
+    requestType: SupportTicketRequestType.help,
+    allowedRoles: {'finder', 'provider'},
     subcategories: [
       SupportTicketSubcategoryOption(
         id: 'login_problem',
@@ -255,6 +301,8 @@ const List<SupportTicketCategoryOption> supportTicketCategories = [
     label: 'App bug / technical issue',
     description: 'Crashes, UI bugs, map issues, chat bugs, or broken actions.',
     icon: Icons.bug_report_rounded,
+    requestType: SupportTicketRequestType.support,
+    allowedRoles: {'finder', 'provider'},
     subcategories: [
       SupportTicketSubcategoryOption(
         id: 'crash',
@@ -291,6 +339,8 @@ const List<SupportTicketCategoryOption> supportTicketCategories = [
     label: 'Other',
     description: 'Anything else that does not fit the categories above.',
     icon: Icons.more_horiz_rounded,
+    requestType: SupportTicketRequestType.help,
+    allowedRoles: {'finder', 'provider'},
     subcategories: [
       SupportTicketSubcategoryOption(
         id: 'general_question',
@@ -316,6 +366,19 @@ const List<SupportTicketCategoryOption> supportTicketCategories = [
     ],
   ),
 ];
+
+List<SupportTicketCategoryOption> supportTicketCategoriesFor({
+  required bool isProvider,
+  required SupportTicketRequestType requestType,
+}) {
+  final role = isProvider ? 'provider' : 'finder';
+  return supportTicketCategories
+      .where(
+        (item) =>
+            item.requestType == requestType && item.allowedRoles.contains(role),
+      )
+      .toList(growable: false);
+}
 
 SupportTicketCategoryOption supportTicketCategoryById(String id) {
   return supportTicketCategories.firstWhere(

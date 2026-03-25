@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_tokens.dart';
 
 class StatusTimelineEntry {
   final String label;
@@ -36,9 +37,9 @@ class OrderStatusTimelineCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppThemeTokens.surface(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: AppThemeTokens.outline(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +47,7 @@ class OrderStatusTimelineCard extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.textPrimary,
+              color: AppThemeTokens.textPrimary(context),
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -83,7 +84,7 @@ class OrderStatusTimelineCard extends StatelessWidget {
                           item.label,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                color: AppColors.textPrimary,
+                                color: AppThemeTokens.textPrimary(context),
                                 fontWeight: FontWeight.w600,
                               ),
                         ),
@@ -91,7 +92,9 @@ class OrderStatusTimelineCard extends StatelessWidget {
                         Text(
                           _formatDateTime(item.at),
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textSecondary),
+                              ?.copyWith(
+                                color: AppThemeTokens.textSecondary(context),
+                              ),
                         ),
                       ],
                     ),

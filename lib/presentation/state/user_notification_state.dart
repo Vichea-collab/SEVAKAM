@@ -99,7 +99,7 @@ class UserNotificationState {
   static bool _readStateHydrating = false;
   static Timer? _readStatePersistTimer;
 
-  static void setBackendToken(String token) {
+  static void setBackendToken(String token, {bool refresh = true}) {
     _apiClient.setBearerToken(token);
     if (token.trim().isEmpty) {
       notices.value = const <UserNotificationItem>[];
@@ -112,7 +112,9 @@ class UserNotificationState {
       readStateVersion.value += 1;
       return;
     }
-    unawaited(refresh());
+    if (refresh) {
+      unawaited(UserNotificationState.refresh());
+    }
   }
 
   static Future<void> refresh({

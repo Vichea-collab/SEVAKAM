@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
 import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/theme/app_theme_tokens.dart';
 import 'package:servicefinder/domain/entities/subscription.dart';
 import 'package:servicefinder/presentation/state/subscription_state.dart';
 import 'package:servicefinder/domain/entities/provider_portal.dart';
@@ -75,7 +76,7 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
         final canAdd = remains > 0;
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: AppThemeTokens.pageBackground(context),
           body: SafeArea(
             child: Column(
               children: [
@@ -106,14 +107,16 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: AppThemeTokens.textPrimary(context),
                               ),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
                           'Showcase your best work to attract more clients.',
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: AppColors.textSecondary),
+                              ?.copyWith(
+                                color: AppThemeTokens.textSecondary(context),
+                              ),
                         ),
                         const SizedBox(height: AppSpacing.lg),
                         if (_loadingPost) ...[
@@ -360,7 +363,7 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F5F9),
+          color: AppThemeTokens.mutedSurface(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: AppColors.primary.withValues(alpha: 0.1),
@@ -401,7 +404,7 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppThemeTokens.surface(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -452,9 +455,9 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFF),
+        color: AppThemeTokens.mutedSurface(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: AppThemeTokens.outline(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -479,7 +482,7 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
                   'Create a provider post first',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: AppThemeTokens.textPrimary(context),
                   ),
                 ),
               ),
@@ -490,7 +493,9 @@ class _ProviderPortfolioPageState extends State<ProviderPortfolioPage> {
             'Portfolio photos are attached to your latest provider post. Create or save a provider post first, then upload images here.',
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            ).textTheme.bodyMedium?.copyWith(
+              color: AppThemeTokens.textSecondary(context),
+            ),
           ),
           const SizedBox(height: 16),
           Row(

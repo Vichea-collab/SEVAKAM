@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/responsive.dart';
-import '../../../domain/entities/order.dart';
-import '../../state/order_state.dart';
 import '../../state/user_notification_state.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/app_state_panel.dart';
@@ -69,18 +69,15 @@ class _NotificationsPageState extends State<NotificationsPage>
   @override
   Widget build(BuildContext context) {
     final rs = context.rs;
-    return ValueListenableBuilder<List<OrderItem>>(
-      valueListenable: OrderState.finderOrders,
-      builder: (context, orders, _) {
-        return ValueListenableBuilder<List<UserNotificationItem>>(
-          valueListenable: UserNotificationState.notices,
-          builder: (context, notices, _) {
-            return ValueListenableBuilder<int>(
-              valueListenable: UserNotificationState.readStateVersion,
-              builder: (context, readStateVersion, child) {
-                return ValueListenableBuilder<bool>(
-                  valueListenable: UserNotificationState.loading,
-                  builder: (context, loading, _) {
+    return ValueListenableBuilder<List<UserNotificationItem>>(
+      valueListenable: UserNotificationState.notices,
+      builder: (context, notices, _) {
+        return ValueListenableBuilder<int>(
+          valueListenable: UserNotificationState.readStateVersion,
+          builder: (context, readStateVersion, child) {
+            return ValueListenableBuilder<bool>(
+              valueListenable: UserNotificationState.loading,
+              builder: (context, loading, _) {
                     if (_screenLoading && !_initialLoadComplete) {
                       return Scaffold(
                         body: SafeArea(
@@ -115,16 +112,15 @@ class _NotificationsPageState extends State<NotificationsPage>
                     }
 
                     final backendSystemUpdates = _buildSystemUpdates(notices);
-                    final backendPromos = _buildPromoNotices(notices);
-                    final orderStatusNotices = _latestOrderStatusNotices(
+                    final backendOrderUpdates = _buildBackendOrderUpdates(
                       notices,
                     );
+                    final backendPromos = _buildPromoNotices(notices);
 
-                    final liveUpdates = <_NotificationUpdate>[
-                      ..._buildOrderUpdates(orders, orderStatusNotices),
+                    final updates = <_NotificationUpdate>[
+                      ...backendOrderUpdates,
                       ...backendSystemUpdates,
-                    ];
-                    final updates = liveUpdates
+                    ]
                         .map(
                           (item) => item.copyWith(
                             unread: !UserNotificationState.isRead(
@@ -173,6 +169,9 @@ class _NotificationsPageState extends State<NotificationsPage>
 
                     final hasItems =
                         visibleUpdates.isNotEmpty || visiblePromos.isNotEmpty;
+                    final primaryText = AppThemeTokens.textPrimary(context);
+                    final surface = AppThemeTokens.surface(context);
+                    final outline = AppThemeTokens.outline(context);
 
                     final contentKey = ValueKey<String>(
                       'notifications_${_filter.name}_'
@@ -189,16 +188,14 @@ class _NotificationsPageState extends State<NotificationsPage>
                                 Text(
                                   'Recent Updates',
                                   style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(color: AppColors.textPrimary),
+                                      ?.copyWith(color: primaryText),
                                 ),
                                 const SizedBox(height: 10),
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: surface,
                                     borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: AppColors.divider,
-                                    ),
+                                    border: Border.all(color: outline),
                                   ),
                                   child: Column(
                                     children: List.generate(
@@ -222,16 +219,14 @@ class _NotificationsPageState extends State<NotificationsPage>
                                 Text(
                                   'Promotions',
                                   style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(color: AppColors.textPrimary),
+                                      ?.copyWith(color: primaryText),
                                 ),
                                 const SizedBox(height: 10),
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: surface,
                                     borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: AppColors.divider,
-                                    ),
+                                    border: Border.all(color: outline),
                                   ),
                                   child: Column(
                                     children: List.generate(
@@ -361,8 +356,6 @@ class _NotificationsPageState extends State<NotificationsPage>
                         ),
                       ),
                     );
-                  },
-                );
               },
             );
           },
@@ -383,14 +376,9 @@ class _NotificationsPageState extends State<NotificationsPage>
   }
 
   void _clearAllNotifications() {
-    final orderUpdateKeys =
-        _buildOrderUpdates(
-              OrderState.finderOrders.value,
-              const <String, UserNotificationItem>{},
-            )
-            .where((item) => item.kind == _NoticeFilter.orders)
-            .map((item) => _updateStateKey(item.key))
-            .toList(growable: false);
+    final orderUpdateKeys = _buildBackendOrderUpdates(
+      UserNotificationState.notices.value,
+    ).map((item) => _updateStateKey(item.key)).toList(growable: false);
     unawaited(UserNotificationState.clearMany(orderUpdateKeys));
   }
 
@@ -444,10 +432,27 @@ class _NotificationsPageState extends State<NotificationsPage>
     Navigator.pushNamed(context, ChatListPage.routeName);
   }
 
-  Future<void> _refreshNotifications({bool forceNetwork = false}) {
-    return OrderState.refreshCurrentRole(
-      forceNetwork: forceNetwork || !OrderState.realtimeActive.value,
-    );
+  Future<void> _waitUntilNotLoading(ValueListenable<bool> listenable) async {
+    if (!listenable.value) return;
+    final completer = Completer<void>();
+    late VoidCallback listener;
+    listener = () {
+      if (!listenable.value && !completer.isCompleted) {
+        listenable.removeListener(listener);
+        completer.complete();
+      }
+    };
+    listenable.addListener(listener);
+    if (!listenable.value && !completer.isCompleted) {
+      listenable.removeListener(listener);
+      completer.complete();
+    }
+    await completer.future;
+  }
+
+  Future<void> _refreshInboxNoticesAndWait() async {
+    await UserNotificationState.refresh();
+    await _waitUntilNotLoading(UserNotificationState.loading);
   }
 
   Future<void> _loadScreen({bool forceNetwork = false}) async {
@@ -457,10 +462,7 @@ class _NotificationsPageState extends State<NotificationsPage>
       setState(() => _screenLoading = true);
     }
     try {
-      await Future.wait<void>([
-        _refreshNotifications(forceNetwork: forceNetwork),
-        UserNotificationState.refresh(),
-      ]);
+      await _refreshInboxNoticesAndWait();
     } finally {
       _screenRefreshInFlight = false;
       if (mounted) {
@@ -476,70 +478,7 @@ class _NotificationsPageState extends State<NotificationsPage>
     await _loadScreen(forceNetwork: true);
   }
 
-  List<_NotificationUpdate> _buildOrderUpdates(
-    List<OrderItem> orders,
-    Map<String, UserNotificationItem> statusNotices,
-  ) {
-    final sortedOrders = List<OrderItem>.from(orders)
-      ..sort(
-        (a, b) =>
-            _statusEventTime(b).millisecondsSinceEpoch -
-            _statusEventTime(a).millisecondsSinceEpoch,
-      );
-    final updates = <_NotificationUpdate>[];
-    for (final order in sortedOrders) {
-      final status = order.status;
-      final statusNotice =
-          statusNotices['${order.id}:${_orderStatusStorage(status)}'];
-      final label = switch (status) {
-        OrderStatus.booked => 'Order Booked',
-        OrderStatus.onTheWay => 'Order Confirmed',
-        OrderStatus.started => 'Service Started',
-        OrderStatus.completed => 'Order Completed',
-        OrderStatus.cancelled => 'Order Cancelled',
-        OrderStatus.declined => 'Order Declined',
-      };
-      final icon = switch (status) {
-        OrderStatus.booked => Icons.fact_check_outlined,
-        OrderStatus.onTheWay => Icons.verified_rounded,
-        OrderStatus.started => Icons.handyman_rounded,
-        OrderStatus.completed => Icons.check_circle_outline_rounded,
-        OrderStatus.cancelled => Icons.cancel_outlined,
-        OrderStatus.declined => Icons.highlight_off_rounded,
-      };
-      final color = switch (status) {
-        OrderStatus.booked => const Color(0xFFF59E0B),
-        OrderStatus.onTheWay => AppColors.primary,
-        OrderStatus.started => const Color(0xFF7C6EF2),
-        OrderStatus.completed => AppColors.success,
-        OrderStatus.cancelled => AppColors.danger,
-        OrderStatus.declined => AppColors.danger,
-      };
-
-      updates.add(
-        _NotificationUpdate(
-          key: '${order.id}:${status.name}',
-          title: (statusNotice?.title ?? '').trim().isEmpty
-              ? label
-              : statusNotice!.title,
-          description: (statusNotice?.message ?? '').trim().isEmpty
-              ? '${order.serviceName} with ${order.provider.name} • ${order.address.city}'
-              : statusNotice!.message,
-          timeLabel: _timeAgo(
-            statusNotice?.createdAt ?? _statusEventTime(order),
-          ),
-          icon: icon,
-          iconColor: color,
-          kind: _NoticeFilter.orders,
-          source: 'order_status',
-          unread: false,
-        ),
-      );
-    }
-    return updates;
-  }
-
-  Map<String, UserNotificationItem> _latestOrderStatusNotices(
+  List<_NotificationUpdate> _buildBackendOrderUpdates(
     List<UserNotificationItem> notices,
   ) {
     final indexed = <String, UserNotificationItem>{};
@@ -558,21 +497,35 @@ class _NotificationsPageState extends State<NotificationsPage>
             return right.compareTo(left);
           });
     for (final item in sorted) {
-      final key = '${item.orderId}:${item.orderStatus}';
-      indexed.putIfAbsent(key, () => item);
+      indexed.putIfAbsent('${item.orderId}:${item.orderStatus}', () => item);
     }
-    return indexed;
-  }
 
-  String _orderStatusStorage(OrderStatus status) {
-    return switch (status) {
-      OrderStatus.booked => 'booked',
-      OrderStatus.onTheWay => 'on_the_way',
-      OrderStatus.started => 'started',
-      OrderStatus.completed => 'completed',
-      OrderStatus.cancelled => 'cancelled',
-      OrderStatus.declined => 'declined',
-    };
+    return indexed.values.map((item) {
+      final (icon, color) = switch (item.orderStatus) {
+        'booked' => (Icons.fact_check_outlined, const Color(0xFFF59E0B)),
+        'on_the_way' => (Icons.verified_rounded, AppColors.primary),
+        'started' => (Icons.handyman_rounded, const Color(0xFF7C6EF2)),
+        'completed' => (
+          Icons.check_circle_outline_rounded,
+          AppColors.success,
+        ),
+        'cancelled' => (Icons.cancel_outlined, AppColors.danger),
+        'declined' => (Icons.highlight_off_rounded, AppColors.danger),
+        _ => (Icons.notifications_none_rounded, AppColors.primary),
+      };
+
+      return _NotificationUpdate(
+        key: '${item.orderId}:${item.orderStatus}',
+        title: item.title,
+        description: item.message,
+        timeLabel: _timeAgo(item.createdAt ?? DateTime.now()),
+        icon: icon,
+        iconColor: color,
+        kind: _NoticeFilter.orders,
+        source: item.source,
+        unread: false,
+      );
+    }).toList(growable: false);
   }
 
   List<_NotificationUpdate> _buildSystemUpdates(
@@ -664,29 +617,6 @@ class _NotificationsPageState extends State<NotificationsPage>
         .toList(growable: false);
   }
 
-  DateTime _statusEventTime(OrderItem order) {
-    return switch (order.status) {
-      OrderStatus.booked => order.timeline.bookedAt ?? order.bookedAt,
-      OrderStatus.onTheWay =>
-        order.timeline.onTheWayAt ?? order.timeline.bookedAt ?? order.bookedAt,
-      OrderStatus.started =>
-        order.timeline.startedAt ??
-            order.timeline.onTheWayAt ??
-            order.timeline.bookedAt ??
-            order.bookedAt,
-      OrderStatus.completed =>
-        order.timeline.completedAt ??
-            order.timeline.startedAt ??
-            order.timeline.onTheWayAt ??
-            order.timeline.bookedAt ??
-            order.bookedAt,
-      OrderStatus.cancelled =>
-        order.timeline.cancelledAt ?? order.timeline.bookedAt ?? order.bookedAt,
-      OrderStatus.declined =>
-        order.timeline.declinedAt ?? order.timeline.bookedAt ?? order.bookedAt,
-    };
-  }
-
   String _timeAgo(DateTime date) {
     final delta = DateTime.now().difference(date);
     if (delta.isNegative) return 'Just now';
@@ -713,6 +643,7 @@ class _HeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rs = context.rs;
+    final isDark = AppThemeTokens.isDark(context);
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -720,8 +651,10 @@ class _HeroCard extends StatelessWidget {
         vertical: rs.space(16),
       ),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.splashStart, AppColors.splashEnd],
+        gradient: LinearGradient(
+          colors: isDark
+              ? const [Color(0xFF172554), Color(0xFF1D4ED8)]
+              : const [AppColors.splashStart, AppColors.splashEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -832,6 +765,9 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rs = context.rs;
+    final surface = AppThemeTokens.surface(context);
+    final outline = AppThemeTokens.outline(context);
+    final primaryText = AppThemeTokens.textPrimary(context);
     return Padding(
       padding: EdgeInsets.only(right: rs.space(8)),
       child: PressableScale(
@@ -846,16 +782,16 @@ class _FilterChip extends StatelessWidget {
               vertical: rs.space(8),
             ),
             decoration: BoxDecoration(
-              color: selected ? AppColors.primary : Colors.white,
+              color: selected ? AppColors.primary : surface,
               borderRadius: BorderRadius.circular(rs.radius(100)),
               border: Border.all(
-                color: selected ? AppColors.primary : AppColors.divider,
+                color: selected ? AppColors.primary : outline,
               ),
             ),
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: selected ? Colors.white : AppColors.textPrimary,
+                color: selected ? Colors.white : primaryText,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -880,7 +816,12 @@ class _UpdateTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rs = context.rs;
-    final dotColor = item.unread ? AppColors.primary : AppColors.divider;
+    final outline = AppThemeTokens.outline(context);
+    final dotColor = item.unread ? AppColors.primary : outline;
+    final primaryText = AppThemeTokens.textPrimary(context);
+    final secondaryText = AppThemeTokens.textSecondary(context);
+    final surface = AppThemeTokens.surface(context);
+    final mutedSurface = AppThemeTokens.mutedSurface(context);
     return PressableScale(
       onTap: onTap,
       child: InkWell(
@@ -891,10 +832,10 @@ class _UpdateTile extends StatelessWidget {
             vertical: rs.space(14),
           ),
           decoration: BoxDecoration(
-            color: item.unread ? const Color(0xFFF8FAFF) : Colors.white,
+            color: item.unread ? mutedSurface : surface,
             border: isLast
                 ? null
-                : const Border(bottom: BorderSide(color: AppColors.divider)),
+                : Border(bottom: BorderSide(color: outline)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -920,7 +861,7 @@ class _UpdateTile extends StatelessWidget {
                     Text(
                       item.title,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: primaryText,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -939,13 +880,13 @@ class _UpdateTile extends StatelessWidget {
                         Icon(
                           Icons.access_time,
                           size: rs.icon(14),
-                          color: AppColors.textSecondary,
+                          color: secondaryText,
                         ),
                         rs.gapW(4),
                         Text(
                           item.timeLabel,
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textSecondary),
+                              ?.copyWith(color: secondaryText),
                         ),
                       ],
                     ),
@@ -953,7 +894,7 @@ class _UpdateTile extends StatelessWidget {
                     Text(
                       item.description,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: secondaryText,
                       ),
                     ),
                   ],
@@ -981,6 +922,11 @@ class _PromoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rs = context.rs;
+    final outline = AppThemeTokens.outline(context);
+    final primaryText = AppThemeTokens.textPrimary(context);
+    final secondaryText = AppThemeTokens.textSecondary(context);
+    final surface = AppThemeTokens.surface(context);
+    final mutedSurface = AppThemeTokens.mutedSurface(context);
     return PressableScale(
       onTap: onTap,
       child: InkWell(
@@ -991,10 +937,10 @@ class _PromoTile extends StatelessWidget {
             vertical: rs.space(14),
           ),
           decoration: BoxDecoration(
-            color: item.unread ? const Color(0xFFF8FAFF) : Colors.white,
+            color: item.unread ? mutedSurface : surface,
             border: isLast
                 ? null
-                : const Border(bottom: BorderSide(color: AppColors.divider)),
+                : Border(bottom: BorderSide(color: outline)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1006,7 +952,7 @@ class _PromoTile extends StatelessWidget {
                     child: Text(
                       item.title,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: primaryText,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1035,7 +981,7 @@ class _PromoTile extends StatelessWidget {
               Text(
                 item.description,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: secondaryText,
                   height: 1.35,
                 ),
               ),
@@ -1044,7 +990,7 @@ class _PromoTile extends StatelessWidget {
                 Text(
                   item.dateRange!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: secondaryText,
                   ),
                 ),
               ],

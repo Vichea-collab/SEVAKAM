@@ -74,6 +74,8 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   bool _hasLocationPermission = false;
   StreamSubscription<Position>? _positionSubscription;
   Timer? _reverseGeocodeDebounce;
+  String? _locationNotice;
+  AppToastType _locationNoticeType = AppToastType.info;
 
   bool _followCurrentLocation = false;
   bool _cameraMoveByApp = false;
@@ -182,6 +184,23 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                 ],
               ),
             ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: (_locationNotice == null || _locationNotice!.trim().isEmpty)
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      key: ValueKey<String>(_locationNotice!),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: _LocationNoticeCard(
+                        message: _locationNotice!,
+                        type: _locationNoticeType,
+                        onDismiss: () {
+                          if (!mounted) return;
+                          setState(() => _locationNotice = null);
+                        },
+                      ),
+                    ),
+            ),
             const SizedBox(height: 10),
             Expanded(
               child: Padding(
@@ -281,6 +300,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
           return;
         }
         setState(() => _selectedPoint = point);
+        setState(() => _locationNotice = null);
         _reverseGeocode(point);
       },
       markers: {
@@ -358,6 +378,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
             return;
           }
           setState(() => _selectedPoint = selected);
+          setState(() => _locationNotice = null);
           _reverseGeocode(selected);
         },
       ),
@@ -399,6 +420,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       _selectedPoint = target;
       _selectedAddress = '$city, Cambodia';
       _searchController.text = city;
+      _locationNotice = null;
     });
     _moveCamera(target, zoom: 12.4);
   }
@@ -462,6 +484,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       _selectedPoint = point;
       _selectedAddress =
           (first['formatted_address'] as String?) ?? _defaultCountry;
+      _locationNotice = null;
     });
     await _moveCamera(point, zoom: 14.8);
     return true;
@@ -494,6 +517,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     setState(() {
       _selectedPoint = point;
       _selectedAddress = (first['display_name'] as String?) ?? _defaultCountry;
+      _locationNotice = null;
     });
     await _moveCamera(point, zoom: 14.8);
     return true;
@@ -558,7 +582,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
           });
           await _moveCamera(simulatorFallback, zoom: 15.0);
           if (!silent) {
-            _showMessage(
+            _showLocationNotice(
               'Using simulator fallback location in Phnom Penh. Set a Cambodia location in the simulator for live GPS tracking.',
               type: AppToastType.info,
             );
@@ -592,7 +616,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
             final message = isSimulatorHq
                 ? 'Simulator is still using its default mock position. Using Phnom Penh fallback until you set a Cambodia location.'
                 : 'Simulator location is outside Cambodia. Using Phnom Penh fallback for testing.';
-            _showMessage(message, type: AppToastType.info);
+            _showLocationNotice(message, type: AppToastType.info);
           }
           return;
         }
@@ -610,7 +634,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
           final message = isSimulatorHq
               ? 'The iOS simulator is still using its default mock location. In Simulator, choose Features > Location and set a Cambodia location.'
               : 'Current location is outside Cambodia. This picker works in Cambodia only.';
-          _showMessage(message, type: AppToastType.info);
+          _showLocationNotice(message, type: AppToastType.info);
         }
         return;
       }
@@ -619,6 +643,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       setState(() {
         _currentLiveLocation = resolvedPoint;
         _selectedPoint = resolvedPoint;
+        _locationNotice = null;
       });
       await _moveCamera(resolvedPoint, zoom: 15.0);
       await _reverseGeocode(resolvedPoint);
@@ -1069,6 +1094,17 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     AppToast.show(context, message: text, type: type);
   }
 
+  void _showLocationNotice(
+    String text, {
+    AppToastType type = AppToastType.info,
+  }) {
+    if (!mounted) return;
+    setState(() {
+      _locationNotice = text;
+      _locationNoticeType = type;
+    });
+  }
+
   Future<void> _showPermissionDialog() async {
     if (!mounted) return;
     final openSettings = await showAppConfirmDialog(
@@ -1096,4 +1132,77 @@ class _AddressParts {
     required this.street,
     required this.additional,
   });
+}
+
+class _LocationNoticeCard extends StatelessWidget {
+  final String message;
+  final AppToastType type;
+  final VoidCallback onDismiss;
+
+  const _LocationNoticeCard({
+    required this.message,
+    required this.type,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color accent;
+    final IconData icon;
+    switch (type) {
+      case AppToastType.success:
+        accent = AppColors.success;
+        icon = Icons.check_circle_outline_rounded;
+        break;
+      case AppToastType.warning:
+        accent = AppColors.warning;
+        icon = Icons.warning_amber_rounded;
+        break;
+      case AppToastType.error:
+        accent = AppColors.danger;
+        icon = Icons.error_outline_rounded;
+        break;
+      case AppToastType.info:
+        accent = AppColors.primary;
+        icon = Icons.info_outline_rounded;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(icon, color: accent, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: onDismiss,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+            visualDensity: VisualDensity.compact,
+            splashRadius: 18,
+            icon: const Icon(Icons.close_rounded, size: 18),
+            color: AppColors.textSecondary,
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../core/utils/safe_image_provider.dart';
@@ -227,7 +228,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 child: Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor: AppColors.background,
+                      backgroundColor: AppThemeTokens.mutedSurface(context),
                       backgroundImage:
                           _order.provider.imagePath.trim().isNotEmpty
                           ? safeImageProvider(_order.provider.imagePath)
@@ -581,6 +582,9 @@ class _ServiceRequirementsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mutedSurface = AppThemeTokens.mutedSurface(context);
+    final secondaryText = AppThemeTokens.textSecondary(context);
+    final primaryText = AppThemeTokens.textPrimary(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -605,7 +609,7 @@ class _ServiceRequirementsCard extends StatelessWidget {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
+                        color: mutedSurface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -623,7 +627,7 @@ class _ServiceRequirementsCard extends StatelessWidget {
                             entry.key,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: secondaryText,
                                   fontWeight: FontWeight.w700,
                                 ),
                           ),
@@ -632,7 +636,7 @@ class _ServiceRequirementsCard extends StatelessWidget {
                             entry.value,
                             style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(
-                                  color: AppColors.textPrimary,
+                                  color: primaryText,
                                   fontWeight: FontWeight.w700,
                                   height: 1.35,
                                 ),
@@ -871,13 +875,20 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final secondaryText = AppThemeTokens.textSecondary(context);
+    final primaryText = AppThemeTokens.textPrimary(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: secondaryText),
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -885,7 +896,10 @@ class _InfoRow extends StatelessWidget {
               value,
               style: Theme.of(
                 context,
-              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+              ).textTheme.bodyLarge?.copyWith(
+                color: primaryText,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],

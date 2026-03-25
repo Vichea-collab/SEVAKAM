@@ -93,38 +93,67 @@ class ProfileSettingsState {
     if (_initialized) return;
     _initialized = true;
 
-    finderProfile.value = await _repository.loadProfile(isProvider: false);
-    providerProfile.value = await _repository.loadProfile(isProvider: true);
+    final finderProfileFuture = _repository.loadProfile(isProvider: false);
+    final providerProfileFuture = _repository.loadProfile(isProvider: true);
+    final finderNotificationFuture = _repository.loadNotifications(
+      isProvider: false,
+    );
+    final providerNotificationFuture = _repository.loadNotifications(
+      isProvider: true,
+    );
+    final finderTicketsFuture = _repository.loadHelpTickets(isProvider: false);
+    final providerTicketsFuture = _repository.loadHelpTickets(isProvider: true);
+    final providerProfessionFuture = _repository.loadProviderProfession();
+    final providerCompletedOrdersFuture = _repository
+        .loadProviderCompletedOrdersFromBackend();
+    final providerVerifiedFuture = _repository
+        .loadProviderVerifiedFromBackend();
+    final providerKycStatusFuture = _repository
+        .loadProviderKycStatusFromBackend();
+
+    finderProfile.value = await finderProfileFuture;
+    providerProfile.value = await providerProfileFuture;
     _applyAvatarForRole(profile: finderProfile.value, isProvider: false);
     _applyAvatarForRole(profile: providerProfile.value, isProvider: true);
 
-    finderNotification.value = await _repository.loadNotifications(
-      isProvider: false,
-    );
-    providerNotification.value = await _repository.loadNotifications(
-      isProvider: true,
-    );
-    final finderTicketsResult = await _repository.loadHelpTickets(
-      isProvider: false,
-    );
+    finderNotification.value = await finderNotificationFuture;
+    providerNotification.value = await providerNotificationFuture;
+    final finderTicketsResult = await finderTicketsFuture;
     finderHelpTickets.value = finderTicketsResult.items;
     finderHelpTicketsPagination.value = finderTicketsResult.pagination;
-    final providerTicketsResult = await _repository.loadHelpTickets(
-      isProvider: true,
-    );
+    final providerTicketsResult = await providerTicketsFuture;
     providerHelpTickets.value = providerTicketsResult.items;
     providerHelpTicketsPagination.value = providerTicketsResult.pagination;
-    providerProfession.value = await _repository.loadProviderProfession();
-    providerCompletedOrders.value = await _repository
-        .loadProviderCompletedOrdersFromBackend();
-    providerVerified.value = await _repository
-        .loadProviderVerifiedFromBackend();
-    providerKycStatus.value = await _repository
-        .loadProviderKycStatusFromBackend();
+    providerProfession.value = await providerProfessionFuture;
+    providerCompletedOrders.value = await providerCompletedOrdersFuture;
+    providerVerified.value = await providerVerifiedFuture;
+    providerKycStatus.value = await providerKycStatusFuture;
   }
 
   static void setBackendToken(String token) {
     _repository.setBearerToken(token);
+    if (token.trim().isEmpty) {
+      finderHelpTickets.value = const <HelpSupportTicket>[];
+      providerHelpTickets.value = const <HelpSupportTicket>[];
+      finderHelpTicketsPagination.value = const PaginationMeta.initial(
+        limit: _helpPageSize,
+      );
+      providerHelpTicketsPagination.value = const PaginationMeta.initial(
+        limit: _helpPageSize,
+      );
+      finderHelpTicketMessages.value = const <HelpTicketMessage>[];
+      providerHelpTicketMessages.value = const <HelpTicketMessage>[];
+      finderHelpTicketMessagesPagination.value = const PaginationMeta.initial(
+        limit: _helpMessagePageSize,
+      );
+      providerHelpTicketMessagesPagination.value = const PaginationMeta.initial(
+        limit: _helpMessagePageSize,
+      );
+      finderHelpTicketsLoading.value = false;
+      providerHelpTicketsLoading.value = false;
+      finderHelpTicketMessagesLoading.value = false;
+      providerHelpTicketMessagesLoading.value = false;
+    }
   }
 
   static Future<void> initUserRoleOnBackend({required bool isProvider}) {
@@ -151,14 +180,16 @@ class ProfileSettingsState {
       if (isProvider) {
         providerProfile.value = profile;
         _applyAvatarForRole(profile: profile, isProvider: true);
-        providerProfession.value = await _repository
+        final professionFuture = _repository
             .loadProviderProfessionFromBackend();
-        providerCompletedOrders.value = await _repository
+        final completedOrdersFuture = _repository
             .loadProviderCompletedOrdersFromBackend();
-        providerVerified.value = await _repository
-            .loadProviderVerifiedFromBackend();
-        providerKycStatus.value = await _repository
-            .loadProviderKycStatusFromBackend();
+        final verifiedFuture = _repository.loadProviderVerifiedFromBackend();
+        final kycStatusFuture = _repository.loadProviderKycStatusFromBackend();
+        providerProfession.value = await professionFuture;
+        providerCompletedOrders.value = await completedOrdersFuture;
+        providerVerified.value = await verifiedFuture;
+        providerKycStatus.value = await kycStatusFuture;
       } else {
         finderProfile.value = profile;
         _applyAvatarForRole(profile: profile, isProvider: false);
@@ -171,14 +202,15 @@ class ProfileSettingsState {
 
   static Future<bool> syncProviderProfessionFromBackend() async {
     try {
-      providerProfession.value = await _repository
-          .loadProviderProfessionFromBackend();
-      providerCompletedOrders.value = await _repository
+      final professionFuture = _repository.loadProviderProfessionFromBackend();
+      final completedOrdersFuture = _repository
           .loadProviderCompletedOrdersFromBackend();
-      providerVerified.value = await _repository
-          .loadProviderVerifiedFromBackend();
-      providerKycStatus.value = await _repository
-          .loadProviderKycStatusFromBackend();
+      final verifiedFuture = _repository.loadProviderVerifiedFromBackend();
+      final kycStatusFuture = _repository.loadProviderKycStatusFromBackend();
+      providerProfession.value = await professionFuture;
+      providerCompletedOrders.value = await completedOrdersFuture;
+      providerVerified.value = await verifiedFuture;
+      providerKycStatus.value = await kycStatusFuture;
       return true;
     } catch (_) {
       return false;
@@ -211,7 +243,7 @@ class ProfileSettingsState {
     ProviderProfessionData value,
   ) async {
     await _repository.saveProviderProfession(value);
-    providerProfession.value = value;
+    providerProfession.value = await _repository.loadProviderProfession();
   }
 
   static Future<void> saveCurrentProfile(ProfileFormData profile) async {
@@ -359,10 +391,51 @@ class ProfileSettingsState {
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     if (isProvider) {
       providerHelpTicketMessages.value = updatedMessages;
+      providerHelpTickets.value = _mergeUpdatedHelpTicket(
+        providerHelpTickets.value,
+        ticketId: ticketId,
+        message: message,
+      );
     } else {
       finderHelpTicketMessages.value = updatedMessages;
+      finderHelpTickets.value = _mergeUpdatedHelpTicket(
+        finderHelpTickets.value,
+        ticketId: ticketId,
+        message: message,
+      );
     }
     return message;
+  }
+
+  static List<HelpSupportTicket> _mergeUpdatedHelpTicket(
+    List<HelpSupportTicket> source, {
+    required String ticketId,
+    required HelpTicketMessage message,
+  }) {
+    final updated = source
+        .map((ticket) {
+          if (ticket.id != ticketId) return ticket;
+          return HelpSupportTicket(
+            id: ticket.id,
+            title: ticket.title,
+            message: ticket.message,
+            category: ticket.category,
+            subcategory: ticket.subcategory,
+            priority: ticket.priority,
+            status: 'waiting_on_admin',
+            createdAt: ticket.createdAt,
+            updatedAt: message.createdAt,
+            lastMessageText: message.text,
+            lastMessageAt: message.createdAt,
+          );
+        })
+        .toList(growable: false);
+    updated.sort((a, b) {
+      final right = b.lastMessageAt ?? b.updatedAt ?? b.createdAt;
+      final left = a.lastMessageAt ?? a.updatedAt ?? a.createdAt;
+      return right.compareTo(left);
+    });
+    return updated;
   }
 
   static PaginationMeta _withAdjustedTotalItems(

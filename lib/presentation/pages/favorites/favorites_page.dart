@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../domain/entities/provider.dart';
 import '../../../domain/entities/provider_portal.dart';
@@ -198,21 +199,18 @@ class _FavoritesHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = AppThemeTokens.surface(context);
+    final outline = AppThemeTokens.outline(context);
+    final mutedSurface = AppThemeTokens.mutedSurface(context);
+    final primaryText = AppThemeTokens.textPrimary(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: surface,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.divider),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x110F172A),
-            blurRadius: 22,
-            spreadRadius: -12,
-            offset: Offset(0, 14),
-          ),
-        ],
+        border: Border.all(color: outline),
+        boxShadow: AppThemeTokens.cardShadow(context),
       ),
       child: Row(
         children: [
@@ -223,9 +221,9 @@ class _FavoritesHeaderCard extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: mutedSurface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: outline),
               ),
               child: const Icon(
                 Icons.arrow_back_rounded,
@@ -238,7 +236,7 @@ class _FavoritesHeaderCard extends StatelessWidget {
             child: Text(
               'Favorite Providers',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.textPrimary,
+                color: primaryText,
                 fontSize: 28,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.5,
@@ -256,6 +254,10 @@ class _FavoritesEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = AppThemeTokens.surface(context);
+    final outline = AppThemeTokens.outline(context);
+    final primaryText = AppThemeTokens.textPrimary(context);
+    final secondaryText = AppThemeTokens.textSecondary(context);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460),
@@ -263,9 +265,9 @@ class _FavoritesEmptyState extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: surface,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.divider),
+            border: Border.all(color: outline),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -288,7 +290,7 @@ class _FavoritesEmptyState extends StatelessWidget {
                 'No favorites yet',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: primaryText,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -297,7 +299,7 @@ class _FavoritesEmptyState extends StatelessWidget {
                 'Save providers to keep them in one place.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: secondaryText,
                   height: 1.45,
                 ),
               ),

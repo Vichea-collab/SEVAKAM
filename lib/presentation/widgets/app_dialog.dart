@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_tokens.dart';
 
 enum AppDialogTone { primary, info, success, warning, danger }
 
@@ -38,6 +39,7 @@ class _LottieSuccessDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final secondaryText = AppThemeTokens.textSecondary(context);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
@@ -79,7 +81,7 @@ class _LottieSuccessDialog extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: secondaryText,
               ),
             ),
             const SizedBox(height: 24),
@@ -142,6 +144,10 @@ class _AppConfirmDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = _DialogColors.resolve(tone);
     final textTheme = Theme.of(context).textTheme;
+    final outline = AppThemeTokens.outline(context);
+    final surface = AppThemeTokens.surface(context);
+    final titleColor = AppThemeTokens.textPrimary(context);
+    final secondaryText = AppThemeTokens.textSecondary(context);
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -152,16 +158,10 @@ class _AppConfirmDialog extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: surface,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.divider.withValues(alpha: 165)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x29000000),
-                blurRadius: 30,
-                offset: Offset(0, 16),
-              ),
-            ],
+            border: Border.all(color: outline.withValues(alpha: 0.8)),
+            boxShadow: AppThemeTokens.cardShadow(context),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -185,7 +185,7 @@ class _AppConfirmDialog extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: titleColor,
                 ),
               ),
               const SizedBox(height: 8),
@@ -193,7 +193,7 @@ class _AppConfirmDialog extends StatelessWidget {
                 message,
                 textAlign: TextAlign.center,
                 style: textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: secondaryText,
                   height: 1.45,
                 ),
               ),
@@ -232,7 +232,7 @@ class _AppConfirmDialog extends StatelessWidget {
                 child: Text(
                   cancelText,
                   style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: secondaryText,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

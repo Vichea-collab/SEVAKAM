@@ -33,6 +33,20 @@ class ProviderPostRemoteDataSource {
     return PaginatedResult(items: items, pagination: pagination);
   }
 
+  Future<List<DateTime>> fetchProviderBlockedDates({
+    required String providerUid,
+  }) async {
+    final response = await _apiClient.getJson(
+      '/api/providers/public-profile/${Uri.encodeComponent(providerUid)}',
+    );
+    final row = _safeMap(response['data']);
+    return (row['blockedDates'] as List? ?? [])
+        .map(_parseBlockedDate)
+        .where((item) => item != null)
+        .cast<DateTime>()
+        .toList(growable: false);
+  }
+
   Future<ProviderPostItem> createProviderPost({
     required String category,
     required List<String> services,
@@ -95,7 +109,7 @@ class ProviderPostRemoteDataSource {
     final primaryService = (row['service'] ?? '').toString().trim();
     final avatarUrl = (row['providerAvatarUrl'] ?? '').toString().trim();
     final blockedDates = (row['blockedDates'] as List? ?? [])
-        .map((e) => DateTime.tryParse(e.toString()))
+        .map(_parseBlockedDate)
         .where((e) => e != null)
         .cast<DateTime>()
         .toList();
@@ -166,6 +180,22 @@ class ProviderPostRemoteDataSource {
       return DateTime.fromMillisecondsSinceEpoch((seconds * 1000).round());
     }
     return null;
+  }
+
+  DateTime? _parseBlockedDate(dynamic value) {
+    final raw = (value ?? '').toString().trim();
+    if (raw.isEmpty) return null;
+    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(raw);
+    if (match != null) {
+      return DateTime(
+        int.parse(match.group(1)!),
+        int.parse(match.group(2)!),
+        int.parse(match.group(3)!),
+      );
+    }
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return null;
+    return DateTime(parsed.year, parsed.month, parsed.day);
   }
 
   String _timeLabel(DateTime? date) {

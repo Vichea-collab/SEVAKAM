@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/app_calendar_picker.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../core/utils/responsive.dart';
@@ -54,13 +55,24 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
 
     setState(() => _refreshingProvider = true);
     try {
+      final blockedDates = await ProviderPostState.loadProviderBlockedDates(uid);
       final latest = await ProviderPostState.findLatestByUid(uid);
       final allServices = await ProviderPostState.aggregateServicesByUid(uid);
 
       if (mounted) {
         setState(() {
+          _currentProvider = _currentProvider.copyWith(
+            blockedDates: blockedDates,
+          );
           if (latest != null) {
-            _currentProvider = ProviderItem.fromPost(latest);
+            _currentProvider = ProviderItem.fromPost(latest).copyWith(
+              blockedDates: blockedDates,
+            );
+            _preferredDate = _findFirstAvailableDate(
+              _preferredDate,
+              _currentProvider.blockedDates,
+            );
+          } else {
             _preferredDate = _findFirstAvailableDate(
               _preferredDate,
               _currentProvider.blockedDates,
@@ -192,9 +204,11 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
         ),
       ),
       bottomSheet: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: AppColors.divider)),
+        decoration: BoxDecoration(
+          color: AppThemeTokens.surface(context),
+          border: Border(
+            top: BorderSide(color: AppThemeTokens.outline(context)),
+          ),
         ),
         child: SafeArea(
           top: false,
@@ -258,10 +272,14 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final blockedDates = _currentProvider.blockedDates;
+    final initialDate = _findFirstAvailableDate(
+      _preferredDate,
+      blockedDates,
+    );
 
     final picked = await showAppCalendarDatePicker(
       context,
-      initialDate: _preferredDate,
+      initialDate: initialDate,
       firstDate: DateTime(now.year, now.month, now.day),
       lastDate: DateTime(now.year + 2, 12, 31),
       helpText: 'Choose booking date',

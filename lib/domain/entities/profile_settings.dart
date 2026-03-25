@@ -1,3 +1,28 @@
+import '../../core/constants/support_ticket_options.dart';
+
+DateTime _parseBlockedDate(dynamic value) {
+  final raw = (value ?? '').toString().trim();
+  if (raw.isEmpty) return DateTime.now();
+  final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(raw);
+  if (match != null) {
+    return DateTime(
+      int.parse(match.group(1)!),
+      int.parse(match.group(2)!),
+      int.parse(match.group(3)!),
+    );
+  }
+  final parsed = DateTime.tryParse(raw);
+  if (parsed == null) return DateTime.now();
+  return DateTime(parsed.year, parsed.month, parsed.day);
+}
+
+String _formatBlockedDate(DateTime value) {
+  final normalized = DateTime(value.year, value.month, value.day);
+  final month = normalized.month.toString().padLeft(2, '0');
+  final day = normalized.day.toString().padLeft(2, '0');
+  return '${normalized.year}-$month-$day';
+}
+
 class ProfileFormData {
   final String name;
   final String email;
@@ -154,7 +179,7 @@ class ProviderProfessionData {
       experienceYears: (map['experienceYears'] ?? '').toString(),
       serviceArea: (map['serviceArea'] ?? '').toString(),
       blockedDates: (map['blockedDates'] as List? ?? [])
-          .map((e) => DateTime.parse(e.toString()))
+          .map(_parseBlockedDate)
           .toList(),
     );
   }
@@ -167,7 +192,7 @@ class ProviderProfessionData {
       'availableTo': availableTo,
       'experienceYears': experienceYears,
       'serviceArea': serviceArea,
-      'blockedDates': blockedDates.map((e) => e.toIso8601String()).toList(),
+      'blockedDates': blockedDates.map(_formatBlockedDate).toList(),
     };
   }
 }
@@ -229,6 +254,7 @@ class NotificationPreference {
 
 class HelpSupportTicket {
   final String id;
+  final String ticketType;
   final String title;
   final String message;
   final String category;
@@ -242,6 +268,7 @@ class HelpSupportTicket {
 
   const HelpSupportTicket({
     this.id = '',
+    this.ticketType = 'help',
     required this.title,
     required this.message,
     this.category = 'other',
@@ -258,12 +285,21 @@ class HelpSupportTicket {
     final createdAt = _parseDateDynamic(map['createdAt']) ?? DateTime.now();
     final message = (map['message'] ?? '').toString();
     final lastMessageText = (map['lastMessageText'] ?? '').toString().trim();
+    final category = (map['category'] ?? 'other').toString();
+    final subcategory = (map['subcategory'] ?? 'other_issue').toString();
+    final title = (map['title'] ?? '').toString().trim();
     return HelpSupportTicket(
       id: (map['id'] ?? '').toString(),
-      title: (map['title'] ?? '').toString(),
+      ticketType: (map['ticketType'] ?? 'help').toString().trim().toLowerCase(),
+      title: title.isEmpty
+          ? supportTicketSubcategoryLabel(
+              categoryId: category,
+              subcategoryId: subcategory,
+            )
+          : title,
       message: message,
-      category: (map['category'] ?? 'other').toString(),
-      subcategory: (map['subcategory'] ?? 'other_issue').toString(),
+      category: category,
+      subcategory: subcategory,
       priority: (map['priority'] ?? 'normal').toString(),
       status: (map['status'] ?? 'open').toString(),
       createdAt: createdAt,
@@ -276,6 +312,7 @@ class HelpSupportTicket {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'ticketType': ticketType,
       'title': title,
       'message': message,
       'category': category,

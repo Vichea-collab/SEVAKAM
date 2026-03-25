@@ -44,7 +44,9 @@ class AuthState {
 
     final auth = FirebaseAuth.instance;
     currentUser.value = auth.currentUser;
-    debugPrint('AuthState: Initial user is ${auth.currentUser?.email ?? 'null'}');
+    debugPrint(
+      'AuthState: Initial user is ${auth.currentUser?.email ?? 'null'}',
+    );
 
     if (auth.currentUser != null) {
       await _syncSignedInUser(auth.currentUser!);
@@ -55,7 +57,9 @@ class AuthState {
     await _idTokenSubscription?.cancel();
     _idTokenSubscription = auth.idTokenChanges().listen(
       (user) async {
-        debugPrint('AuthState: idTokenChanges emitted for ${user?.email ?? 'null'}');
+        debugPrint(
+          'AuthState: idTokenChanges emitted for ${user?.email ?? 'null'}',
+        );
         currentUser.value = user;
         if (user == null) {
           _applyBackendTokenToStates('');
@@ -79,7 +83,7 @@ class AuthState {
     } catch (error) {
       debugPrint('AuthState.getIdToken failed: $error');
     }
-    _applyBackendTokenToStates(token);
+    _applyBackendTokenToStates(token, eagerRefresh: false);
     if (token.trim().isEmpty) {
       debugPrint('AuthState: Empty token, signing out sync');
       await AppSyncState.setSignedIn(false);
@@ -91,15 +95,17 @@ class AuthState {
       debugPrint('AuthState: Role resolution result: $roleResolved');
 
       if (!roleResolved) {
-         debugPrint('AuthState: No role found during sync. Attempting default finder initialization...');
-         try {
-           await ProfileSettingsState.initUserRoleOnBackend(isProvider: false);
-           final newToken = await user.getIdToken(true);
-           _applyBackendTokenToStates(newToken ?? '');
-           debugPrint('AuthState: Default finder initialization successful');
-         } catch (e) {
-           debugPrint('AuthState: Default initialization failed: $e');
-         }
+        debugPrint(
+          'AuthState: No role found during sync. Attempting default finder initialization...',
+        );
+        try {
+          await ProfileSettingsState.initUserRoleOnBackend(isProvider: false);
+          final newToken = await user.getIdToken(true);
+          _applyBackendTokenToStates(newToken ?? '', eagerRefresh: false);
+          debugPrint('AuthState: Default finder initialization successful');
+        } catch (e) {
+          debugPrint('AuthState: Default initialization failed: $e');
+        }
       }
 
       final isAdmin = await _isAdminSession(user);
@@ -109,15 +115,10 @@ class AuthState {
         return;
       }
 
-      debugPrint('AuthState: Refreshing states for user');
-      await ChatState.refresh();
-      await ChatState.refreshUnreadCount();
-      await FinderPostState.refresh();
-      await FinderPostState.refreshAllForLookup();
-      await ProviderPostState.refresh();
-      await ProviderPostState.refreshAllForLookup();
-      await OrderState.refreshCurrentRole();
+      debugPrint('AuthState: Warming user state');
+      await _warmSignedInState(isProvider: AppRoleState.isProvider);
       await AppSyncState.setSignedIn(true);
+      unawaited(_warmBackgroundState());
       debugPrint('AuthState: Sync complete');
     } catch (error) {
       debugPrint('AuthState._syncSignedInUser failed: $error');
@@ -131,7 +132,9 @@ class AuthState {
     required bool isProvider,
     bool registerIfMissing = true,
   }) async {
-    debugPrint('AuthState: signInWithGoogle(isProvider: $isProvider, register: $registerIfMissing)');
+    debugPrint(
+      'AuthState: signInWithGoogle(isProvider: $isProvider, register: $registerIfMissing)',
+    );
     final configured = await FirebaseBootstrap.initializeIfConfigured();
     if (!configured) return FirebaseBootstrap.setupHint();
 
@@ -156,7 +159,8 @@ class AuthState {
         }
 
         debugPrint('AuthState: Google account selected: ${account.email}');
-        final GoogleSignInAuthentication authentication = await account.authentication;
+        final GoogleSignInAuthentication authentication =
+            await account.authentication;
         final String? idToken = authentication.idToken;
         final String? accessToken = authentication.accessToken;
 
@@ -181,7 +185,9 @@ class AuthState {
         return 'Google sign-in failed.';
       }
 
-      debugPrint('AuthState: Google sign-in success for ${user.email}, applying session...');
+      debugPrint(
+        'AuthState: Google sign-in success for ${user.email}, applying session...',
+      );
       final sessionError = await _applyAuthenticatedSession(
         user,
         isProvider: isProvider,
@@ -211,7 +217,9 @@ class AuthState {
       debugPrint('AuthState: Google sign-in flow complete');
       return null;
     } on FirebaseAuthException catch (error) {
-      debugPrint('AuthState: FirebaseAuthException: code=${error.code}, message=${error.message}');
+      debugPrint(
+        'AuthState: FirebaseAuthException: code=${error.code}, message=${error.message}',
+      );
       return _friendlyAuthError(error, googleFlow: true);
     } catch (error) {
       debugPrint('AuthState: Google sign-in unexpected error: $error');
@@ -224,7 +232,9 @@ class AuthState {
     required String email,
     required String password,
   }) async {
-    debugPrint('AuthState: signInWithEmailPassword(email: $email, isProvider: $isProvider)');
+    debugPrint(
+      'AuthState: signInWithEmailPassword(email: $email, isProvider: $isProvider)',
+    );
     final configured = await FirebaseBootstrap.initializeIfConfigured();
     if (!configured) return FirebaseBootstrap.setupHint();
 
@@ -239,7 +249,9 @@ class AuthState {
       final user = result.user;
       if (user == null) return 'Sign-in failed.';
 
-      debugPrint('AuthState: Email sign-in success for ${user.email}, applying session...');
+      debugPrint(
+        'AuthState: Email sign-in success for ${user.email}, applying session...',
+      );
       final sessionError = await _applyAuthenticatedSession(
         user,
         isProvider: isProvider,
@@ -256,7 +268,9 @@ class AuthState {
       debugPrint('AuthState: Email sign-in flow complete');
       return null;
     } on FirebaseAuthException catch (error) {
-      debugPrint('AuthState: FirebaseAuthException: code=${error.code}, message=${error.message}');
+      debugPrint(
+        'AuthState: FirebaseAuthException: code=${error.code}, message=${error.message}',
+      );
       return _friendlyAuthError(error);
     } catch (error) {
       debugPrint('AuthState: Email sign-in unexpected error: $error');
@@ -296,7 +310,9 @@ class AuthState {
     String dateOfBirth = '',
     String bio = '',
   }) async {
-    debugPrint('AuthState: signUpWithEmailPassword(email: $email, isProvider: $isProvider)');
+    debugPrint(
+      'AuthState: signUpWithEmailPassword(email: $email, isProvider: $isProvider)',
+    );
     final configured = await FirebaseBootstrap.initializeIfConfigured();
     if (!configured) return FirebaseBootstrap.setupHint();
 
@@ -313,7 +329,9 @@ class AuthState {
         user = result.user;
       } on FirebaseAuthException catch (error) {
         if (error.code != 'email-already-in-use') rethrow;
-        debugPrint('AuthState: Email already in use, attempting sign-in as fallback');
+        debugPrint(
+          'AuthState: Email already in use, attempting sign-in as fallback',
+        );
         final existing = await _runAuthOperation(
           operation: 'Existing account sign-in',
           action: () => FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -333,7 +351,9 @@ class AuthState {
         await user.updateDisplayName(fullName.trim());
       }
 
-      debugPrint('AuthState: Registration success for ${user.email}, applying session...');
+      debugPrint(
+        'AuthState: Registration success for ${user.email}, applying session...',
+      );
       final sessionError = await _applyAuthenticatedSession(
         user,
         isProvider: isProvider,
@@ -358,7 +378,9 @@ class AuthState {
       debugPrint('AuthState: Sign-up flow complete');
       return null;
     } on FirebaseAuthException catch (error) {
-      debugPrint('AuthState: FirebaseAuthException: code=${error.code}, message=${error.message}');
+      debugPrint(
+        'AuthState: FirebaseAuthException: code=${error.code}, message=${error.message}',
+      );
       return _friendlyAuthError(error);
     } catch (error) {
       debugPrint('AuthState: Sign-up unexpected error: $error');
@@ -375,7 +397,7 @@ class AuthState {
         await _googleSignIn.signOut();
       }
     } catch (_) {}
-    _applyBackendTokenToStates('');
+    _applyBackendTokenToStates('', eagerRefresh: false);
     await AppSyncState.setSignedIn(false);
   }
 
@@ -385,7 +407,7 @@ class AuthState {
       return 'Please sign in first.';
     }
     final token = await user.getIdToken(true);
-    _applyBackendTokenToStates(token ?? '');
+    _applyBackendTokenToStates(token ?? '', eagerRefresh: false);
     final hasRole = await ProfileSettingsState.hasRoleRegisteredOnBackend(
       isProvider: toProvider,
     );
@@ -394,16 +416,8 @@ class AuthState {
     }
 
     AppRoleState.setProvider(toProvider);
-    await ChatState.refresh();
-    await ChatState.refreshUnreadCount();
-    await ProfileSettingsState.syncRoleProfileFromBackend(
-      isProvider: toProvider,
-    );
-    await FinderPostState.refresh();
-    await FinderPostState.refreshAllForLookup();
-    await ProviderPostState.refresh();
-    await ProviderPostState.refreshAllForLookup();
-    await OrderState.refreshCurrentRole();
+    await _warmSignedInState(isProvider: toProvider, includeProfileSync: true);
+    unawaited(_warmBackgroundState());
     return null;
   }
 
@@ -412,15 +426,19 @@ class AuthState {
     required bool isProvider,
     required bool registerRoleIfMissing,
   }) async {
-    debugPrint('AuthState: Applying session (isProvider: $isProvider, register: $registerRoleIfMissing)');
+    debugPrint(
+      'AuthState: Applying session (isProvider: $isProvider, register: $registerRoleIfMissing)',
+    );
     var token = await user.getIdToken(true);
-    _applyBackendTokenToStates(token ?? '');
+    _applyBackendTokenToStates(token ?? '', eagerRefresh: false);
 
     bool initPerformed = false;
     if (registerRoleIfMissing) {
       try {
         debugPrint('AuthState: Initializing role on backend...');
-        await ProfileSettingsState.initUserRoleOnBackend(isProvider: isProvider);
+        await ProfileSettingsState.initUserRoleOnBackend(
+          isProvider: isProvider,
+        );
         initPerformed = true;
       } catch (e) {
         debugPrint('AuthState: Backend initialization failed: $e');
@@ -434,9 +452,13 @@ class AuthState {
     debugPrint('AuthState: Role registered on backend? $hasRole');
 
     if (!hasRole && !registerRoleIfMissing) {
-      debugPrint('AuthState: Role missing during sign-in. Attempting auto-initialization...');
+      debugPrint(
+        'AuthState: Role missing during sign-in. Attempting auto-initialization...',
+      );
       try {
-        await ProfileSettingsState.initUserRoleOnBackend(isProvider: isProvider);
+        await ProfileSettingsState.initUserRoleOnBackend(
+          isProvider: isProvider,
+        );
         initPerformed = true;
         hasRole = await ProfileSettingsState.hasRoleRegisteredOnBackend(
           isProvider: isProvider,
@@ -455,17 +477,15 @@ class AuthState {
     if (initPerformed) {
       debugPrint('AuthState: Forcing token refresh after initialization');
       token = await user.getIdToken(true);
-      _applyBackendTokenToStates(token ?? '');
+      _applyBackendTokenToStates(token ?? '', eagerRefresh: false);
     }
 
     AppRoleState.setProvider(isProvider);
-    await ChatState.refresh();
-    await ChatState.refreshUnreadCount();
-    await FinderPostState.refresh();
-    await FinderPostState.refreshAllForLookup();
-    await ProviderPostState.refresh();
-    await ProviderPostState.refreshAllForLookup();
-    await OrderState.refreshCurrentRole();
+    await _warmSignedInState(
+      isProvider: isProvider,
+      includeProfileSync: !registerRoleIfMissing,
+    );
+    unawaited(_warmBackgroundState());
     return null;
   }
 
@@ -517,22 +537,55 @@ class AuthState {
     return false;
   }
 
-  static void _applyBackendTokenToStates(String token) {
+  static void _applyBackendTokenToStates(
+    String token, {
+    bool eagerRefresh = true,
+  }) {
     if (token.trim().isEmpty) {
       unawaited(PushNotificationState.unregisterCurrentToken());
     }
     ProfileSettingsState.setBackendToken(token);
-    ChatState.setBackendToken(token);
-    FinderPostState.setBackendToken(token);
-    HomePromotionState.setBackendToken(token);
-    ProviderPostState.setBackendToken(token);
-    OrderState.setBackendToken(token);
-    UserNotificationState.setBackendToken(token);
+    ChatState.setBackendToken(token, refresh: eagerRefresh);
+    FinderPostState.setBackendToken(token, refresh: eagerRefresh);
+    HomePromotionState.setBackendToken(token, refresh: eagerRefresh);
+    ProviderPostState.setBackendToken(token, refresh: eagerRefresh);
+    OrderState.setBackendToken(token, refresh: eagerRefresh);
+    UserNotificationState.setBackendToken(token, refresh: eagerRefresh);
     SubscriptionState.setBackendToken(token);
     PushNotificationState.setBackendToken(token);
     if (token.trim().isNotEmpty) {
       unawaited(PushNotificationState.syncCurrentDeviceToken());
     }
+  }
+
+  static Future<void> _warmSignedInState({
+    required bool isProvider,
+    bool includeProfileSync = true,
+  }) async {
+    final tasks = <Future<void>>[
+      ChatState.refresh(page: 1),
+      ChatState.refreshUnreadCount(),
+      OrderState.refreshCurrentRole(forceNetwork: true, page: 1),
+      HomePromotionState.refresh(),
+      UserNotificationState.refresh(page: 1),
+    ];
+    if (includeProfileSync) {
+      tasks.add(
+        ProfileSettingsState.syncRoleProfileFromBackend(
+          isProvider: isProvider,
+        ).then((_) {}),
+      );
+    }
+    await Future.wait(tasks);
+  }
+
+  static Future<void> _warmBackgroundState() async {
+    await Future.wait<void>([
+      FinderPostState.refresh(page: 1),
+      ProviderPostState.refresh(page: 1),
+      FinderPostState.refreshAllForLookup(maxPages: 3),
+      ProviderPostState.refreshAllForLookup(maxPages: 3),
+    ]);
   }
 
   static Future<bool> _isAdminSession(User user) async {
@@ -638,7 +691,6 @@ class AuthState {
     }
     return raw.isEmpty ? 'Google sign-in failed.' : raw;
   }
-
 
   static String _friendlyUnknownAuthError(Object error) {
     final raw = error.toString().trim();

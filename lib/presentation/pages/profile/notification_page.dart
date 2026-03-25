@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../domain/entities/profile_settings.dart';
 import '../../state/profile_settings_state.dart';
@@ -111,20 +112,17 @@ class _SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryText = AppThemeTokens.textPrimary(context);
+    final surface = AppThemeTokens.surface(context);
+    final outline = AppThemeTokens.outline(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: outline),
+        boxShadow: AppThemeTokens.cardShadow(context),
       ),
       child: Row(
         children: [
@@ -133,13 +131,13 @@ class _SwitchTile extends StatelessWidget {
               label,
               style: Theme.of(
                 context,
-              ).textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
+              ).textTheme.bodyLarge?.copyWith(color: primaryText),
             ),
           ),
           Switch(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: AppColors.primaryLight,
+            activeTrackColor: AppColors.primary.withValues(alpha: 0.45),
             activeThumbColor: AppColors.primary,
           ),
         ],

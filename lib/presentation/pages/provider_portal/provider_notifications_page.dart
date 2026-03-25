@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
 import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/theme/app_theme_tokens.dart';
 import 'package:servicefinder/domain/entities/provider_portal.dart';
 import 'package:servicefinder/presentation/state/order_state.dart';
 import 'package:servicefinder/presentation/state/user_notification_state.dart';
@@ -137,85 +139,82 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage>
                         backendItems.isEmpty;
 
                     final Widget body = Column(
-                            key: ValueKey<String>(
-                              'provider_notice_content_${backendItems.length}',
+                      key: ValueKey<String>(
+                        'provider_notice_content_${backendItems.length}',
+                      ),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (showSummary) ...[
+                          _ProviderNotificationSummary(
+                            incoming: incoming,
+                            active: active,
+                            completed: completed,
+                          ),
+                          const SizedBox(height: 14),
+                        ],
+                        if (backendItems.isNotEmpty) ...[
+                          Text(
+                            'Recent Updates',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: AppThemeTokens.textPrimary(context),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          const SizedBox(height: 10),
+                          ...backendItems.map(
+                            (notice) => _NotificationTile(
+                              title: notice.title,
+                              description: notice.description,
+                              timeLabel: notice.timeLabel,
+                              icon: notice.icon,
+                              color: notice.color,
+                              onTap: () {
+                                if (notice.key.startsWith('order:')) {
+                                  ProviderOrdersPage.requestedTab.value =
+                                      notice.tab;
+                                  MainShellPage.activeTab.value =
+                                      AppBottomTab.order;
+                                } else if (notice.source == 'chat_message') {
+                                  Navigator.pushNamed(
+                                    context,
+                                    ChatListPage.routeName,
+                                  );
+                                  unawaited(
+                                    UserNotificationState.clear(
+                                      _providerAdminStateKey(notice.key),
+                                    ),
+                                  );
+                                } else if (notice.source == 'support_message') {
+                                  Navigator.pushNamed(
+                                    context,
+                                    HelpSupportPage.routeName,
+                                  );
+                                  unawaited(
+                                    UserNotificationState.clear(
+                                      _providerAdminStateKey(notice.key),
+                                    ),
+                                  );
+                                } else {
+                                  unawaited(
+                                    UserNotificationState.clear(
+                                      _providerAdminStateKey(notice.key),
+                                    ),
+                                  );
+                                }
+                              },
                             ),
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (showSummary) ...[
-                                _ProviderNotificationSummary(
-                                  incoming: incoming,
-                                  active: active,
-                                  completed: completed,
-                                ),
-                                const SizedBox(height: 14),
-                              ],
-                              if (backendItems.isNotEmpty) ...[
-                                Text(
-                                  'Recent Updates',
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(
-                                        color: AppColors.textPrimary,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                ),
-                                const SizedBox(height: 10),
-                                ...backendItems.map(
-                                  (notice) => _NotificationTile(
-                                    title: notice.title,
-                                    description: notice.description,
-                                    timeLabel: notice.timeLabel,
-                                    icon: notice.icon,
-                                    color: notice.color,
-                                    onTap: () {
-                                      if (notice.key.startsWith('order:')) {
-                                        ProviderOrdersPage.requestedTab.value =
-                                            notice.tab;
-                                        MainShellPage.activeTab.value =
-                                            AppBottomTab.order;
-                                      } else if (notice.source ==
-                                          'chat_message') {
-                                        Navigator.pushNamed(
-                                          context,
-                                          ChatListPage.routeName,
-                                        );
-                                        unawaited(
-                                          UserNotificationState.clear(
-                                            _providerAdminStateKey(notice.key),
-                                          ),
-                                        );
-                                      } else if (notice.source ==
-                                          'support_message') {
-                                        Navigator.pushNamed(
-                                          context,
-                                          HelpSupportPage.routeName,
-                                        );
-                                        unawaited(
-                                          UserNotificationState.clear(
-                                            _providerAdminStateKey(notice.key),
-                                          ),
-                                        );
-                                      } else {
-                                        unawaited(
-                                          UserNotificationState.clear(
-                                            _providerAdminStateKey(notice.key),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ] else
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 40),
-                                  child: AppStatePanel.empty(
-                                    title: 'No recent updates',
-                                    message:
-                                        'New order activities will appear here.',
-                                  ),
-                                ),
-                            ],
-                          );
+                          ),
+                        ] else
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: AppStatePanel.empty(
+                              title: 'No recent updates',
+                              message: 'New order activities will appear here.',
+                            ),
+                          ),
+                      ],
+                    );
 
                     return Scaffold(
                       body: SafeArea(
@@ -274,6 +273,37 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage>
     );
   }
 
+  Future<void> _waitUntilNotLoading(ValueListenable<bool> listenable) async {
+    if (!listenable.value) return;
+    final completer = Completer<void>();
+    late VoidCallback listener;
+    listener = () {
+      if (!listenable.value && !completer.isCompleted) {
+        listenable.removeListener(listener);
+        completer.complete();
+      }
+    };
+    listenable.addListener(listener);
+    if (!listenable.value && !completer.isCompleted) {
+      listenable.removeListener(listener);
+      completer.complete();
+    }
+    await completer.future;
+  }
+
+  Future<void> _refreshNotificationsAndWait({bool forceNetwork = false}) async {
+    if (OrderState.loading.value) {
+      await _waitUntilNotLoading(OrderState.loading);
+    }
+    await _refreshNotifications(forceNetwork: true);
+    await _waitUntilNotLoading(OrderState.loading);
+  }
+
+  Future<void> _refreshAdminNoticesAndWait() async {
+    await UserNotificationState.refresh();
+    await _waitUntilNotLoading(UserNotificationState.loading);
+  }
+
   Future<void> _loadScreen({bool forceNetwork = false}) async {
     if (_screenRefreshInFlight) return;
     _screenRefreshInFlight = true;
@@ -282,8 +312,8 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage>
     }
     try {
       await Future.wait<void>([
-        _refreshNotifications(forceNetwork: forceNetwork),
-        UserNotificationState.refresh(),
+        _refreshNotificationsAndWait(forceNetwork: forceNetwork),
+        _refreshAdminNoticesAndWait(),
       ]);
     } finally {
       _screenRefreshInFlight = false;
@@ -508,16 +538,10 @@ class _NotificationTile extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppThemeTokens.surface(context),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.divider),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0C0F172A),
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              ),
-            ],
+            border: Border.all(color: AppThemeTokens.outline(context)),
+            boxShadow: AppThemeTokens.cardShadow(context),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -543,7 +567,7 @@ class _NotificationTile extends StatelessWidget {
                             title,
                             style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(
-                                  color: AppColors.textPrimary,
+                                  color: AppThemeTokens.textPrimary(context),
                                   fontWeight: FontWeight.w700,
                                 ),
                           ),
@@ -551,12 +575,19 @@ class _NotificationTile extends StatelessWidget {
                         Text(
                           timeLabel,
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textSecondary),
+                              ?.copyWith(
+                                color: AppThemeTokens.textSecondary(context),
+                              ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(description),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppThemeTokens.textSecondary(context),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -583,7 +614,7 @@ class _ProviderNotificationSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final stats = <_ProviderNotificationStat>[
       _ProviderNotificationStat(
-        label: 'Incoming',
+        label: 'Upcoming',
         value: incoming,
         icon: Icons.mark_email_unread_rounded,
         color: const Color(0xFFFFC857),

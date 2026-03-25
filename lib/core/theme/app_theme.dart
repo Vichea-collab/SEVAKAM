@@ -9,6 +9,8 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
       canvasColor: Colors.white,
       cardColor: Colors.white,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
       dividerColor: AppColors.divider,
       colorScheme: base.colorScheme.copyWith(
         primary: AppColors.primary,
@@ -47,6 +49,14 @@ class AppTheme {
           borderRadius: BorderRadius.circular(_radius(18, scale)),
         ),
       ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius(24, scale)),
+        ),
+      ),
       dialogTheme: DialogThemeData(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -65,6 +75,19 @@ class AppTheme {
           height: 1.45,
         ),
       ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: const Color(0xFF0F172A),
+        contentTextStyle: GoogleFonts.poppins(
+          color: Colors.white,
+          fontSize: _font(14, scale),
+          fontWeight: FontWeight.w500,
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius(14, scale)),
+        ),
+      ),
+      iconTheme: const IconThemeData(color: AppColors.textPrimary),
       popupMenuTheme: PopupMenuThemeData(
         color: Colors.white,
         surfaceTintColor: Colors.transparent,
@@ -117,6 +140,16 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
+        surfaceTintColor: Colors.transparent,
+      ),
+      chipTheme: base.chipTheme.copyWith(
+        backgroundColor: const Color(0xFFF4F7FD),
+        selectedColor: AppColors.primary.withValues(alpha: 0.12),
+        side: const BorderSide(color: AppColors.divider),
+        labelStyle: GoogleFonts.poppins(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -186,6 +219,9 @@ class AppTheme {
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.bgDark,
       canvasColor: AppColors.bgDark,
+      cardColor: AppColors.surfaceDark,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
       shadowColor: Colors.black,
       dividerColor: AppColors.dividerDark,
       colorScheme: base.colorScheme.copyWith(
@@ -231,6 +267,14 @@ class AppTheme {
           side: const BorderSide(color: AppColors.dividerDark),
         ),
       ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: AppColors.surfaceDark,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: AppColors.surfaceDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius(24, scale)),
+        ),
+      ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surfaceDark,
         elevation: 0,
@@ -249,6 +293,19 @@ class AppTheme {
           height: 1.45,
         ),
       ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: const Color(0xFF111827),
+        contentTextStyle: GoogleFonts.poppins(
+          color: AppColors.textPrimaryDark,
+          fontSize: _font(14, scale),
+          fontWeight: FontWeight.w500,
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius(14, scale)),
+        ),
+      ),
+      iconTheme: const IconThemeData(color: AppColors.textPrimaryDark),
       popupMenuTheme: PopupMenuThemeData(
         color: AppColors.surfaceDark,
         surfaceTintColor: Colors.transparent,
@@ -305,6 +362,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppColors.textPrimaryDark,
+        surfaceTintColor: Colors.transparent,
       ),
       switchTheme: SwitchThemeData(
         trackColor: WidgetStateProperty.resolveWith((states) {

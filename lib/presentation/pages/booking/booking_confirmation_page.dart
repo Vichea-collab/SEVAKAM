@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/safe_image_provider.dart';
 import '../../../domain/entities/order.dart';
@@ -170,21 +171,18 @@ class _SuccessHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = AppThemeTokens.surface(context);
+    final outline = AppThemeTokens.outline(context);
+    final primaryText = AppThemeTokens.textPrimary(context);
+    final secondaryText = AppThemeTokens.textSecondary(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: surface,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFFD9E6FF)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x110F172A),
-            blurRadius: 24,
-            spreadRadius: -12,
-            offset: Offset(0, 16),
-          ),
-        ],
+        border: Border.all(color: outline),
+        boxShadow: AppThemeTokens.cardShadow(context),
       ),
       child: Column(
         children: [
@@ -223,7 +221,7 @@ class _SuccessHero extends StatelessWidget {
             'Your booking is confirmed',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: AppColors.textPrimary,
+              color: primaryText,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.6,
             ),
@@ -233,7 +231,7 @@ class _SuccessHero extends StatelessWidget {
             'Your ${order.serviceName.toLowerCase()} request has been sent to ${order.provider.name}. Track updates from the Orders tab.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.textSecondary,
+              color: secondaryText,
               height: 1.45,
             ),
           ),
@@ -253,7 +251,7 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        color: AppColors.textPrimary,
+        color: AppThemeTokens.textPrimary(context),
         fontWeight: FontWeight.w800,
         letterSpacing: -0.3,
       ),
@@ -268,13 +266,17 @@ class _BookingSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = AppThemeTokens.surface(context);
+    final outline = AppThemeTokens.outline(context);
+    final primaryText = AppThemeTokens.textPrimary(context);
+    final secondaryText = AppThemeTokens.textSecondary(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: surface,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,7 +311,7 @@ class _BookingSummaryCard extends StatelessWidget {
                     Text(
                       order.serviceName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: primaryText,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -317,7 +319,7 @@ class _BookingSummaryCard extends StatelessWidget {
                     Text(
                       order.provider.name,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: secondaryText,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -391,7 +393,7 @@ class _SummaryCell extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFF),
+        color: AppThemeTokens.mutedSurface(context),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -400,7 +402,7 @@ class _SummaryCell extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: AppThemeTokens.textSecondary(context),
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -410,7 +412,7 @@ class _SummaryCell extends StatelessWidget {
             maxLines: multiline ? null : 2,
             overflow: multiline ? null : TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.textPrimary,
+              color: AppThemeTokens.textPrimary(context),
               fontWeight: FontWeight.w700,
               height: 1.35,
             ),
@@ -428,13 +430,15 @@ class _ServiceRequirementsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = AppThemeTokens.surface(context);
+    final outline = AppThemeTokens.outline(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: surface,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: outline),
       ),
       child: Column(
         children: entries

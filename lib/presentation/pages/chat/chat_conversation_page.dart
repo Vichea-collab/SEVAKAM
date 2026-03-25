@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
+import 'package:servicefinder/core/theme/app_theme_tokens.dart';
 import 'package:servicefinder/core/utils/app_toast.dart';
 import 'package:servicefinder/core/utils/page_transition.dart';
 import 'package:servicefinder/core/utils/responsive.dart';
@@ -90,7 +91,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppThemeTokens.pageBackground(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -102,11 +103,11 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             ),
             Expanded(
               child: Container(
-                color: const Color(0xFFF8FAFF),
+                color: AppThemeTokens.mutedSurface(context),
                 child: RefreshIndicator(
                   onRefresh: _refreshLatest,
                   color: AppColors.primary,
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppThemeTokens.surface(context),
                   child: _buildMessageList(context),
                 ),
               ),
@@ -887,15 +888,9 @@ class _ChatHeader extends StatelessWidget {
     final status = _activityStatus(thread.lastActiveAt);
     final isProvider = AppRoleState.isProvider;
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+      decoration: BoxDecoration(
+        color: AppThemeTokens.surface(context),
+        boxShadow: AppThemeTokens.cardShadow(context),
       ),
       padding: EdgeInsets.fromLTRB(
         rs.space(4),
@@ -937,7 +932,10 @@ class _ChatHeader extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: status.color,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(
+                      color: AppThemeTokens.surface(context),
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -953,7 +951,7 @@ class _ChatHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF0F172A),
+                    color: AppThemeTokens.textPrimary(context),
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.3,
                   ),
@@ -1047,10 +1045,14 @@ class _HeaderAction extends StatelessWidget {
         child: Container(
           padding: rs.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
+            color: AppThemeTokens.mutedSurface(context),
             borderRadius: BorderRadius.circular(rs.radius(10)),
           ),
-          child: Icon(icon, color: const Color(0xFF64748B), size: rs.icon(20)),
+          child: Icon(
+            icon,
+            color: AppThemeTokens.textSecondary(context),
+            size: rs.icon(20),
+          ),
         ),
       ),
     );
@@ -1065,6 +1067,7 @@ class _ChatDateChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rs = context.rs;
+    final isDark = AppThemeTokens.isDark(context);
     return Container(
       margin: EdgeInsets.symmetric(vertical: rs.space(16)),
       padding: EdgeInsets.symmetric(
@@ -1072,13 +1075,13 @@ class _ChatDateChip extends StatelessWidget {
         vertical: rs.space(6),
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
+        color: isDark ? const Color(0xFF223048) : const Color(0xFFE2E8F0),
         borderRadius: BorderRadius.circular(rs.radius(20)),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: const Color(0xFF64748B),
+          color: AppThemeTokens.textSecondary(context),
           fontWeight: FontWeight.w700,
           fontSize: rs.text(11),
           letterSpacing: 0.5,
@@ -1098,8 +1101,10 @@ class _MessageBubble extends StatelessWidget {
     final rs = context.rs;
     final fromMe = message.fromMe;
     const accentColor = AppColors.primary;
-    final bubbleColor = fromMe ? accentColor : Colors.white;
-    final textColor = fromMe ? Colors.white : const Color(0xFF0F172A);
+    final bubbleColor = fromMe ? accentColor : AppThemeTokens.surface(context);
+    final textColor = fromMe
+        ? Colors.white
+        : AppThemeTokens.textPrimary(context);
 
     final hasImage =
         message.type == ChatMessageType.image &&
@@ -1153,7 +1158,7 @@ class _MessageBubble extends StatelessWidget {
                   BoxShadow(
                     color: fromMe
                         ? accentColor.withValues(alpha: 0.2)
-                        : const Color(0x080F172A),
+                        : AppThemeTokens.cardShadow(context).first.color,
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -1206,7 +1211,7 @@ class _MessageBubble extends StatelessWidget {
                 Text(
                   _timeLabel(message.sentAt),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF94A3B8),
+                    color: AppThemeTokens.textSecondary(context),
                     fontSize: rs.text(10),
                     fontWeight: FontWeight.w500,
                   ),
@@ -1377,7 +1382,7 @@ class _ProfileLinkCardState extends State<_ProfileLinkCard> {
       child: Container(
         padding: rs.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppThemeTokens.surface(context),
           borderRadius: BorderRadius.circular(rs.radius(16)),
           border: Border.all(color: widget.accentColor.withValues(alpha: 0.3)),
           boxShadow: [
@@ -1413,16 +1418,16 @@ class _ProfileLinkCardState extends State<_ProfileLinkCard> {
                     children: [
                       Text(
                         p.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: AppThemeTokens.textPrimary(context),
                         ),
                       ),
                       Text(
                         'Professional ${p.role}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: AppThemeTokens.textSecondary(context),
                         ),
                       ),
                     ],
@@ -1488,9 +1493,9 @@ class _Composer extends StatelessWidget {
     const accentColor = AppColors.primary;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppThemeTokens.surface(context),
         border: Border(
-          top: BorderSide(color: AppColors.divider.withValues(alpha: 0.5)),
+          top: BorderSide(color: AppThemeTokens.outline(context)),
         ),
       ),
       padding: EdgeInsets.fromLTRB(
@@ -1510,7 +1515,7 @@ class _Composer extends StatelessWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: AppThemeTokens.mutedSurface(context),
                 borderRadius: BorderRadius.circular(rs.radius(24)),
               ),
               padding: EdgeInsets.symmetric(horizontal: rs.space(16)),
@@ -1581,7 +1586,11 @@ class _ComposerAction extends StatelessWidget {
           width: rs.dimension(44),
           height: rs.dimension(44),
           alignment: Alignment.center,
-          child: Icon(icon, color: const Color(0xFF64748B), size: rs.icon(24)),
+          child: Icon(
+            icon,
+            color: AppThemeTokens.textSecondary(context),
+            size: rs.icon(24),
+          ),
         ),
       ),
     );

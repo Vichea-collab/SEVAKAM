@@ -50,8 +50,44 @@ class _AdvancedCalendarDialog extends StatefulWidget {
 }
 
 class _AdvancedCalendarDialogState extends State<_AdvancedCalendarDialog> {
+  static const List<String> _weekdayLabels = <String>[
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ];
+
   late DateTime _focusedDay;
   late DateTime _selectedDay;
+
+  bool _isSelectable(DateTime day) {
+    return widget.selectableDayPredicate?.call(day) ?? true;
+  }
+
+  DateTime _firstSelectableDate({
+    required DateTime start,
+    required DateTime firstDate,
+    required DateTime lastDate,
+  }) {
+    var candidate = DateTime(start.year, start.month, start.day);
+    if (candidate.isBefore(firstDate)) {
+      candidate = DateTime(firstDate.year, firstDate.month, firstDate.day);
+    }
+    if (candidate.isAfter(lastDate)) {
+      candidate = DateTime(lastDate.year, lastDate.month, lastDate.day);
+    }
+    for (
+      var day = candidate;
+      !day.isAfter(lastDate);
+      day = day.add(const Duration(days: 1))
+    ) {
+      if (_isSelectable(day)) return day;
+    }
+    return candidate;
+  }
 
   @override
   void initState() {
@@ -62,9 +98,17 @@ class _AdvancedCalendarDialogState extends State<_AdvancedCalendarDialog> {
         : widget.initialDate.isAfter(widget.lastDate)
             ? widget.lastDate
             : widget.initialDate;
-            
-    _focusedDay = safeDate;
-    _selectedDay = safeDate;
+
+    final resolvedDate = _isSelectable(safeDate)
+        ? safeDate
+        : _firstSelectableDate(
+            start: safeDate,
+            firstDate: widget.firstDate,
+            lastDate: widget.lastDate,
+          );
+
+    _focusedDay = resolvedDate;
+    _selectedDay = resolvedDate;
   }
 
   @override
@@ -90,6 +134,9 @@ class _AdvancedCalendarDialogState extends State<_AdvancedCalendarDialog> {
               firstDay: widget.firstDate,
               lastDay: widget.lastDate,
               focusedDay: _focusedDay,
+              startingDayOfWeek: StartingDayOfWeek.monday,
+              daysOfWeekHeight: 28,
+              rowHeight: 52,
               selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
               onDaySelected: (selectedDay, focusedDay) {
                 if (widget.selectableDayPredicate != null &&
@@ -103,6 +150,7 @@ class _AdvancedCalendarDialogState extends State<_AdvancedCalendarDialog> {
               },
               enabledDayPredicate: widget.selectableDayPredicate,
               calendarStyle: CalendarStyle(
+                outsideDaysVisible: false,
                 selectedDecoration: const BoxDecoration(
                   color: AppColors.primary,
                   shape: BoxShape.circle,
@@ -115,6 +163,21 @@ class _AdvancedCalendarDialogState extends State<_AdvancedCalendarDialog> {
                 disabledTextStyle: const TextStyle(color: AppColors.danger),
               ),
               calendarBuilders: CalendarBuilders(
+                dowBuilder: (context, day) {
+                  final label = _weekdayLabels[day.weekday - 1];
+                  return Center(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.visible,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  );
+                },
                 disabledBuilder: (context, day, focusedDay) {
                   return Center(
                     child: Container(
@@ -149,6 +212,18 @@ class _AdvancedCalendarDialogState extends State<_AdvancedCalendarDialog> {
                 formatButtonVisible: false,
                 titleCentered: true,
               ),
+              daysOfWeekStyle: const DaysOfWeekStyle(
+                weekdayStyle: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+                weekendStyle: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             Row(
@@ -160,7 +235,9 @@ class _AdvancedCalendarDialogState extends State<_AdvancedCalendarDialog> {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: () => Navigator.pop(context, _selectedDay),
+                  onPressed: _isSelectable(_selectedDay)
+                      ? () => Navigator.pop(context, _selectedDay)
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

@@ -15,6 +15,7 @@ import 'package:servicefinder/presentation/widgets/app_top_bar.dart';
 import 'package:servicefinder/presentation/widgets/primary_button.dart';
 import 'package:servicefinder/presentation/pages/main_shell_page.dart';
 import 'package:servicefinder/presentation/widgets/app_bottom_nav.dart';
+import 'package:servicefinder/presentation/widgets/post_composer_ui.dart';
 
 class ClientPostPage extends StatefulWidget {
   static const String routeName = '/post';
@@ -136,7 +137,7 @@ class _ClientPostPageState extends State<ClientPostPage> {
           child: Column(
             children: [
               AppTopBar(
-                title: 'Post Service',
+                title: 'Request Service',
                 showBack: true,
                 onBack: () => MainShellPage.activeTab.value = AppBottomTab.home,
                 actions: [
@@ -169,65 +170,116 @@ class _ClientPostPageState extends State<ClientPostPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'What do you need help with?',
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.w600,
+                              const PostComposerHeaderCard(
+                                icon: Icons.assignment_rounded,
+                                accentColor: AppColors.primary,
+                                eyebrow: 'Finder request',
+                                title: 'Describe the job clearly',
+                                subtitle:
+                                    'Share the service, date, and area so providers can respond with the right offer faster.',
+                                highlights: [
+                                  '1 service focus',
+                                  'Preferred date',
+                                  'Visible to providers',
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              if (_editingPostId != null) ...[
+                                PostComposerEditingBanner(
+                                  message:
+                                      'You are editing an existing request.',
+                                  onCancel: _cancelEdit,
+                                  enabled: !_posting,
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                              const PostComposerSectionHeader(
+                                title: 'Service details',
+                                subtitle:
+                                    'Pick the exact type of help you need.',
+                              ),
+                              PostComposerSectionCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const PostComposerFieldLabel(
+                                      label: 'Category*',
                                     ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Describe your needs so providers can reach out to you.',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              const SizedBox(height: 12),
-                              _FieldLabel(label: 'Category*'),
-                              _PickerField(
-                                label: _selectedCategory,
-                                onTap: _pickCategory,
-                              ),
-                              const SizedBox(height: 8),
-                              _FieldLabel(label: 'Service*'),
-                              _PickerField(
-                                label: _selectedService,
-                                onTap: _pickService,
-                              ),
-                              const SizedBox(height: 8),
-                              _FieldLabel(label: 'Preferred Date (Optional)'),
-                              _PickerField(
-                                label: _preferredDate == null
-                                    ? 'Select date'
-                                    : '${_preferredDate!.day}/${_preferredDate!.month}/${_preferredDate!.year}',
-                                onTap: _pickDate,
-                              ),
-                              const SizedBox(height: 8),
-                              _FieldLabel(label: 'Your Location*'),
-                              _PickerField(
-                                label: _selectedDistrictLabel,
-                                onTap: _pickDistrict,
-                              ),
-                              const SizedBox(height: 8),
-                              _FieldLabel(label: 'Description*'),
-                              TextField(
-                                controller: _messageController,
-                                minLines: 4,
-                                maxLines: 6,
-                                decoration: _fieldDecoration(
-                                  hintText:
-                                      'Example: I need 2 people to clean my house tomorrow morning. Total 3 bedrooms.',
+                                    PostComposerPickerField(
+                                      label: _selectedCategory,
+                                      icon: Icons.category_rounded,
+                                      onTap: _pickCategory,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    const PostComposerFieldLabel(
+                                      label: 'Service*',
+                                    ),
+                                    PostComposerPickerField(
+                                      label: _selectedService,
+                                      icon: Icons.design_services_rounded,
+                                      onTap: _pickService,
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              if (_editingPostId != null)
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: _posting ? null : _cancelEdit,
-                                    child: const Text('Cancel edit'),
-                                  ),
+                              const PostComposerSectionHeader(
+                                title: 'Schedule and area',
+                                subtitle:
+                                    'Optional timing and required district.',
+                              ),
+                              PostComposerSectionCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const PostComposerFieldLabel(
+                                      label: 'Preferred Date (Optional)',
+                                    ),
+                                    PostComposerPickerField(
+                                      label: _preferredDate == null
+                                          ? 'Select date'
+                                          : '${_preferredDate!.day}/${_preferredDate!.month}/${_preferredDate!.year}',
+                                      icon: Icons.calendar_today_rounded,
+                                      onTap: _pickDate,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    const PostComposerFieldLabel(
+                                      label: 'Your Location*',
+                                    ),
+                                    PostComposerPickerField(
+                                      label: _selectedDistrictLabel,
+                                      icon: Icons.location_on_outlined,
+                                      onTap: _pickDistrict,
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              const SizedBox(height: 12),
+                              const PostComposerSectionHeader(
+                                title: 'Job description',
+                                subtitle:
+                                    'Write what providers need to know before contacting you.',
+                              ),
+                              PostComposerSectionCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const PostComposerFieldLabel(
+                                      label: 'Description*',
+                                    ),
+                                    TextField(
+                                      controller: _messageController,
+                                      minLines: 4,
+                                      maxLines: 6,
+                                      decoration: _fieldDecoration(
+                                        hintText:
+                                            'Example: I need 2 people to clean my house tomorrow morning. Total 3 bedrooms.',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
                               PrimaryButton(
                                 label: _posting
                                     ? (_editingPostId == null
@@ -285,9 +337,7 @@ class _ClientPostPageState extends State<ClientPostPage> {
         );
       }
       if (!mounted) return;
-      _editingPostId = null;
-      _messageController.clear();
-      _preferredDate = null;
+      _resetComposer();
       AppToast.success(
         context,
         'Your request is now live for providers to see.',
@@ -327,11 +377,10 @@ class _ClientPostPageState extends State<ClientPostPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Manage my posts',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    const PostManageSheetHeader(
+                      title: 'Manage my requests',
+                      subtitle:
+                          'Review your active requests and keep the details up to date.',
                     ),
                     const SizedBox(height: 8),
                     Expanded(
@@ -343,49 +392,35 @@ class _ClientPostPageState extends State<ClientPostPage> {
                               itemCount: ownPosts.length,
                               separatorBuilder: (_, _) =>
                                   const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                final post = ownPosts[index];
-                                return ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: const BorderSide(
-                                      color: AppColors.divider,
-                                    ),
-                                  ),
-                                  title: Text(post.serviceLabel),
-                                  subtitle: Text(
-                                    '${post.category} • ${post.location}',
-                                  ),
-                                  trailing: PopupMenuButton<String>(
-                                    onSelected: (action) async {
-                                      if (action == 'edit') {
-                                        Navigator.pop(sheetContext);
-                                        _beginEdit(post);
-                                        return;
-                                      }
-                                      if (action == 'delete') {
-                                        final deleted = await _deletePost(post);
-                                        if (!deleted) return;
-                                      }
-                                    },
-                                    itemBuilder: (_) => const [
-                                      PopupMenuItem<String>(
-                                        value: 'edit',
-                                        child: Text('Edit'),
-                                      ),
-                                      PopupMenuItem<String>(
-                                        value: 'delete',
-                                        child: Text('Delete'),
-                                      ),
-                                    ],
-                                  ),
+                            itemBuilder: (context, index) {
+                              final post = ownPosts[index];
+                              final chips = <String>[
+                                post.category,
+                                post.location,
+                              ];
+                              if (post.preferredDate != null) {
+                                chips.add(
+                                  '${post.preferredDate!.day}/${post.preferredDate!.month}/${post.preferredDate!.year}',
                                 );
-                              },
-                            ),
+                              }
+                              return PostManageCard(
+                                icon: Icons.assignment_rounded,
+                                accentColor: AppColors.primary,
+                                title: post.serviceLabel,
+                                subtitle: 'Request posted in ${post.location}',
+                                body: post.message,
+                                chips: chips,
+                                onEdit: () {
+                                  Navigator.pop(sheetContext);
+                                  _beginEdit(post);
+                                },
+                                onDelete: () async {
+                                  final deleted = await _deletePost(post);
+                                  if (!deleted) return;
+                                },
+                              );
+                            },
+                          ),
                     ),
                   ],
                 ),
@@ -413,7 +448,7 @@ class _ClientPostPageState extends State<ClientPostPage> {
   }
 
   void _cancelEdit() {
-    setState(() => _editingPostId = null);
+    setState(_resetComposer);
   }
 
   Future<bool> _deletePost(FinderPostItem post) async {
@@ -439,7 +474,7 @@ class _ClientPostPageState extends State<ClientPostPage> {
       await FinderPostState.deleteFinderRequest(postId: post.id);
       if (!mounted) return false;
       if (_editingPostId == post.id) {
-        setState(() => _editingPostId = null);
+        setState(_resetComposer);
       }
       AppToast.success(context, 'Post deleted.');
       return true;
@@ -448,6 +483,18 @@ class _ClientPostPageState extends State<ClientPostPage> {
       AppToast.error(context, error.toString());
       return false;
     }
+  }
+
+  void _resetComposer() {
+    _editingPostId = null;
+    _selectedCategory = 'Cleaner';
+    _selectedService = 'House Cleaning';
+    _messageController.clear();
+    _cityController.text = LocationOptions.defaultCity;
+    _districtController.clear();
+    _locationController.clear();
+    _preferredDate = null;
+    _syncSelectionFromCatalog();
   }
 
   Future<void> _pickCategory() async {
@@ -644,66 +691,6 @@ class _ClientPostPageState extends State<ClientPostPage> {
           },
         );
       },
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String label;
-
-  const _FieldLabel({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        label,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
-      ),
-    );
-  }
-}
-
-class _PickerField extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const _PickerField({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.tune_rounded, size: 17, color: AppColors.primary),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
-              ),
-            ),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: AppColors.textSecondary,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

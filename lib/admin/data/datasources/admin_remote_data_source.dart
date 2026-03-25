@@ -14,10 +14,10 @@ class AdminRemoteDataSource {
 
   Future<bool> verifyAccess() async {
     try {
-      await _apiClient.getJson('/api/admin/overview');
+      await _apiClient.getJson('/api/admin/access');
       return true;
-    } on AdminApiException {
-      return false;
+    } on AdminApiException catch (e) {
+      throw Exception('Backend Error (${e.statusCode}): ${e.message}');
     }
   }
 

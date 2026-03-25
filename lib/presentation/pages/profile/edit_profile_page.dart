@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/location_options.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/app_calendar_picker.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../domain/entities/profile_settings.dart';
@@ -230,7 +231,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).bottomSheetTheme.modalBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -245,7 +246,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 Text(
                   'Profile Photo',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: AppThemeTokens.textPrimary(context),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -394,7 +395,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).bottomSheetTheme.modalBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -409,7 +410,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: AppThemeTokens.textPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 12),

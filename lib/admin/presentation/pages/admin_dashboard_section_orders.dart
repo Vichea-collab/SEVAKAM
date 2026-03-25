@@ -104,6 +104,7 @@ extension on _AdminDashboardPageState {
                   onTap: () => _runSafeAction(
                     dialogTitle: 'Mark order ${item.id} as cancelled?',
                     actionLabel: 'Cancel',
+                    reasonRequired: true,
                     run: (reason) => AdminDashboardState.updateOrderStatus(
                       orderId: item.id,
                       status: 'cancelled',

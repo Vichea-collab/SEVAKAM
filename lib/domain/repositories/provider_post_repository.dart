@@ -9,6 +9,10 @@ abstract class ProviderPostRepository {
     int limit = 10,
   });
 
+  Future<List<DateTime>> loadProviderBlockedDates({
+    required String providerUid,
+  });
+
   Future<ProviderPostItem> createProviderPost({
     required String category,
     required List<String> services,

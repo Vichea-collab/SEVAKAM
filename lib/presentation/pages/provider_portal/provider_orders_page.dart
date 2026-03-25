@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:servicefinder/core/constants/app_colors.dart';
 import 'package:servicefinder/core/constants/app_spacing.dart';
+import 'package:servicefinder/core/theme/app_theme_tokens.dart';
 import 'package:servicefinder/core/utils/app_toast.dart';
 import 'package:servicefinder/data/network/backend_api_client.dart';
 import 'package:servicefinder/domain/entities/pagination.dart';
@@ -141,7 +142,7 @@ class _ProviderOrdersPageState extends State<ProviderOrdersPage>
                           Row(
                             children: [
                               _TabChip(
-                                label: 'Booked',
+                                label: 'Upcoming',
                                 active: _tab == ProviderOrderTab.incoming,
                                 onTap: () =>
                                     _onTabSelected(ProviderOrderTab.incoming),
@@ -408,7 +409,7 @@ class _ProviderOrdersPageState extends State<ProviderOrdersPage>
   String _emptyTitle(ProviderOrderTab tab) {
     switch (tab) {
       case ProviderOrderTab.incoming:
-        return 'No bookings';
+        return 'No upcoming orders';
       case ProviderOrderTab.active:
         return 'No active jobs';
       case ProviderOrderTab.completed:
@@ -419,7 +420,7 @@ class _ProviderOrdersPageState extends State<ProviderOrdersPage>
   String _emptyMessage(ProviderOrderTab tab) {
     switch (tab) {
       case ProviderOrderTab.incoming:
-        return 'New client bookings will appear here.';
+        return 'New upcoming bookings will appear here.';
       case ProviderOrderTab.active:
         return 'Accepted and in-progress orders appear here.';
       case ProviderOrderTab.completed:
@@ -441,6 +442,7 @@ class _TabChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppThemeTokens.isDark(context);
     return Expanded(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -449,16 +451,22 @@ class _TabChip extends StatelessWidget {
           height: 40,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: active ? const Color(0xFFEAF1FF) : Colors.white,
+            color: active
+                ? (isDark
+                      ? AppColors.primary.withValues(alpha: 0.18)
+                      : const Color(0xFFEAF1FF))
+                : AppThemeTokens.surface(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: active ? AppColors.primary : AppColors.divider,
+              color: active ? AppColors.primary : AppThemeTokens.outline(context),
             ),
           ),
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: active ? AppColors.primary : AppColors.textSecondary,
+              color: active
+                  ? AppColors.primary
+                  : AppThemeTokens.textSecondary(context),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -489,9 +497,9 @@ class _ProviderOrderCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppThemeTokens.surface(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: AppThemeTokens.outline(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,7 +510,7 @@ class _ProviderOrderCard extends StatelessWidget {
                   child: Text(
                     item.serviceName,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: AppThemeTokens.textPrimary(context),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -521,7 +529,7 @@ class _ProviderOrderCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: PrimaryButton(
-                      label: 'Confirm',
+                      label: 'Accept',
                       icon: Icons.check_circle_outline_rounded,
                       tone: PrimaryButtonTone.success,
                       onPressed: onAccept,
@@ -564,8 +572,8 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, bg) = switch (state) {
-      ProviderOrderState.incoming => ('Booked', const Color(0xFFD97706)),
-      ProviderOrderState.booked => ('Confirm', const Color(0xFFD97706)),
+      ProviderOrderState.incoming => ('Upcoming', const Color(0xFFD97706)),
+      ProviderOrderState.booked => ('Upcoming', const Color(0xFFD97706)),
       ProviderOrderState.onTheWay => ('Confirmed', AppColors.primary),
       ProviderOrderState.started => ('Started', const Color(0xFF7C6EF2)),
       ProviderOrderState.completed => ('Completed', AppColors.success),

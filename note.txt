@@ -55,6 +55,31 @@ tmr prompts:
 
 One real note: for iOS background/outside-app delivery, Apple Push Notifications capability and valid APNs provisioning still need to be enabled in the Xcode/Apple Developer setup. The app code is ready, but that signing configuration is still required for iPhone push delivery.
 
-- can u do QA tester on my android simulator, anything need to fix or updgate
-- in .env of backend for bakong api, just put only useful and implememt feature bakong for me at method of subscription
-- in admin panels u should use sidebar navigation
+//- can u do QA tester on my android simulator, anything need to fix or updgate
+//- in .env of backend for bakong api, just put only useful and implememt feature bakong for me at method of subscription
+//- in admin panels u should use sidebar navigation
+
+//- for help & support, i think just select the category and sub, no need to input so many field so it auto apply with those category and sub category chat
+//- help me increase the speech of loading or fetching it wait too long
+
+
+//- remove it useless and i think the ux/ui just like before show as dialog better of the chat
+
+
+the status should be: finder have booked, confirmed, started, completed
+provider have upcoming, comfirmed, started, completed
+so when finder order have booking sucess, the status be booked and for provider upcoming
+after that provider accept/deadline, if accept it goes to started
+so on the way status replace to confirmed
+provider accepts booking
+provider starts service
+finder completes booking
+finder cancels booking
+provider declines booking
+
+
+- for feature avalibility of dateblock, help me check the UI and backend, it work correctly? i think when i hot restart, the date i blocked it not store.
+
+- update the Dark mode for whole app for me, make it professional with dark and white mode
+- for the chat feature, the roles like the user have 2 role on that account so it has only 1 chat or seperate chat defferent finder and provider?
+- for help & support i updated, so in admin panels for tickets section need update anything or not?

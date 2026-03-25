@@ -121,10 +121,7 @@ const List<_SidebarSectionGroup> _sidebarSectionGroups = [
   _SidebarSectionGroup(
     label: 'Growth',
     hint: 'Messaging and campaign surfaces',
-    sections: [
-      _AdminSection.promotions,
-      _AdminSection.broadcasts,
-    ],
+    sections: [_AdminSection.promotions, _AdminSection.broadcasts],
   ),
 ];
 
@@ -132,10 +129,7 @@ class _SidebarExpandButton extends StatelessWidget {
   final bool expanded;
   final VoidCallback onTap;
 
-  const _SidebarExpandButton({
-    required this.expanded,
-    required this.onTap,
-  });
+  const _SidebarExpandButton({required this.expanded, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -203,40 +197,146 @@ class _DashboardSidebar extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.fromLTRB(
-                expanded ? 18 : 12,
-                18,
-                expanded ? 18 : 12,
-                expanded ? 20 : 14,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
-                ),
-                gradient: LinearGradient(
-                  colors: [
-                    accent.withValues(alpha: 0.96),
-                    AppColors.primary,
-                    const Color(0xFF7AA6FF),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (expanded)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final showExpandedHeader =
+                    expanded && constraints.maxWidth >= 220;
+                return Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(
+                    showExpandedHeader ? 18 : 12,
+                    18,
+                    showExpandedHeader ? 18 : 12,
+                    showExpandedHeader ? 20 : 14,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(28),
+                    ),
+                    gradient: LinearGradient(
+                      colors: [
+                        accent.withValues(alpha: 0.96),
+                        AppColors.primary,
+                        const Color(0xFF7AA6FF),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (showExpandedHeader)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    height: 54,
+                                    width: 54,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(18),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.20,
+                                      ),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.24,
+                                        ),
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.admin_panel_settings_rounded,
+                                      color: Colors.white,
+                                      size: 30,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.16,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.16,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Sidebar Navigation',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall
+                                                ?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.2,
+                                                ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          'Sevakam Admin',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          email,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(color: Colors.white70),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _SidebarExpandButton(
+                              expanded: true,
+                              onTap: onToggleExpanded,
+                            ),
+                          ],
+                        )
+                      else
+                        Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.center,
+                              child: _SidebarExpandButton(
+                                expanded: false,
+                                onTap: onToggleExpanded,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Center(
+                              child: Container(
                                 height: 54,
                                 width: 54,
                                 decoration: BoxDecoration(
@@ -252,185 +352,102 @@ class _DashboardSidebar extends StatelessWidget {
                                   size: 30,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.16,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          999,
-                                        ),
-                                        border: Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.16,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Sidebar Navigation',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.labelSmall?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.2,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      'Sevakam Admin',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      email,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(color: Colors.white70),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _SidebarExpandButton(
-                          expanded: true,
-                          onTap: onToggleExpanded,
-                        ),
-                      ],
-                    )
-                  else
-                    Column(
-                      children: [
-                        Align(
-                          alignment: Alignment.center,
-                          child: _SidebarExpandButton(
-                            expanded: false,
-                            onTap: onToggleExpanded,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Center(
-                          child: Container(
-                            height: 54,
-                            width: 54,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              color: Colors.white.withValues(alpha: 0.20),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.24),
-                              ),
                             ),
-                            child: const Icon(
-                              Icons.admin_panel_settings_rounded,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  if (expanded) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.18),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Current workspace',
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                          const SizedBox(height: 7),
-                          Row(
-                            children: [
-                              Icon(section.icon, color: Colors.white, size: 18),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  section.label,
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            section.navHint,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ] else ...[
-                    const SizedBox(height: 14),
-                    Center(
-                      child: Tooltip(
-                        message: section.label,
-                        child: Container(
-                          height: 48,
-                          width: 48,
+                      if (showExpandedHeader) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.16),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(18),
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.18),
                             ),
                           ),
-                          child: Icon(
-                            section.icon,
-                            color: Colors.white,
-                            size: 22,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Current workspace',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              const SizedBox(height: 7),
+                              Row(
+                                children: [
+                                  Icon(
+                                    section.icon,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      section.label,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                section.navHint,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.white70),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                      ] else ...[
+                        const SizedBox(height: 14),
+                        Center(
+                          child: Tooltip(
+                            message: section.label,
+                            child: Container(
+                              height: 48,
+                              width: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                ),
+                              ),
+                              child: Icon(
+                                section.icon,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 6),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                padding: EdgeInsets.fromLTRB(
+                  expanded ? 12 : 8,
+                  10,
+                  expanded ? 12 : 8,
+                  12,
+                ),
                 children: _sidebarSectionGroups
                     .map(
                       (group) => Padding(
@@ -447,86 +464,92 @@ class _DashboardSidebar extends StatelessWidget {
               ),
             ),
             const Divider(height: 1, color: Color(0xFFE3EAF9)),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                expanded ? 14 : 10,
-                12,
-                expanded ? 14 : 10,
-                14,
-              ),
-              child: expanded
-                  ? Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF6F9FF),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFFD8E3F6)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Secure Session',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w700,
-                                ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final showExpandedFooter =
+                    expanded && constraints.maxWidth >= 220;
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    showExpandedFooter ? 14 : 10,
+                    12,
+                    showExpandedFooter ? 14 : 10,
+                    14,
+                  ),
+                  child: showExpandedFooter
+                      ? Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF6F9FF),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: const Color(0xFFD8E3F6)),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Use the sidebar to move between admin workspaces and sign out when operations are done.',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: AppColors.textSecondary,
-                                  height: 1.35,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Secure Session',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Use the sidebar to move between admin workspaces and sign out when operations are done.',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: AppColors.textSecondary,
+                                      height: 1.35,
+                                    ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: onLogout,
+                                  icon: const Icon(Icons.logout_rounded),
+                                  label: const Text('Sign out'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.textPrimary,
+                                    side: const BorderSide(
+                                      color: Color(0xFFD5DEEF),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
                                 ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: onLogout,
-                              icon: const Icon(Icons.logout_rounded),
-                              label: const Text('Sign out'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.textPrimary,
-                                side: const BorderSide(
-                                  color: Color(0xFFD5DEEF),
+                        )
+                      : Tooltip(
+                          message: 'Sign out',
+                          child: Center(
+                            child: SizedBox(
+                              width: 52,
+                              height: 52,
+                              child: OutlinedButton(
+                                onPressed: onLogout,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.textPrimary,
+                                  side: const BorderSide(
+                                    color: Color(0xFFD5DEEF),
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
+                                child: const Icon(Icons.logout_rounded),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : Tooltip(
-                      message: 'Sign out',
-                      child: Center(
-                        child: SizedBox(
-                          width: 52,
-                          height: 52,
-                          child: OutlinedButton(
-                            onPressed: onLogout,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textPrimary,
-                              side: const BorderSide(
-                                color: Color(0xFFD5DEEF),
-                              ),
-                              padding: EdgeInsets.zero,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: const Icon(Icons.logout_rounded),
                           ),
                         ),
-                      ),
-                    ),
+                );
+              },
             ),
           ],
         ),
@@ -551,7 +574,12 @@ class _SidebarSectionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+      padding: EdgeInsets.fromLTRB(
+        expanded ? 10 : 6,
+        10,
+        expanded ? 10 : 6,
+        expanded ? 8 : 6,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FBFF),
         borderRadius: BorderRadius.circular(18),
@@ -616,6 +644,21 @@ class _SidebarSectionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = section.accentColor;
+    final iconTile = Container(
+      height: 40,
+      width: 40,
+      decoration: BoxDecoration(
+        color: selected
+            ? accent.withValues(alpha: 0.16)
+            : const Color(0xFFF1F5FC),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        section.icon,
+        size: 20,
+        color: selected ? accent : AppColors.textSecondary,
+      ),
+    );
     return Material(
       color: selected ? accent.withValues(alpha: 0.10) : Colors.transparent,
       borderRadius: BorderRadius.circular(16),
@@ -638,88 +681,76 @@ class _SidebarSectionTile extends StatelessWidget {
                     : const Color(0x00000000),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: expanded
-                  ? MainAxisAlignment.start
-                  : MainAxisAlignment.center,
-              children: [
-                Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? accent.withValues(alpha: 0.16)
-                        : const Color(0xFFF1F5FC),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    section.icon,
-                    size: 20,
-                    color: selected ? accent : AppColors.textSecondary,
-                  ),
-                ),
-                if (expanded) ...[
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          section.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: selected
-                                    ? FontWeight.w800
-                                    : FontWeight.w600,
-                              ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          section.navHint,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(
-                                color: selected
-                                    ? accent
-                                    : AppColors.textSecondary,
-                                fontWeight: selected
-                                    ? FontWeight.w600
-                                    : FontWeight.w500,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  AnimatedOpacity(
-                    duration: const Duration(milliseconds: 180),
-                    opacity: selected ? 1 : 0.65,
-                    child: Container(
-                      height: 28,
-                      width: 28,
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? accent.withValues(alpha: 0.16)
-                            : const Color(0xFFF4F7FC),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        selected
-                            ? Icons.arrow_forward_rounded
-                            : Icons.chevron_right_rounded,
-                        size: 18,
-                        color: selected ? accent : AppColors.textSecondary,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final showExpandedTile =
+                    expanded && constraints.maxWidth >= 180;
+                if (!showExpandedTile) {
+                  return Center(child: iconTile);
+                }
+                return Row(
+                  children: [
+                    iconTile,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            section.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: selected
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            section.navHint,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: selected
+                                      ? accent
+                                      : AppColors.textSecondary,
+                                  fontWeight: selected
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                                ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ],
+                    const SizedBox(width: 8),
+                    AnimatedOpacity(
+                      duration: const Duration(milliseconds: 180),
+                      opacity: selected ? 1 : 0.65,
+                      child: Container(
+                        height: 28,
+                        width: 28,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? accent.withValues(alpha: 0.16)
+                              : const Color(0xFFF4F7FC),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          selected
+                              ? Icons.arrow_forward_rounded
+                              : Icons.chevron_right_rounded,
+                          size: 18,
+                          color: selected ? accent : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -995,9 +1026,7 @@ class _MobileTopBar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.20),
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
               ),
               child: IconButton(
                 onPressed: () => unawaited(_openNavigationSheet(context)),

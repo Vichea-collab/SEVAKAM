@@ -32,8 +32,8 @@ extension on _AdminDashboardPageState {
           options: const [
             _DropdownOption(value: 'all', label: 'All plans'),
             _DropdownOption(value: 'basic', label: 'Basic'),
-            _DropdownOption(value: 'professional', label: 'Professional'),
-            _DropdownOption(value: 'elite', label: 'Elite'),
+            _DropdownOption(value: 'professional', label: 'Plus'),
+            _DropdownOption(value: 'elite', label: 'Pro'),
           ],
           onChanged: (value) {
             _setSectionState(() => _userPlanFilter = value);
@@ -200,6 +200,7 @@ extension on _AdminDashboardPageState {
         onTap: () => _runSafeAction(
           dialogTitle: 'Reject KYC for ${item.name}?',
           actionLabel: 'Reject',
+          reasonRequired: true,
           run: (reason) => AdminDashboardState.updateProviderKycStatus(
             providerId: item.id,
             status: 'rejected',
@@ -212,6 +213,7 @@ extension on _AdminDashboardPageState {
         onTap: () => _runSafeAction(
           dialogTitle: 'Reset KYC for ${item.name} to unverified?',
           actionLabel: 'Reset',
+          reasonRequired: true,
           run: (reason) => AdminDashboardState.updateProviderKycStatus(
             providerId: item.id,
             status: 'unverified',

@@ -25,6 +25,8 @@ class BookingAddressPage extends StatefulWidget {
 }
 
 class _BookingAddressPageState extends State<BookingAddressPage> {
+  static const String _virtualAddressPrefix = 'addr-';
+
   late List<HomeAddress> _addresses;
   String? _selectedId;
   bool _loadingAddresses = false;
@@ -83,6 +85,9 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
                           itemBuilder: (context, index) {
                             final address = _addresses[index];
                             final selected = _selectedId == address.id;
+                            final isVirtualAddress = _isVirtualAddress(
+                              address.id,
+                            );
                             return InkWell(
                               borderRadius: BorderRadius.circular(
                                 rs.radius(12),
@@ -158,15 +163,16 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
                                           unawaited(_deleteAddress(address));
                                         }
                                       },
-                                      itemBuilder: (_) => const [
-                                        PopupMenuItem<String>(
+                                      itemBuilder: (_) => [
+                                        const PopupMenuItem<String>(
                                           value: 'edit',
                                           child: Text('Edit'),
                                         ),
-                                        PopupMenuItem<String>(
-                                          value: 'delete',
-                                          child: Text('Delete'),
-                                        ),
+                                        if (!isVirtualAddress)
+                                          const PopupMenuItem<String>(
+                                            value: 'delete',
+                                            child: Text('Delete'),
+                                          ),
                                       ],
                                     ),
                                   ],
@@ -213,9 +219,11 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
     final streetController = TextEditingController();
     final additionalController = TextEditingController();
     if (existing != null) {
+      final streetParts = _splitStreetParts(existing.street);
       labelController.text = existing.label;
       mapLinkController.text = existing.mapLink;
-      streetController.text = existing.street;
+      streetController.text = streetParts.street;
+      additionalController.text = streetParts.additional;
     }
     var pickedCity = existing?.city.trim().isNotEmpty == true
         ? existing!.city.trim()
@@ -431,16 +439,19 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
     final resolvedStreet = additional.isEmpty
         ? streetController.text.trim()
         : '${streetController.text.trim()}, $additional';
+    final isVirtualAddress = existing != null && _isVirtualAddress(existing.id);
     final draftAddress = HomeAddress(
-      id: existing?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
+      id: isVirtualAddress
+          ? DateTime.now().microsecondsSinceEpoch.toString()
+          : (existing?.id ?? DateTime.now().microsecondsSinceEpoch.toString()),
       label: labelController.text.trim(),
       mapLink: mapLinkController.text.trim(),
       street: resolvedStreet,
       city: pickedCity.trim().isEmpty ? 'Phnom Penh' : pickedCity.trim(),
-      isDefault: existing?.isDefault ?? _addresses.isEmpty,
+      isDefault: (existing?.isDefault ?? _addresses.isEmpty) || isVirtualAddress,
     );
     try {
-      final saved = existing == null
+      final saved = existing == null || isVirtualAddress
           ? await OrderState.createSavedAddress(address: draftAddress)
           : await OrderState.updateSavedAddress(address: draftAddress);
       if (!mounted) return;
@@ -500,6 +511,13 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
   }
 
   Future<void> _deleteAddress(HomeAddress address) async {
+    if (_isVirtualAddress(address.id)) {
+      AppToast.warning(
+        context,
+        'This profile address is not a saved address yet. Add another address first if you want to manage saved addresses.',
+      );
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -520,20 +538,33 @@ class _BookingAddressPageState extends State<BookingAddressPage> {
     if (confirmed != true) return;
     try {
       await OrderState.deleteSavedAddress(addressId: address.id);
+      await _loadSavedAddresses();
       if (!mounted) return;
-      setState(() {
-        _addresses = _sortAddresses(
-          _addresses
-              .where((item) => item.id != address.id)
-              .toList(growable: false),
-        );
-        _selectedId = _firstPreferredAddressId(_addresses);
-      });
       AppToast.success(context, 'Address deleted.');
     } catch (error) {
       if (!mounted) return;
       AppToast.error(context, error.toString());
     }
+  }
+
+  bool _isVirtualAddress(String id) =>
+      id.trim().toLowerCase().startsWith(_virtualAddressPrefix);
+
+  ({String street, String additional}) _splitStreetParts(String value) {
+    final raw = value.trim();
+    if (raw.isEmpty) return (street: '', additional: '');
+    final segments = raw
+        .split(',')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+    if (segments.length <= 1) {
+      return (street: raw, additional: '');
+    }
+    return (
+      street: segments.first,
+      additional: segments.skip(1).join(', '),
+    );
   }
 
   List<HomeAddress> _sortAddresses(List<HomeAddress> source) {

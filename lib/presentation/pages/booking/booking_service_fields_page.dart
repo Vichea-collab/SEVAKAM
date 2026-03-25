@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../domain/entities/order.dart';
@@ -82,9 +83,11 @@ class _BookingServiceFieldsPageState extends State<BookingServiceFieldsPage> {
         ),
       ),
       bottomSheet: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: AppColors.divider)),
+        decoration: BoxDecoration(
+          color: AppThemeTokens.surface(context),
+          border: Border(
+            top: BorderSide(color: AppThemeTokens.outline(context)),
+          ),
         ),
         child: SafeArea(
           top: false,
@@ -210,10 +213,14 @@ class _BookingServiceFieldsPageState extends State<BookingServiceFieldsPage> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: uploaded ? const Color(0xFFE8F5EE) : Colors.white,
+                    color: uploaded
+                        ? const Color(0xFFE8F5EE)
+                        : AppThemeTokens.surface(context),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: uploaded ? AppColors.success : AppColors.divider,
+                      color: uploaded
+                          ? AppColors.success
+                          : AppThemeTokens.outline(context),
                     ),
                   ),
                   child: Row(
@@ -247,9 +254,9 @@ class _BookingServiceFieldsPageState extends State<BookingServiceFieldsPage> {
                   width: double.infinity,
                   constraints: const BoxConstraints(maxHeight: 400),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFF),
+                    color: AppThemeTokens.mutedSurface(context),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.divider),
+                    border: Border.all(color: AppThemeTokens.outline(context)),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),

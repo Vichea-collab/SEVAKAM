@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_theme_tokens.dart';
 import '../../../core/utils/page_transition.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/safe_image_provider.dart';
@@ -99,7 +100,10 @@ class _ChatListPageState extends State<ChatListPage> {
                     ),
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      color: AppThemeTokens.outline(context),
+                    ),
                     itemBuilder: (context, index) {
                       final thread = filtered[index];
                       return _ChatThreadTile(thread: thread);
@@ -277,9 +281,7 @@ class _ChatThreadTile extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: rs.dimension(28),
-                    backgroundColor: isDark
-                        ? const Color(0xFF162133)
-                        : AppColors.background,
+                    backgroundColor: AppThemeTokens.mutedSurface(context),
                     backgroundImage: thread.avatarPath.trim().isNotEmpty
                         ? safeImageProvider(thread.avatarPath)
                         : null,
@@ -300,7 +302,9 @@ class _ChatThreadTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isActive
                             ? AppColors.success
-                            : const Color(0xFFCBD5E1),
+                            : (isDark
+                                  ? const Color(0xFF475569)
+                                  : const Color(0xFFCBD5E1)),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isDark
