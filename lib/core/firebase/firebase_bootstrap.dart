@@ -82,6 +82,13 @@ class FirebaseBootstrap {
           );
           break;
         case TargetPlatform.iOS:
+          if (!AppEnv.enableIosAppCheck()) {
+            debugPrint(
+              'Firebase App Check (iOS) skipped by config. '
+              'Set FIREBASE_ENABLE_IOS_APP_CHECK=true to enable it.',
+            );
+            return;
+          }
           await FirebaseAppCheck.instance.activate(
             providerApple: kDebugMode
                 ? const AppleDebugProvider()

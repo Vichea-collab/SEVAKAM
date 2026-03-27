@@ -316,7 +316,7 @@ class _TopHeaderState extends State<_TopHeader> {
               ],
             ),
             child: SafeArea(
-                bottom: false,
+              bottom: false,
               child: _syncingProfile && !hasProfileContent
                   ? const _FinderHeaderLoading()
                   : Column(
@@ -441,7 +441,7 @@ class _SearchBar extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(rs.radius(16)),
       onTap: () => Navigator.push(context, slideFadeRoute(const SearchPage())),
-        child: Container(
+      child: Container(
         padding: rs.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: theme.cardColor,
@@ -500,7 +500,11 @@ class _SearchBar extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.16),
                 ),
               ),
-              child: Icon(Icons.tune, color: AppColors.primary, size: rs.icon(18)),
+              child: Icon(
+                Icons.tune,
+                color: AppColors.primary,
+                size: rs.icon(18),
+              ),
             ),
           ],
         ),
@@ -1402,10 +1406,11 @@ class _ProviderPostTile extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     _HomePostPill(text: post.category),
-                    const SizedBox(width: 8),
                     _HomePostPill(
                       text: LocationOptions.districtFromArea(post.area),
                     ),

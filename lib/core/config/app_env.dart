@@ -232,6 +232,14 @@ class AppEnv {
     return raw == '1' || raw == 'true' || raw == 'yes' || raw == 'on';
   }
 
+  static bool enableIosAppCheck() {
+    final raw = _read(
+      key: 'FIREBASE_ENABLE_IOS_APP_CHECK',
+      fallback: const String.fromEnvironment('FIREBASE_ENABLE_IOS_APP_CHECK'),
+    ).toLowerCase();
+    return raw == '1' || raw == 'true' || raw == 'yes' || raw == 'on';
+  }
+
   static String _read({required String key, required String fallback}) {
     final fromEnv = dotenv.env[key]?.trim() ?? '';
     if (fromEnv.isNotEmpty) return fromEnv;

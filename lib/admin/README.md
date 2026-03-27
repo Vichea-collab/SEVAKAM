@@ -1,31 +1,56 @@
-# Admin Web Architecture
+# Admin Web Module
 
-This admin frontend is separated from the mobile app and uses its own Flutter entrypoint.
+This directory contains the dedicated Flutter web admin interface for Sevakam. It is intentionally separated from the main mobile route tree and uses its own entrypoint, application shell, and admin-specific data flow.
 
-## Structure
+## Purpose
+
+The admin web app is responsible for:
+
+- platform overview and operational monitoring
+- user and provider administration
+- order and post moderation
+- service and category management
+- support ticket review
+- admin broadcasts and promotions
+
+## Module Structure
+
+```text
+lib/admin/
+├── main.dart           Admin web entrypoint
+├── app/                App shell, routes, and admin bootstrap
+├── data/               API clients, data sources, and repository implementations
+├── domain/             Entities and repository contracts
+└── presentation/       Pages, widgets, and state management
+```
+
+## Entrypoint
 
 - `lib/admin/main.dart`
-  - admin web entrypoint
-- `lib/admin/app/`
-  - admin routes and app shell
-- `lib/admin/domain/`
-  - admin entities and repository contracts
-- `lib/admin/data/`
-  - backend API client, remote datasource, repository implementation
-- `lib/admin/presentation/`
-  - state + admin login/dashboard pages
 
-## Run Admin Web Only
+This entrypoint is separate from the main app entrypoint:
+
+- mobile / shared app: `lib/main.dart`
+- admin web app: `lib/admin/main.dart`
+
+## Running the Admin App
+
+Start the backend first:
+
+```bash
+cd lib/backend
+npm run dev
+```
+
+Then run the admin web application:
 
 ```bash
 flutter run -d chrome -t lib/admin/main.dart --web-port=8099
 ```
 
-This does not use the mobile route tree from `lib/main.dart`.
-
 ## Backend Dependency
 
-The admin web app calls backend admin APIs:
+The admin UI depends on backend admin endpoints such as:
 
 - `/api/admin/overview`
 - `/api/admin/users`
@@ -34,11 +59,10 @@ The admin web app calls backend admin APIs:
 - `/api/admin/tickets`
 - `/api/admin/services`
 
-All list endpoints are paginated with max `10` rows per page.
+Most list endpoints are paginated and intended for dashboard-style management views rather than bulk export workflows.
 
-Make sure backend is running first:
+## Development Notes
 
-```bash
-cd lib/backend
-npm run dev
-```
+- The admin module does not reuse the mobile app route tree.
+- Authentication and authorization are enforced through the backend admin APIs.
+- Keep admin-only presentation, routing, and state inside `lib/admin/` to avoid coupling with the customer app.
